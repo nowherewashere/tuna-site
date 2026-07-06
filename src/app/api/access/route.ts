@@ -4,6 +4,7 @@ import { eq } from "drizzle-orm";
 import { getDb, schema } from "@/lib/db";
 import { createTrialAccount } from "@/lib/access";
 import { createSession } from "@/lib/auth/session";
+import { rateLimit, clientIp } from "@/lib/rate-limit";
 
 const Body = z.object({
   email: z.string().email().optional().or(z.literal("")),
@@ -16,6 +17,14 @@ const Body = z.object({
  * ("без почты"): access lives on our remnawave_uuid, email only enables re-login.
  */
 export async function POST(req: Request) {
+  const rl = rateLimit(`access:${clientIp(req)}`, 5, 60 * 60_000);
+  if (!rl.ok) {
+    return NextResponse.json(
+      { error: "rate_limited" },
+      { status: 429, headers: { "Retry-After": String(rl.retryAfterSec) } },
+    );
+  }
+
   const json = await req.json().catch(() => null);
   const parsed = Body.safeParse(json ?? {});
   if (!parsed.success) {
