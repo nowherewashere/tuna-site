@@ -13,11 +13,58 @@ const PLATFORMS = [
 
 type Step = "register" | "install";
 
+interface AccessResult {
+  username: string;
+  subscriptionUrl: string | null;
+  expireAt: string;
+}
+
 export default function ConnectPage() {
   const [step, setStep] = useState<Step>("register");
   const [platform, setPlatform] = useState<string>("iphone");
+  const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [result, setResult] = useState<AccessResult | null>(null);
+  const [copied, setCopied] = useState(false);
 
-  const platLabel = PLATFORMS.find((p) => p.id === platform)?.label.replace(/^\S+\s/, "") ?? "iPhone";
+  const platLabel =
+    PLATFORMS.find((p) => p.id === platform)?.label.replace(/^\S+\s/, "") ?? "iPhone";
+  const subUrl = result?.subscriptionUrl ?? "";
+
+  async function getAccess(withEmail: boolean) {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/access", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(withEmail ? { email } : {}),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(
+          data.error === "account_exists"
+            ? "Аккаунт с этой почтой уже есть — войди."
+            : "Не удалось выдать доступ. Попробуй ещё раз.",
+        );
+        return;
+      }
+      setResult(data);
+      setStep("install");
+    } catch {
+      setError("Сеть недоступна. Попробуй ещё раз.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function copySub() {
+    if (!subUrl) return;
+    navigator.clipboard?.writeText(subUrl);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  }
 
   if (step === "register") {
     return (
@@ -29,14 +76,29 @@ export default function ConnectPage() {
               Введи почту — сразу выдадим подписку. Почта нужна, чтобы входить с других устройств.
             </p>
             <div className="field-row">
-              <input className="field" type="email" placeholder="твой@email.ру" />
-              <button className="btn btn-amber" onClick={() => setStep("install")}>
-                Получить доступ
+              <input
+                className="field"
+                type="email"
+                placeholder="твой@email.ру"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={loading}
+              />
+              <button
+                className="btn btn-amber"
+                onClick={() => getAccess(true)}
+                disabled={loading}
+              >
+                {loading ? "Выдаём…" : "Получить доступ"}
               </button>
             </div>
+            {error && (
+              <p style={{ color: "var(--coral)", fontSize: 14, margin: "4px 0 10px" }}>{error}</p>
+            )}
             <p className="onb-alt">
-              или <a onClick={() => setStep("install")}>продолжить без почты</a> · уже есть аккаунт?{" "}
-              <Link href="/login">войти</Link>
+              или{" "}
+              <a onClick={() => !loading && getAccess(false)}>продолжить без почты</a> · уже есть
+              аккаунт? <Link href="/login">войти</Link>
             </p>
             <p className="turnstile-note">
               🛡 Защита от ботов включена автоматически (Cloudflare Turnstile)
@@ -84,12 +146,20 @@ export default function ConnectPage() {
             <div className="istep-body">
               <h4>Добавь Tuna</h4>
               <p>Одним тапом — настроится само.</p>
-              <a className="btn btn-amber" style={{ marginTop: 10 }}>
+              <a
+                className="btn btn-amber"
+                style={{ marginTop: 10 }}
+                href={subUrl ? `happ://add/${encodeURIComponent(subUrl)}` : undefined}
+              >
                 ⚡ Добавить подписку в Happ
               </a>
               <div className="copy-link" style={{ marginTop: 10 }}>
-                <span>happ://add/tuna-8f3a…</span>
-                <span className="amber">копировать</span>
+                <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {subUrl || "happ://add/…"}
+                </span>
+                <span className="amber" onClick={copySub}>
+                  {copied ? "скопировано ✓" : "копировать"}
+                </span>
               </div>
             </div>
           </div>
