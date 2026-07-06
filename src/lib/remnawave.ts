@@ -115,6 +115,30 @@ export async function createTrialUser(opts: {
   return data.response;
 }
 
+export interface HwidDevice {
+  hwid: string;
+  platform?: string | null;
+  deviceModel?: string | null;
+  userAgent?: string | null;
+  updatedAt?: string | null;
+}
+
+/** List a user's registered HWID devices. */
+export async function getUserDevices(userUuid: string): Promise<HwidDevice[]> {
+  const data = await call<Envelope<{ total?: number; devices?: HwidDevice[] } | HwidDevice[]>>(
+    "GET",
+    `/api/hwid/devices/${userUuid}`,
+  );
+  const r = data.response;
+  return Array.isArray(r) ? r : (r.devices ?? []);
+}
+
+/** Unbind one device (frees an HWID slot; others keep working). */
+export async function deleteDevice(userUuid: string, hwid: string): Promise<boolean> {
+  await call("POST", `/api/hwid/devices/delete`, { userUuid, hwid });
+  return true;
+}
+
 /** Delete a panel user (cleanup / account removal). */
 export async function deleteUser(uuid: string): Promise<boolean> {
   const data = await call<Envelope<{ isDeleted: boolean }>>(

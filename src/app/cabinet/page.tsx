@@ -56,6 +56,23 @@ function fmtBytes(n: number): string {
   return `${(n / 1024 ** i).toFixed(i ? 1 : 0)} ${u[i]}`;
 }
 
+interface HwidDevice {
+  hwid: string;
+  platform?: string | null;
+  deviceModel?: string | null;
+  updatedAt?: string | null;
+}
+
+function platformEmoji(p?: string | null): string {
+  const s = (p ?? "").toLowerCase();
+  if (s.includes("ios") || s.includes("iphone")) return "📱";
+  if (s.includes("mac")) return "💻";
+  if (s.includes("android")) return "🤖";
+  if (s.includes("windows")) return "🖥️";
+  if (s.includes("tv")) return "📺";
+  return "📱";
+}
+
 export default function CabinetPage() {
   const [tab, setTab] = useState<Tab>("overview");
   const [client, setClient] = useState(0);
@@ -84,6 +101,28 @@ export default function CabinetPage() {
       .catch(() => setMe(null))
       .finally(() => setLoadingMe(false));
   }, []);
+
+  const [devices, setDevices] = useState<HwidDevice[] | null>(null);
+
+  function loadDevices() {
+    fetch("/api/devices")
+      .then((r) => (r.ok ? r.json() : { devices: [] }))
+      .then((d) => setDevices(d.devices ?? []))
+      .catch(() => setDevices([]));
+  }
+  useEffect(() => {
+    loadDevices();
+  }, []);
+
+  async function unbind(hwid: string) {
+    setDevices((ds) => ds?.filter((d) => d.hwid !== hwid) ?? null);
+    await fetch("/api/devices", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ hwid }),
+    }).catch(() => {});
+    loadDevices();
+  }
 
   function sendMsg() {
     const v = draft.trim();
@@ -164,7 +203,9 @@ export default function CabinetPage() {
                     </div>
                     <div className="cab-cell">
                       <div className="lbl">📱 Устройства</div>
-                      <div className="val">до {me.subscription.deviceLimit ?? "—"}</div>
+                      <div className="val">
+                        {devices?.length ?? 0} / {me.subscription.deviceLimit ?? "—"}
+                      </div>
                     </div>
                   </div>
                   <div className="card">
@@ -227,30 +268,41 @@ export default function CabinetPage() {
                 слот.
               </div>
               <div className="dev-counter">
-                Подключено: <b style={{ color: "#fff" }}>2 / 3</b>
+                Подключено:{" "}
+                <b style={{ color: "#fff" }}>
+                  {devices?.length ?? 0} / {me?.subscription?.deviceLimit ?? "—"}
+                </b>
               </div>
-              <div className="dev-list">
-                <div className="dev">
-                  <div className="dev-info">
-                    <span className="dev-ic">📱</span>
-                    <div>
-                      <div className="dev-name">iPhone</div>
-                      <div className="dev-meta">активно сейчас · a1b2…</div>
-                    </div>
-                  </div>
-                  <button className="dev-unbind">Отвязать</button>
+              {devices === null ? (
+                <div className="panel-sub">Загрузка…</div>
+              ) : devices.length === 0 ? (
+                <div className="card">
+                  Пока нет подключённых устройств. Добавь профиль в Happ — устройство появится
+                  здесь после первого подключения.
                 </div>
-                <div className="dev">
-                  <div className="dev-info">
-                    <span className="dev-ic">💻</span>
-                    <div>
-                      <div className="dev-name">MacBook</div>
-                      <div className="dev-meta">2 часа назад · c3d4…</div>
+              ) : (
+                <div className="dev-list">
+                  {devices.map((d) => (
+                    <div className="dev" key={d.hwid}>
+                      <div className="dev-info">
+                        <span className="dev-ic">{platformEmoji(d.platform)}</span>
+                        <div>
+                          <div className="dev-name">
+                            {d.deviceModel || d.platform || "Устройство"}
+                          </div>
+                          <div className="dev-meta">
+                            {d.updatedAt ? fmtDate(d.updatedAt) + " · " : ""}
+                            {d.hwid.slice(0, 6)}…
+                          </div>
+                        </div>
+                      </div>
+                      <button className="dev-unbind" onClick={() => unbind(d.hwid)}>
+                        Отвязать
+                      </button>
                     </div>
-                  </div>
-                  <button className="dev-unbind">Отвязать</button>
+                  ))}
                 </div>
-              </div>
+              )}
             </div>
           )}
 
