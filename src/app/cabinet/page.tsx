@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type Tab = "overview" | "devices" | "sub" | "ref" | "support";
 type ChatMsg = { who: "them" | "me" | "sys"; text: string };
@@ -22,6 +22,40 @@ const TERMS = [
   { t: "12 мес", p: "2099 ₽", save: "−30%" },
 ];
 
+interface Me {
+  user: { id: string; email: string | null; username: string; isReferred: boolean };
+  subscription: {
+    status: string;
+    expireAt: string;
+    usedTrafficBytes: number;
+    trafficLimitBytes: number;
+    subscriptionUrl: string | null;
+    deviceLimit: number | null;
+  } | null;
+}
+
+const STATUS_LABEL: Record<string, string> = {
+  ACTIVE: "Активна",
+  EXPIRED: "Истекла",
+  LIMITED: "Лимит трафика",
+  DISABLED: "Отключена",
+};
+
+function fmtDate(iso: string): string {
+  return new Intl.DateTimeFormat("ru-RU", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  }).format(new Date(iso));
+}
+
+function fmtBytes(n: number): string {
+  if (!n) return "0 Б";
+  const u = ["Б", "КБ", "МБ", "ГБ", "ТБ"];
+  const i = Math.min(Math.floor(Math.log(n) / Math.log(1024)), u.length - 1);
+  return `${(n / 1024 ** i).toFixed(i ? 1 : 0)} ${u[i]}`;
+}
+
 export default function CabinetPage() {
   const [tab, setTab] = useState<Tab>("overview");
   const [client, setClient] = useState(0);
@@ -40,6 +74,16 @@ export default function CabinetPage() {
   ]);
   const [draft, setDraft] = useState("");
   const topRef = useRef<HTMLDivElement>(null);
+  const [me, setMe] = useState<Me | null>(null);
+  const [loadingMe, setLoadingMe] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/me")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d: Me | null) => setMe(d))
+      .catch(() => setMe(null))
+      .finally(() => setLoadingMe(false));
+  }, []);
 
   function sendMsg() {
     const v = draft.trim();
@@ -82,52 +126,96 @@ export default function CabinetPage() {
         <div className="wrap">
           {tab === "overview" && (
             <div className="panel">
-              <div className="cab-user">
-                <span>🐟</span> user_8f3a{" "}
-                <span className="status-pill">
-                  <span className="d" /> Активна
-                </span>
-              </div>
-              <div className="cab-grid">
-                <div className="cab-cell">
-                  <div className="lbl">Тариф</div>
-                  <div className="val">Standard</div>
+              {loadingMe ? (
+                <div className="panel-sub">Загрузка…</div>
+              ) : !me || !me.subscription ? (
+                <div className="card">
+                  <p style={{ marginBottom: 16 }}>Нужно войти, чтобы увидеть подписку.</p>
+                  <Link className="btn btn-amber" href="/connect">
+                    Получить доступ
+                  </Link>
                 </div>
-                <div className="cab-cell">
-                  <div className="lbl">📅 Истекает</div>
-                  <div className="val">12 авг 2026</div>
-                </div>
-                <div className="cab-cell">
-                  <div className="lbl">↕ Трафик</div>
-                  <div className="val amber">14.2 ГБ / ∞</div>
-                </div>
-                <div className="cab-cell">
-                  <div className="lbl">📱 Устройства</div>
-                  <div className="val">2 / 3</div>
-                </div>
-              </div>
-              <div className="card">
-                <div className="install-head">
-                  <h4>Установка</h4>
-                  <span className="platform">iPhone ▾</span>
-                </div>
-                <div className="client-row">
-                  {CLIENTS.map((c, i) => (
-                    <span
-                      key={c}
-                      className={`client${client === i ? " on" : ""}`}
-                      onClick={() => setClient(i)}
-                    >
-                      {c}
+              ) : (
+                <>
+                  <div className="cab-user">
+                    <span>🐟</span> {me.user.username}{" "}
+                    <span className="status-pill">
+                      <span className="d" />{" "}
+                      {STATUS_LABEL[me.subscription.status] ?? me.subscription.status}
                     </span>
-                  ))}
-                </div>
-                <button className="btn btn-amber btn-full">⚡ Добавить подписку в Happ</button>
-                <div className="copy-link">
-                  <span>happ://add/tuna-8f3a…</span>
-                  <span className="amber">копировать</span>
-                </div>
-              </div>
+                  </div>
+                  <div className="cab-grid">
+                    <div className="cab-cell">
+                      <div className="lbl">Тариф</div>
+                      <div className="val">{me.user.isReferred ? "Триал 72ч" : "Триал"}</div>
+                    </div>
+                    <div className="cab-cell">
+                      <div className="lbl">📅 Истекает</div>
+                      <div className="val">{fmtDate(me.subscription.expireAt)}</div>
+                    </div>
+                    <div className="cab-cell">
+                      <div className="lbl">↕ Трафик</div>
+                      <div className="val amber">
+                        {fmtBytes(me.subscription.usedTrafficBytes)} /{" "}
+                        {me.subscription.trafficLimitBytes === 0
+                          ? "∞"
+                          : fmtBytes(me.subscription.trafficLimitBytes)}
+                      </div>
+                    </div>
+                    <div className="cab-cell">
+                      <div className="lbl">📱 Устройства</div>
+                      <div className="val">до {me.subscription.deviceLimit ?? "—"}</div>
+                    </div>
+                  </div>
+                  <div className="card">
+                    <div className="install-head">
+                      <h4>Установка</h4>
+                      <span className="platform">iPhone ▾</span>
+                    </div>
+                    <div className="client-row">
+                      {CLIENTS.map((c, i) => (
+                        <span
+                          key={c}
+                          className={`client${client === i ? " on" : ""}`}
+                          onClick={() => setClient(i)}
+                        >
+                          {c}
+                        </span>
+                      ))}
+                    </div>
+                    <a
+                      className="btn btn-amber btn-full"
+                      href={
+                        me.subscription.subscriptionUrl
+                          ? `happ://add/${encodeURIComponent(me.subscription.subscriptionUrl)}`
+                          : undefined
+                      }
+                    >
+                      ⚡ Добавить подписку в Happ
+                    </a>
+                    <div className="copy-link">
+                      <span
+                        style={{
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {me.subscription.subscriptionUrl ?? "—"}
+                      </span>
+                      <span
+                        className="amber"
+                        onClick={() =>
+                          me.subscription?.subscriptionUrl &&
+                          navigator.clipboard?.writeText(me.subscription.subscriptionUrl)
+                        }
+                      >
+                        копировать
+                      </span>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           )}
 
