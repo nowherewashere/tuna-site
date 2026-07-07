@@ -1,36 +1,46 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Tuna VPN — website (frontend)
 
-## Getting Started
+The conversion website / web cabinet for Tuna VPN. It is a **pure client** of the
+bot's public API (`/api/v1/public/*`) — the single backend. There is **no site
+database, no Remnawave calls, and no server business logic here**: authentication,
+subscriptions, devices, payments and Remnawave orchestration all live in the
+Python backend (`remnashop/`). See `specs/tuna-vpn-website-backend-spec-en.md`.
 
-First, run the development server:
+- UI/UX/brand follow `tocheck/tuna-vpn-website-spec-v2-en.md` (V2).
+- Auth is passwordless: email → 6-digit code → session (httpOnly JWT + refresh
+  cookies set by the API). All API calls go through `src/lib/api.ts`.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## Architecture
+
+```
+Browser ──▶ this SPA (Next.js, client-only) ──▶ /api/v1/public/*
+                                                     │ (same origin)
+                                     nginx proxy ────┘──▶ Python app (bot backend)
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Same-origin is what keeps the auth cookies first-party. In production nginx serves
+this SPA at `/` and proxies `/api/v1` to the app. In local dev, `next.config.ts`
+rewrites `/api/v1/*` to `NEXT_PUBLIC_API_ORIGIN` (default: the prod bot domain).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Getting started
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+cp .env.example .env.local   # optional: point NEXT_PUBLIC_API_ORIGIN at your backend
+npm install
+npm run dev                  # http://localhost:3000
+```
 
-## Learn More
+By default `npm run dev` talks to the production API at
+`https://tunashop.tuna-transfer.xyz`. The backend must have `WEB_ENABLED=true`.
 
-To learn more about Next.js, take a look at the following resources:
+## Build
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+npm run build
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Deploy (production)
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Build the static assets and serve them from nginx on the site domain, with
+`/api/v1/public` and `/api/v1/connect` proxied to the Python app (see the backend
+spec §9). No Node server or database is required for this site.

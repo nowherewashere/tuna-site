@@ -1,7 +1,8 @@
 "use client";
 
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { api, type Device, type Me, type SubscriptionInfo } from "@/lib/api";
 
 type Tab = "overview" | "devices" | "sub" | "ref" | "support";
 type ChatMsg = { who: "them" | "me" | "sys"; text: string };
@@ -21,18 +22,6 @@ const TERMS = [
   { t: "6 мес", p: "1199 ₽", save: "−20%" },
   { t: "12 мес", p: "2099 ₽", save: "−30%" },
 ];
-
-interface Me {
-  user: { id: string; email: string | null; username: string; isReferred: boolean };
-  subscription: {
-    status: string;
-    expireAt: string;
-    usedTrafficBytes: number;
-    trafficLimitBytes: number;
-    subscriptionUrl: string | null;
-    deviceLimit: number | null;
-  } | null;
-}
 
 const STATUS_LABEL: Record<string, string> = {
   ACTIVE: "Активна",
@@ -56,13 +45,6 @@ function fmtBytes(n: number): string {
   return `${(n / 1024 ** i).toFixed(i ? 1 : 0)} ${u[i]}`;
 }
 
-interface HwidDevice {
-  hwid: string;
-  platform?: string | null;
-  deviceModel?: string | null;
-  updatedAt?: string | null;
-}
-
 function platformEmoji(p?: string | null): string {
   const s = (p ?? "").toLowerCase();
   if (s.includes("ios") || s.includes("iphone")) return "📱";
@@ -74,41 +56,55 @@ function platformEmoji(p?: string | null): string {
 }
 
 export default function CabinetPage() {
+  const router = useRouter();
   const [tab, setTab] = useState<Tab>("overview");
   const [client, setClient] = useState(0);
   const [term, setTerm] = useState(0);
   const [messages, setMessages] = useState<ChatMsg[]>([
     {
       who: "them",
-      text:
-        "Привет! 🐟 Опиши, что не работает — поможем. К сообщению уже приложены твой ID и тариф, так что сразу видим контекст.",
+      text: "Привет! 🐟 Опиши, что не работает — поможем. К сообщению уже приложены твой ID и тариф, так что сразу видим контекст.",
     },
     {
       who: "sys",
-      text:
-        "📢 Апдейт · сегодня: обновили сервера, стало пробивать стабильнее. Если висит — нажми ⟳ в Happ.",
+      text: "📢 Апдейт · сегодня: обновили сервера, стало пробивать стабильнее. Если висит — нажми ⟳ в Happ.",
     },
   ]);
   const [draft, setDraft] = useState("");
   const topRef = useRef<HTMLDivElement>(null);
+
   const [me, setMe] = useState<Me | null>(null);
-  const [loadingMe, setLoadingMe] = useState(true);
+  const [sub, setSub] = useState<SubscriptionInfo | null>(null);
+  const [devices, setDevices] = useState<Device[] | null>(null);
+  const [maxDevices, setMaxDevices] = useState<number | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [authed, setAuthed] = useState(true);
 
   useEffect(() => {
-    fetch("/api/me")
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d: Me | null) => setMe(d))
-      .catch(() => setMe(null))
-      .finally(() => setLoadingMe(false));
+    (async () => {
+      try {
+        const [meRes, subRes] = await Promise.all([api.me(), api.currentSubscription()]);
+        setMe(meRes);
+        setSub(subRes);
+      } catch {
+        setAuthed(false);
+      } finally {
+        setLoading(false);
+      }
+    })();
   }, []);
 
-  const [devices, setDevices] = useState<HwidDevice[] | null>(null);
-
   function loadDevices() {
-    fetch("/api/devices")
-      .then((r) => (r.ok ? r.json() : { devices: [] }))
-      .then((d) => setDevices(d.devices ?? []))
-      .catch(() => setDevices([]));
+    api
+      .devices()
+      .then((d) => {
+        setDevices(d.devices);
+        setMaxDevices(d.max_count);
+      })
+      .catch(() => {
+        setDevices([]);
+        setMaxDevices(null);
+      });
   }
   useEffect(() => {
     loadDevices();
@@ -116,12 +112,13 @@ export default function CabinetPage() {
 
   async function unbind(hwid: string) {
     setDevices((ds) => ds?.filter((d) => d.hwid !== hwid) ?? null);
-    await fetch("/api/devices", {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ hwid }),
-    }).catch(() => {});
+    await api.deleteDevice(hwid).catch(() => {});
     loadDevices();
+  }
+
+  async function logout() {
+    await api.logout().catch(() => {});
+    router.push("/");
   }
 
   function sendMsg() {
@@ -139,6 +136,9 @@ export default function CabinetPage() {
     topRef.current?.scrollIntoView({ behavior: "smooth" });
   }
 
+  const displayName = me?.username || me?.email || me?.name || "user";
+  const trafficLimit = sub && sub.traffic_limit === 0 ? "∞" : sub ? `${sub.traffic_limit} ГБ` : "—";
+
   return (
     <div className="cab-wrap" ref={topRef}>
       <div className="cab-topbar">
@@ -155,9 +155,9 @@ export default function CabinetPage() {
               </button>
             ))}
           </div>
-          <Link className="btn btn-ghost" style={{ padding: "8px 16px" }} href="/">
+          <button className="btn btn-ghost" style={{ padding: "8px 16px" }} onClick={logout}>
             Выйти
-          </Link>
+          </button>
         </div>
       </div>
 
@@ -165,46 +165,49 @@ export default function CabinetPage() {
         <div className="wrap">
           {tab === "overview" && (
             <div className="panel">
-              {loadingMe ? (
+              {loading ? (
                 <div className="panel-sub">Загрузка…</div>
-              ) : !me || !me.subscription ? (
+              ) : !authed ? (
                 <div className="card">
                   <p style={{ marginBottom: 16 }}>Нужно войти, чтобы увидеть подписку.</p>
-                  <Link className="btn btn-amber" href="/connect">
+                  <a className="btn btn-amber" href="/login">
+                    Войти
+                  </a>
+                </div>
+              ) : !sub ? (
+                <div className="card">
+                  <p style={{ marginBottom: 16 }}>Пока нет активной подписки.</p>
+                  <a className="btn btn-amber" href="/connect">
                     Получить доступ
-                  </Link>
+                  </a>
                 </div>
               ) : (
                 <>
                   <div className="cab-user">
-                    <span>🐟</span> {me.user.username}{" "}
+                    <span>🐟</span> {displayName}{" "}
                     <span className="status-pill">
-                      <span className="d" />{" "}
-                      {STATUS_LABEL[me.subscription.status] ?? me.subscription.status}
+                      <span className="d" /> {STATUS_LABEL[sub.status] ?? sub.status}
                     </span>
                   </div>
                   <div className="cab-grid">
                     <div className="cab-cell">
                       <div className="lbl">Тариф</div>
-                      <div className="val">{me.user.isReferred ? "Триал 72ч" : "Триал"}</div>
+                      <div className="val">{sub.plan_name}</div>
                     </div>
                     <div className="cab-cell">
                       <div className="lbl">📅 Истекает</div>
-                      <div className="val">{fmtDate(me.subscription.expireAt)}</div>
+                      <div className="val">{fmtDate(sub.expire_at)}</div>
                     </div>
                     <div className="cab-cell">
                       <div className="lbl">↕ Трафик</div>
                       <div className="val amber">
-                        {fmtBytes(me.subscription.usedTrafficBytes)} /{" "}
-                        {me.subscription.trafficLimitBytes === 0
-                          ? "∞"
-                          : fmtBytes(me.subscription.trafficLimitBytes)}
+                        {fmtBytes(sub.used_traffic_bytes ?? 0)} / {trafficLimit}
                       </div>
                     </div>
                     <div className="cab-cell">
                       <div className="lbl">📱 Устройства</div>
                       <div className="val">
-                        {devices?.length ?? 0} / {me.subscription.deviceLimit ?? "—"}
+                        {devices?.length ?? 0} / {maxDevices ?? sub.device_limit}
                       </div>
                     </div>
                   </div>
@@ -226,11 +229,7 @@ export default function CabinetPage() {
                     </div>
                     <a
                       className="btn btn-amber btn-full"
-                      href={
-                        me.subscription.subscriptionUrl
-                          ? `happ://add/${encodeURIComponent(me.subscription.subscriptionUrl)}`
-                          : undefined
-                      }
+                      href={sub.url ? `happ://add/${sub.url}` : undefined}
                     >
                       ⚡ Добавить подписку в Happ
                     </a>
@@ -242,14 +241,11 @@ export default function CabinetPage() {
                           whiteSpace: "nowrap",
                         }}
                       >
-                        {me.subscription.subscriptionUrl ?? "—"}
+                        {sub.url}
                       </span>
                       <span
                         className="amber"
-                        onClick={() =>
-                          me.subscription?.subscriptionUrl &&
-                          navigator.clipboard?.writeText(me.subscription.subscriptionUrl)
-                        }
+                        onClick={() => sub.url && navigator.clipboard?.writeText(sub.url)}
                       >
                         копировать
                       </span>
@@ -270,15 +266,15 @@ export default function CabinetPage() {
               <div className="dev-counter">
                 Подключено:{" "}
                 <b style={{ color: "#fff" }}>
-                  {devices?.length ?? 0} / {me?.subscription?.deviceLimit ?? "—"}
+                  {devices?.length ?? 0} / {maxDevices ?? sub?.device_limit ?? "—"}
                 </b>
               </div>
               {devices === null ? (
                 <div className="panel-sub">Загрузка…</div>
               ) : devices.length === 0 ? (
                 <div className="card">
-                  Пока нет подключённых устройств. Добавь профиль в Happ — устройство появится
-                  здесь после первого подключения.
+                  Пока нет подключённых устройств. Добавь профиль в Happ — устройство появится здесь
+                  после первого подключения.
                 </div>
               ) : (
                 <div className="dev-list">
@@ -287,11 +283,9 @@ export default function CabinetPage() {
                       <div className="dev-info">
                         <span className="dev-ic">{platformEmoji(d.platform)}</span>
                         <div>
-                          <div className="dev-name">
-                            {d.deviceModel || d.platform || "Устройство"}
-                          </div>
+                          <div className="dev-name">{d.device_model || d.platform || "Устройство"}</div>
                           <div className="dev-meta">
-                            {d.updatedAt ? fmtDate(d.updatedAt) + " · " : ""}
+                            {d.os_version ? d.os_version + " · " : ""}
                             {d.hwid.slice(0, 6)}…
                           </div>
                         </div>
@@ -350,46 +344,34 @@ export default function CabinetPage() {
 
           {tab === "ref" && (
             <div className="panel">
-              <div className="panel-title">Приглашай и зарабатывай</div>
+              <div className="panel-title">Приглашай друзей</div>
               <div className="panel-sub">
-                50% с каждого платежа приглашённых — навсегда. Другу — 3 дня бесплатно по твоей
-                ссылке.
+                За каждого приглашённого — бонусные дни и баллы. Другу — тоже бонус по твоей ссылке.
               </div>
               <div className="ref-hero">
                 <div className="ref-link-box">
                   <div className="lbl">Ссылка для бота</div>
                   <div className="ref-link">
-                    <input readOnly value="https://t.me/tunavpn_bot?start=invite_8f3a" />
+                    <input
+                      readOnly
+                      value={
+                        me?.telegram_id
+                          ? "https://t.me/tunavpn_bot?start=invite"
+                          : "Привяжи Telegram, чтобы получить ссылку для бота"
+                      }
+                    />
                     <button className="btn btn-ghost">копировать</button>
                   </div>
                 </div>
                 <div className="ref-link-box">
                   <div className="lbl">Ссылка для сайта</div>
                   <div className="ref-link">
-                    <input readOnly value="https://tuna.vpn/r/8f3a" />
+                    <input readOnly value="https://tuna-vpn.com/r/…" />
                     <button className="btn btn-ghost">копировать</button>
                   </div>
                 </div>
               </div>
-              <div className="ref-stats">
-                <div className="ref-stat">
-                  <div className="num">7</div>
-                  <div className="cap">Приглашено</div>
-                </div>
-                <div className="ref-stat">
-                  <div className="num">4</div>
-                  <div className="cap">Из них платят</div>
-                </div>
-                <div className="ref-stat">
-                  <div className="num amber">1 340 ₽</div>
-                  <div className="cap">Доступно к выводу</div>
-                </div>
-              </div>
-              <div className="ref-actions">
-                <button className="btn btn-amber">💰 Вывести (от 1000 ₽)</button>
-                <button className="btn btn-ghost">🐟 Оплатить подписку балансом</button>
-              </div>
-              <p className="ref-note">Выведено всего: 500 ₽ · Доход за всё время: 1 840 ₽</p>
+              <p className="ref-note">Статистика приглашений и начислений появится здесь. Бета.</p>
             </div>
           )}
 
@@ -397,7 +379,8 @@ export default function CabinetPage() {
             <div className="panel">
               <div className="panel-title">Поддержка</div>
               <div className="panel-sub">
-                Не подключается? Чаще всего помогает — попробуй сам за минуту. Не вышло — напиши в чат.
+                Не подключается? Чаще всего помогает — попробуй сам за минуту. Не вышло — напиши в
+                чат.
               </div>
 
               <div className="help-grid">
@@ -430,12 +413,18 @@ export default function CabinetPage() {
                     <span className="chat-online" /> Чат поддержки{" "}
                     <span className="chat-eta">отвечаем ~10 мин</span>
                   </div>
-                  <span className="chat-ctx">id: 8f3a · Standard · iPhone</span>
+                  <span className="chat-ctx">
+                    {displayName} · {sub?.plan_name ?? "—"}
+                  </span>
                 </div>
                 <div className="chat-log">
                   {messages.map((m, i) => (
                     <div key={i} className={`msg ${m.who}`}>
-                      {m.who === "sys" ? <span>{m.text}</span> : <div className="bubble">{m.text}</div>}
+                      {m.who === "sys" ? (
+                        <span>{m.text}</span>
+                      ) : (
+                        <div className="bubble">{m.text}</div>
+                      )}
                     </div>
                   ))}
                 </div>

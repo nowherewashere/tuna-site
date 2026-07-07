@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { api, ApiError } from "@/lib/api";
 
 const PLATFORMS = [
   { id: "iphone", label: "📱 iPhone" },
@@ -11,49 +12,60 @@ const PLATFORMS = [
   { id: "tv", label: "📺 TV" },
 ] as const;
 
-type Step = "register" | "install";
-
-interface AccessResult {
-  username: string;
-  subscriptionUrl: string | null;
-  expireAt: string;
-}
+type Step = "register" | "code" | "install";
 
 export default function ConnectPage() {
   const [step, setStep] = useState<Step>("register");
   const [platform, setPlatform] = useState<string>("iphone");
   const [email, setEmail] = useState("");
+  const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<AccessResult | null>(null);
+  const [subUrl, setSubUrl] = useState<string>("");
   const [copied, setCopied] = useState(false);
 
-  const platLabel =
-    PLATFORMS.find((p) => p.id === platform)?.label.replace(/^\S+\s/, "") ?? "iPhone";
-  const subUrl = result?.subscriptionUrl ?? "";
+  const platLabel = PLATFORMS.find((p) => p.id === platform)?.label.replace(/^\S+\s/, "") ?? "iPhone";
 
-  async function getAccess(withEmail: boolean) {
+  async function requestCode() {
+    if (!email.trim()) return;
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/access", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(withEmail ? { email } : {}),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setError(
-          data.error === "account_exists"
-            ? "Аккаунт с этой почтой уже есть — войди."
-            : "Не удалось выдать доступ. Попробуй ещё раз.",
-        );
-        return;
+      await api.requestLoginCode(email.trim());
+      setStep("code");
+    } catch (e) {
+      setError(
+        e instanceof ApiError && e.status === 503
+          ? "Отправка кода временно недоступна. Попробуй позже."
+          : "Проверь адрес почты и попробуй снова.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function verifyAndProvision() {
+    if (code.trim().length !== 6) return;
+    setLoading(true);
+    setError(null);
+    try {
+      await api.verifyLoginCode(email.trim(), code.trim());
+      // Grant the free trial (idempotent-ish: if already has a subscription the
+      // API returns 409, which we tolerate and just read the current one).
+      try {
+        await api.activateTrial();
+      } catch (e) {
+        if (!(e instanceof ApiError && e.status === 409)) throw e;
       }
-      setResult(data);
+      const sub = await api.currentSubscription();
+      setSubUrl(sub?.url ?? "");
       setStep("install");
-    } catch {
-      setError("Сеть недоступна. Попробуй ещё раз.");
+    } catch (e) {
+      setError(
+        e instanceof ApiError && e.status === 410
+          ? "Код истёк — запроси новый."
+          : "Неверный код. Проверь и попробуй снова.",
+      );
     } finally {
       setLoading(false);
     }
@@ -73,7 +85,8 @@ export default function ConnectPage() {
           <div className="onb-card">
             <h2>Получи доступ 🐟</h2>
             <p className="lead">
-              Введи почту — сразу выдадим подписку. Почта нужна, чтобы входить с других устройств.
+              Введи почту — пришлём код, и сразу выдадим подписку. Почта нужна, чтобы входить с
+              других устройств.
             </p>
             <div className="field-row">
               <input
@@ -82,26 +95,72 @@ export default function ConnectPage() {
                 placeholder="твой@email.ру"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && requestCode()}
                 disabled={loading}
               />
-              <button
-                className="btn btn-amber"
-                onClick={() => getAccess(true)}
-                disabled={loading}
-              >
-                {loading ? "Выдаём…" : "Получить доступ"}
+              <button className="btn btn-amber" onClick={requestCode} disabled={loading}>
+                {loading ? "Отправляем…" : "Получить код"}
               </button>
             </div>
             {error && (
               <p style={{ color: "var(--coral)", fontSize: 14, margin: "4px 0 10px" }}>{error}</p>
             )}
             <p className="onb-alt">
-              или{" "}
-              <a onClick={() => !loading && getAccess(false)}>продолжить без почты</a> · уже есть
-              аккаунт? <Link href="/login">войти</Link>
+              уже есть аккаунт? <Link href="/login">войти</Link>
             </p>
             <p className="turnstile-note">
               🛡 Защита от ботов включена автоматически (Cloudflare Turnstile)
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (step === "code") {
+    return (
+      <div className="onb">
+        <div className="wrap">
+          <div className="onb-card">
+            <h2>Введи код 🐟</h2>
+            <p className="lead">
+              Отправили 6-значный код на <b>{email}</b>. Действует 15 минут.
+            </p>
+            <div className="field-row">
+              <input
+                className="field"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                maxLength={6}
+                placeholder="______"
+                value={code}
+                onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                onKeyDown={(e) => e.key === "Enter" && verifyAndProvision()}
+                disabled={loading}
+                autoFocus
+              />
+              <button
+                className="btn btn-amber"
+                onClick={verifyAndProvision}
+                disabled={loading || code.length !== 6}
+              >
+                {loading ? "Выдаём…" : "Подтвердить"}
+              </button>
+            </div>
+            {error && (
+              <p style={{ color: "var(--coral)", fontSize: 14, margin: "4px 0 10px" }}>{error}</p>
+            )}
+            <p className="onb-alt">
+              не пришло?{" "}
+              <a
+                onClick={() => {
+                  setStep("register");
+                  setCode("");
+                  setError(null);
+                }}
+              >
+                ввести другую почту
+              </a>
             </p>
           </div>
         </div>
@@ -114,7 +173,7 @@ export default function ConnectPage() {
       <div className="wrap">
         <div className="onb-card" style={{ maxWidth: 660 }}>
           <div className="status-pill" style={{ marginBottom: 16 }}>
-            <span className="d" /> Подписка активна · 24 часа бесплатно
+            <span className="d" /> Подписка активна · пробный период
           </div>
           <h2>Осталось подключить</h2>
           <p className="lead">Три шага — и ты в сети. Выбери устройство:</p>
@@ -149,13 +208,13 @@ export default function ConnectPage() {
               <a
                 className="btn btn-amber"
                 style={{ marginTop: 10 }}
-                href={subUrl ? `happ://add/${encodeURIComponent(subUrl)}` : undefined}
+                href={subUrl ? `happ://add/${subUrl}` : undefined}
               >
                 ⚡ Добавить подписку в Happ
               </a>
               <div className="copy-link" style={{ marginTop: 10 }}>
                 <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                  {subUrl || "happ://add/…"}
+                  {subUrl || "—"}
                 </span>
                 <span className="amber" onClick={copySub}>
                   {copied ? "скопировано ✓" : "копировать"}
