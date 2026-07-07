@@ -191,8 +191,8 @@ export default function LandingPage() {
             <div className="logo">Tuna VPN</div>
             <div className="foot-links">
               <a href="#">Поддержка</a>
-              <a href="#">Оферта</a>
-              <a href="#">Конфиденциальность</a>
+              <Link href="/oferta">Оферта</Link>
+              <Link href="/privacy">Конфиденциальность</Link>
             </div>
             <div>© 2026 Tuna VPN</div>
           </div>
