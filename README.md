@@ -41,6 +41,19 @@ npm run build
 
 ## Deploy (production)
 
-Build the static assets and serve them from nginx on the site domain, with
-`/api/v1/public` and `/api/v1/connect` proxied to the Python app (see the backend
-spec §9). No Node server or database is required for this site.
+CI builds a self-contained image (`ghcr.io/nowherewashere/tuna-site`) — a tiny
+nginx serving the static `out/` on port 80. Run it as one more service on the
+bot's docker network:
+
+```yaml
+services:
+  tuna-site:
+    image: ghcr.io/nowherewashere/tuna-site:latest
+    restart: unless-stopped
+    networks: [remnawave-network]
+```
+
+The front nginx (TLS + Cloudflare) adds a `tuna-vpn.com` server block that
+proxies `/` to `tuna-site` and `/api/v1/(public|connect)` to the app
+(`remnashop`). No Node server or database is required for this site. See the
+backend spec §9 and the deploy runbook.

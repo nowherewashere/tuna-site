@@ -8,10 +8,9 @@ RUN npm ci
 COPY . .
 RUN BUILD_STATIC=true npm run build
 
-# ── Ship only the static output ───────────────────────────────────────────────
-# No web server here: the existing nginx serves the files. This one-shot image
-# carries `out/` and, when run by docker compose, syncs it into /dist — a volume
-# nginx mounts read-only — then exits.
-FROM alpine:3.20
-COPY --from=build /app/out /site
-CMD ["sh", "-c", "cp -a /site/. /dist/ && echo 'tuna-site static synced to /dist'"]
+# ── Serve the static SPA with a tiny nginx (port 80) ──────────────────────────
+# A normal long-running service: the front nginx proxies tuna-vpn.com here and
+# routes /api/v1/(public|connect) straight to the app. See README.
+FROM nginx:alpine
+COPY --from=build /app/out /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/conf.d/default.conf
