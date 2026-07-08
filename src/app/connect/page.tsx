@@ -26,7 +26,9 @@ export default function ConnectPage() {
       setError(
         e instanceof ApiError && e.status === 503
           ? "Отправка кода временно недоступна. Попробуй позже."
-          : "Проверь адрес почты и попробуй снова.",
+          : e instanceof ApiError && e.status === 429
+            ? "Слишком много запросов. Подожди немного и попробуй снова."
+            : "Проверь адрес почты и попробуй снова.",
       );
     } finally {
       setLoading(false);
