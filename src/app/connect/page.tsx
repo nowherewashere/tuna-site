@@ -6,6 +6,7 @@ import { api, ApiError } from "@/lib/api";
 import InstallBlock from "@/components/InstallBlock";
 import Turnstile from "@/components/Turnstile";
 import { useTurnstile } from "@/lib/useTurnstile";
+import { invalidateAuth } from "@/lib/useAuth";
 
 type Step = "register" | "code" | "install";
 
@@ -53,6 +54,7 @@ export default function ConnectPage() {
     setError(null);
     try {
       await api.verifyLoginCode(email.trim(), code.trim());
+      invalidateAuth();
       // Grant the free trial (if the user already has a subscription the API
       // returns 409, which we tolerate and just read the current one).
       try {

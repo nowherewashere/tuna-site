@@ -16,6 +16,7 @@ import {
 import InstallBlock from "@/components/InstallBlock";
 import { useHashTab } from "@/lib/useHashTab";
 import { redirectTo, reloadPage } from "@/lib/nav";
+import { invalidateAuth } from "@/lib/useAuth";
 
 type Tab = "overview" | "devices" | "sub" | "ref" | "support";
 type ChatMsg = { who: "them" | "me" | "sys"; text: string };
@@ -174,6 +175,7 @@ export default function CabinetPage() {
 
   async function logout() {
     await api.logout().catch(() => {});
+    invalidateAuth();
     router.push("/");
   }
 

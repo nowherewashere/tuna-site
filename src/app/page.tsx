@@ -1,5 +1,5 @@
 import Link from "next/link";
-import LoginButton from "@/components/LoginButton";
+import AuthCta from "@/components/AuthCta";
 
 export default function LandingPage() {
   return (
@@ -11,7 +11,12 @@ export default function LandingPage() {
             <a href="#why">Почему Tuna</a>
             <a href="#how">Подключение</a>
             <a href="#faq">Вопросы</a>
-            <LoginButton className="btn btn-ghost" style={{ padding: "9px 18px" }} />
+            <AuthCta
+              className="btn btn-ghost"
+              style={{ padding: "9px 18px" }}
+              guest={{ href: "/login", label: "Войти" }}
+              authed={{ href: "/cabinet", label: "Личный кабинет" }}
+            />
           </div>
         </div>
       </nav>
@@ -32,10 +37,16 @@ export default function LandingPage() {
                 Рассекаем волны блокировок. VPN работает, пока другие отваливаются.
               </p>
               <div className="hero-cta">
-                <Link className="btn btn-amber btn-lg" href="/connect">
-                  🚀 Подключить
-                </Link>
-                <LoginButton className="btn btn-ghost btn-lg" />
+                <AuthCta
+                  className="btn btn-amber btn-lg"
+                  guest={{ href: "/connect", label: "🚀 Подключить" }}
+                  authed={{ href: "/cabinet", label: "🚀 Открыть кабинет" }}
+                />
+                <AuthCta
+                  className="btn btn-ghost btn-lg"
+                  guest={{ href: "/login", label: "Войти" }}
+                  authed={null}
+                />
               </div>
               <p className="hero-note">
                 Пробный период <span className="mono">24 часа</span> · без карты · до 3 устройств
@@ -176,9 +187,11 @@ export default function LandingPage() {
           <span className="fishmoji">🐟</span>
           <h2>Открытый океан ждёт</h2>
           <p>Сутки бесплатно. Без карты. Мы уверены в своём качестве.</p>
-          <Link className="btn btn-amber btn-lg" href="/connect">
-            🚀 Подключить
-          </Link>
+          <AuthCta
+            className="btn btn-amber btn-lg"
+            guest={{ href: "/connect", label: "🚀 Подключить" }}
+            authed={{ href: "/cabinet", label: "🚀 Открыть кабинет" }}
+          />
         </div>
       </section>
 

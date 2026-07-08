@@ -6,6 +6,7 @@ import { useState } from "react";
 import { api, ApiError } from "@/lib/api";
 import Turnstile from "@/components/Turnstile";
 import { useTurnstile } from "@/lib/useTurnstile";
+import { invalidateAuth } from "@/lib/useAuth";
 
 type Step = "email" | "code";
 
@@ -53,6 +54,7 @@ export default function LoginPage() {
     setError(null);
     try {
       await api.verifyLoginCode(email.trim(), code.trim());
+      invalidateAuth();
       router.push("/cabinet");
     } catch (e) {
       setError(
