@@ -1,4 +1,5 @@
 import Link from "next/link";
+import LoginButton from "@/components/LoginButton";
 
 export default function LandingPage() {
   return (
@@ -10,9 +11,7 @@ export default function LandingPage() {
             <a href="#why">Почему Tuna</a>
             <a href="#how">Подключение</a>
             <a href="#faq">Вопросы</a>
-            <Link className="btn btn-ghost" style={{ padding: "9px 18px" }} href="/login">
-              Войти
-            </Link>
+            <LoginButton className="btn btn-ghost" style={{ padding: "9px 18px" }} />
           </div>
         </div>
       </nav>
@@ -36,9 +35,7 @@ export default function LandingPage() {
                 <Link className="btn btn-amber btn-lg" href="/connect">
                   🚀 Подключить
                 </Link>
-                <Link className="btn btn-ghost btn-lg" href="/login">
-                  Войти
-                </Link>
+                <LoginButton className="btn btn-ghost btn-lg" />
               </div>
               <p className="hero-note">
                 Пробный период <span className="mono">24 часа</span> · без карты · до 3 устройств

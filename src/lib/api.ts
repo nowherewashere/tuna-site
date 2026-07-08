@@ -22,7 +22,11 @@ export class ApiError extends Error {
   }
 }
 
-async function req<T>(method: string, path: string, body?: unknown): Promise<T> {
+// Auth-entry endpoints where a 401 is a real failure, not an expired session —
+// never trigger a token refresh for these (and never for /refresh itself).
+const AUTH_ENTRY = /^\/auth\/(refresh|login|email\/|telegram)/;
+
+async function req<T>(method: string, path: string, body?: unknown, retried = false): Promise<T> {
   const res = await fetch(`${BASE}${path}`, {
     method,
     headers: body === undefined ? undefined : { "Content-Type": "application/json" },
@@ -30,6 +34,18 @@ async function req<T>(method: string, path: string, body?: unknown): Promise<T> 
     credentials: "include",
     cache: "no-store",
   });
+
+  // Access tokens are short-lived (15 min). On 401, try a one-time silent refresh
+  // using the 30-day refresh cookie, then replay the request — so a reload or an
+  // expired access token never logs the user out while the refresh token is valid.
+  if (res.status === 401 && !retried && !AUTH_ENTRY.test(path)) {
+    const refreshed = await fetch(`${BASE}/auth/refresh`, {
+      method: "POST",
+      credentials: "include",
+      cache: "no-store",
+    });
+    if (refreshed.ok) return req<T>(method, path, body, true);
+  }
 
   if (!res.ok) {
     let detail = "";

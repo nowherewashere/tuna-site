@@ -13,6 +13,7 @@ import {
   type SubscriptionOffers,
 } from "@/lib/api";
 import InstallBlock from "@/components/InstallBlock";
+import { useHashTab } from "@/lib/useHashTab";
 
 type Tab = "overview" | "devices" | "sub" | "ref" | "support";
 type ChatMsg = { who: "them" | "me" | "sys"; text: string };
@@ -24,6 +25,7 @@ const TABS: { id: Tab; label: string }[] = [
   { id: "ref", label: "Рефералка" },
   { id: "support", label: "Поддержка" },
 ];
+const TAB_IDS: Tab[] = TABS.map((t) => t.id);
 
 function durationLabel(days: number): string {
   if (days === 0) return "Навсегда";
@@ -71,7 +73,7 @@ function platformEmoji(p?: string | null): string {
 
 export default function CabinetPage() {
   const router = useRouter();
-  const [tab, setTab] = useState<Tab>("overview");
+  const [tab, setTab] = useHashTab(TAB_IDS, "overview");
   const [term, setTerm] = useState(0);
   const [messages, setMessages] = useState<ChatMsg[]>([
     {
