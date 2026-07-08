@@ -73,5 +73,5 @@ export default function Turnstile({
     };
   }, [siteKey]);
 
-  return <div ref={ref} style={{ margin: "4px 0 14px" }} />;
+  return <div ref={ref} className="turnstile-host" />;
 }

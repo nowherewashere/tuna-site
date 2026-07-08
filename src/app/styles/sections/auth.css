@@ -1,9 +1,13 @@
 /* ── Onboarding / login cards ────────────────────────────────────────────── */
+/* Auth screens fill the viewport as a self-contained dive surface (like the
+   cabinet) and clip horizontally, so nothing can widen the page or reveal the
+   backdrop on a sideways drag. */
 .onb {
-  min-height: 70vh;
+  min-height: 100dvh;
   display: flex;
   align-items: center;
   padding: 60px 0;
+  overflow-x: clip;
 }
 .onb-card {
   background: linear-gradient(180deg, rgba(16, 63, 102, 0.82), rgba(10, 37, 64, 0.86));
@@ -69,11 +73,47 @@
   margin-top: 14px;
   opacity: 0.85;
 }
+/* Keeps the fixed-width Turnstile widget centered and unable to widen the card
+   on narrow phones. */
+.turnstile-host {
+  display: flex;
+  justify-content: center;
+  max-width: 100%;
+  overflow-x: clip;
+  margin: 4px 0 14px;
+}
+
+/* Dive-style inline notice — e.g. "check your spam" on the code step. */
+.auth-hint {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  text-align: left;
+  padding: var(--space-3) var(--space-4);
+  margin-bottom: var(--space-5);
+  background: var(--fill-subtle);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  line-height: 1.45;
+  color: var(--ink-card-dim);
+}
+.auth-hint-ic {
+  display: inline-flex;
+  flex-shrink: 0;
+  margin-top: 1px;
+  color: var(--amber);
+}
+.auth-hint b {
+  color: var(--ink-card);
+  font-weight: 600;
+}
 .login {
-  min-height: 80vh;
+  min-height: 100dvh;
   display: flex;
   align-items: center;
   padding: 60px 0;
+  overflow-x: clip;
 }
 .login-card {
   background: linear-gradient(180deg, rgba(16, 63, 102, 0.82), rgba(10, 37, 64, 0.86));

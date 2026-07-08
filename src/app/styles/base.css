@@ -7,9 +7,13 @@
 html {
   scroll-behavior: smooth;
   background: var(--ocean);
+  /* No sideways rubber-band: on mobile a horizontal drag must not bounce the page
+     and expose the html backdrop beside the content. */
+  overscroll-behavior-x: none;
 }
 body {
   font-family: var(--font-body), system-ui, sans-serif;
+  overscroll-behavior-x: none;
   /* One continuous ocean: the gradient spans the whole document, so scrolling
      literally descends from surface light into the abyss. */
   background:

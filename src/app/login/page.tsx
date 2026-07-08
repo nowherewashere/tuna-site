@@ -82,6 +82,15 @@ export default function LoginPage() {
               <p className="lead">
                 Мы отправили 6-значный код на <b>{email}</b>. Действует 15 минут.
               </p>
+              <div className="auth-hint">
+                <span className="auth-hint-ic">
+                  <Icon name="mail" size={18} />
+                </span>
+                <span>
+                  Письмо приходит в течение минуты. Если его не видно — загляни в папку{" "}
+                  <b>«Спам»</b>.
+                </span>
+              </div>
               <TextField
                 label="Код из письма"
                 labelHidden

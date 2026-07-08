@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { api, ApiError } from "@/lib/api";
 import InstallBlock from "@/components/InstallBlock";
+import Icon from "@/components/Icon";
 import Turnstile from "@/components/Turnstile";
 import { useTurnstile } from "@/lib/useTurnstile";
 import { invalidateAuth } from "@/lib/useAuth";
@@ -131,6 +132,15 @@ export default function ConnectPage() {
             <p className="lead">
               Отправили 6-значный код на <b>{email}</b>. Действует 15 минут.
             </p>
+            <div className="auth-hint">
+              <span className="auth-hint-ic">
+                <Icon name="mail" size={18} />
+              </span>
+              <span>
+                Письмо приходит в течение минуты. Если его не видно — загляни в папку{" "}
+                <b>«Спам»</b>.
+              </span>
+            </div>
             <TextField
               label="Код из письма"
               labelHidden
