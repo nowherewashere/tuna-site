@@ -141,7 +141,7 @@ export default function LandingPage() {
                   Tuna <span className="amber">VPN</span>
                 </h1>
                 <p className="hero-sub reveal d3">
-                  Рассекаем волны блокировок. VPN работает, пока другие отваливаются.
+                  Рассекаем волны блокировок. Свободный доступ к мировому океану интернета.
                 </p>
                 <div className="hero-cta reveal d4">
                   <AuthCta
