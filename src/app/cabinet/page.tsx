@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -190,7 +191,9 @@ export default function CabinetPage() {
     <div className="cab-wrap" ref={topRef}>
       <div className="cab-topbar">
         <div className="wrap">
-          <div className="logo">Tuna VPN</div>
+          <Link href="/" className="logo">
+            Tuna VPN
+          </Link>
           <div className="cab-tabs">
             {TABS.map((t) => (
               <button
