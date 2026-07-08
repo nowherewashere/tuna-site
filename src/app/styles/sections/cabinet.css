@@ -382,7 +382,7 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
-  align-items: flex-start;
+  align-items: center;
 }
 .plan-card {
   background: var(--fill-card);
@@ -395,6 +395,10 @@
   .plan-grid {
     flex-direction: row;
     flex-wrap: wrap;
+    /* Keep tops aligned when one card is taller (a plan is selected), and keep
+       the whole card group centered so it stays balanced as plans are added. */
+    align-items: flex-start;
+    justify-content: center;
   }
   .plan-grid .plan-card {
     flex: 1 1 320px;
@@ -763,7 +767,7 @@
 }
 .term {
   flex: 1;
-  min-width: 84px;
+  min-width: 60px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -786,11 +790,13 @@
 .term-t {
   font-weight: 600;
   font-size: 14px;
+  white-space: nowrap;
 }
 .term-p {
   font-family: var(--font-mono), monospace;
   font-size: 14px;
   color: var(--ink-card-dim);
+  white-space: nowrap;
 }
 .term.on .term-p {
   color: var(--amber);

@@ -1,6 +1,6 @@
 import Icon from "@/components/Icon";
 import type { SubscriptionOffers } from "@/lib/api";
-import { durationLabel, ladderSavings, monthlyPrice, pickPrice } from "@/lib/format";
+import { durationLabelShort, ladderSavings, monthlyPrice, pickPrice } from "@/lib/format";
 
 type Selected = { planCode: string; days: number } | null;
 
@@ -101,7 +101,7 @@ export default function SubscriptionPanel({
                           clearPayError();
                         }}
                       >
-                        <span className="term-t">{durationLabel(d.days)}</span>
+                        <span className="term-t">{durationLabelShort(d.days)}</span>
                         <span className="term-p">
                           {pr ? `${pr.final_amount} ${pr.currency_symbol}` : "—"}
                         </span>
