@@ -23,18 +23,6 @@ export function durationLabel(days: number): string {
   return `${days} ${plural(days, "день", "дня", "дней")}`;
 }
 
-/** Compact duration for the tight segmented ladder — months abbreviate to "мес"
- *  so four+ segments stay on one line at phone widths ("12 месяцев" would wrap). */
-export function durationLabelShort(days: number): string {
-  if (days === 0) return "Навсегда";
-  if (days % 365 === 0) {
-    const y = days / 365;
-    return `${y} ${plural(y, "год", "года", "лет")}`;
-  }
-  if (days % 30 === 0) return `${days / 30} мес`;
-  return `${days} дн.`;
-}
-
 /** Pick a display price for a duration: prefer a RUB gateway, else the first. */
 export function pickPrice(d: DurationOffer) {
   return d.prices.find((p) => p.currency === "RUB") ?? d.prices[0] ?? null;

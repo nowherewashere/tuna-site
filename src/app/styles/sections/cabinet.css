@@ -375,88 +375,77 @@
   flex-shrink: 0;
 }
 
-/* Subscription */
-/* Plans as cards: a single column on phone/tablet, sitting side by side once
-   there's desktop room. Spacing comes from the grid gap, not per-card margins. */
-.plan-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  align-items: center;
+/* ══ Subscription — one "dive-plan" console per tariff (no cards). Longer commit
+   = deeper descent = lower price per month; the duration ladder is the hero. ══ */
+/* Plans stack on phone; on desktop they sit side by side, capped and centered so
+   the ladder rows stay a comfortable width no matter how many plans there are. */
+.plan-consoles {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-4);
 }
-.plan-card {
-  background: var(--fill-card);
-  border: 1px solid var(--line);
-  border-radius: 16px;
-  padding: 26px;
-  max-width: 520px;
+.plan-consoles .console {
+  margin-bottom: 0;
 }
 @media (min-width: 900px) {
-  .plan-grid {
-    flex-direction: row;
-    flex-wrap: wrap;
-    /* Keep tops aligned when one card is taller (a plan is selected), and keep
-       the whole card group centered so it stays balanced as plans are added. */
-    align-items: flex-start;
+  .plan-consoles {
+    grid-template-columns: repeat(auto-fit, minmax(360px, 480px));
     justify-content: center;
-  }
-  .plan-grid .plan-card {
-    flex: 1 1 320px;
-    max-width: 440px;
+    align-items: start;
   }
 }
-.plan-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 12px;
-  margin-bottom: 6px;
-}
-.plan-name {
-  font-family: var(--font-display), sans-serif;
-  font-size: 22px;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-}
-.plan-price {
+.plan-from {
   font-family: var(--font-mono), monospace;
-  font-size: 22px;
-  color: var(--amber);
+  font-size: var(--text-sm);
+  color: var(--ink-card-dim);
   white-space: nowrap;
 }
-.plan-price small {
-  font-size: 13px;
-  color: var(--ink-card-dim);
+.plan-from b {
+  color: var(--amber);
+  font-size: var(--text-xl);
+  font-weight: 500;
 }
-.plan-amber-line {
-  height: 3px;
-  width: 56px;
-  background: var(--amber);
-  border-radius: 2px;
-  margin: 14px 0 20px;
+.plan-from small {
+  font-size: var(--text-2xs);
+  margin-left: 1px;
 }
+
+/* Supporting spec list — kept quiet so the price ladder stays the focus. */
 .plan-feats {
   list-style: none;
   display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-6);
+  padding-bottom: var(--space-4);
+  margin-bottom: var(--space-4);
+  border-bottom: 1px solid var(--border-soft);
 }
 .plan-feats li {
   display: flex;
-  gap: 10px;
-  align-items: flex-start;
-  font-size: 15px;
+  gap: 8px;
+  align-items: center;
+  font-size: var(--text-sm);
   color: var(--ink-card);
 }
 .plan-feats .ok {
-  color: var(--green);
+  display: inline-flex;
+  color: var(--success);
   flex-shrink: 0;
 }
 .modal-note {
   font-size: 13px;
   color: var(--ink-card-dim);
   margin-top: 14px;
+}
+
+/* Mono eyebrow above the ladder. */
+.dur-eyebrow {
+  font-family: var(--font-mono), monospace;
+  font-size: var(--text-2xs);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--ink-card-dim);
+  margin-bottom: var(--space-2);
 }
 
 /* Support */
@@ -751,58 +740,161 @@
   border-top: 1px solid var(--border-soft);
 }
 
-/* Subscription — segmented duration ladder; the plan card stays the one raised
-   surface in the cabinet (the sales moment). */
-.plan-card {
-  box-shadow: var(--shadow-card);
-}
-.term-ladder {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 2px;
-  background: var(--fill-subtle);
-  border-radius: var(--radius-lg);
-  padding: 4px;
-  margin-bottom: 22px;
-}
-.term {
-  flex: 1;
-  min-width: 60px;
+/* The duration ladder: full-width selectable rows, hairline-divided — a descent
+   scale. Each row is a comfortable tap target; per-month price tells the value. */
+.dur-ladder {
   display: flex;
   flex-direction: column;
+}
+.dur-line {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
   align-items: center;
-  gap: 3px;
-  padding: 12px 8px;
+  gap: var(--space-4);
+  width: 100%;
+  min-height: 56px;
+  padding: var(--space-3);
   border: none;
-  background: none;
+  border-top: 1px solid var(--border-soft);
   border-radius: var(--radius-md);
+  background: none;
+  text-align: left;
   cursor: pointer;
-  font-family: var(--font-body), sans-serif;
   color: var(--ink-card);
+  font-family: var(--font-body), sans-serif;
   transition: background var(--dur-fast) var(--ease-std);
 }
-.term:hover {
-  background: rgba(255, 255, 255, 0.04);
+.dur-line:first-child {
+  border-top: none;
 }
-.term.on {
+.dur-line:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+.dur-line.on {
   background: var(--fill-accent-soft);
 }
-.term-t {
+/* Amber selection rail. */
+.dur-line.on::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 8px;
+  bottom: 8px;
+  width: 3px;
+  border-radius: var(--radius-pill);
+  background: var(--amber);
+}
+.dur-mark {
+  position: relative;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  flex-shrink: 0;
+  transition: border-color var(--dur-fast) var(--ease-std);
+}
+.dur-line.on .dur-mark {
+  border-color: var(--amber);
+}
+.dur-line.on .dur-mark::after {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  border-radius: 50%;
+  background: var(--amber);
+}
+.dur-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.dur-term {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
   font-weight: 600;
-  font-size: 14px;
-  white-space: nowrap;
+  font-size: var(--text-md);
 }
-.term-p {
+.dur-best {
   font-family: var(--font-mono), monospace;
-  font-size: 14px;
-  color: var(--ink-card-dim);
-  white-space: nowrap;
+  font-size: var(--text-2xs);
+  font-weight: 600;
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--amber);
+  background: var(--fill-accent-soft);
+  padding: 2px 7px;
+  border-radius: var(--radius-pill);
 }
-.term.on .term-p {
+.dur-save {
+  font-family: var(--font-mono), monospace;
+  font-size: var(--text-2xs);
+  color: var(--success);
+}
+.dur-price {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: right;
+  flex-shrink: 0;
+}
+.dur-total {
+  font-family: var(--font-mono), monospace;
+  font-size: var(--text-lg);
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+.dur-line.on .dur-total {
   color: var(--amber);
 }
-.term-save {
-  font-size: 11px;
-  color: var(--success);
+.dur-permonth {
+  font-family: var(--font-mono), monospace;
+  font-size: var(--text-2xs);
+  color: var(--ink-card-dim);
+}
+
+/* Checkout footer — appears inside the selected plan console (single primary CTA). */
+.checkout {
+  margin-top: var(--space-5);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border-soft);
+}
+.checkout-sum {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+.checkout-total {
+  font-family: var(--font-mono), monospace;
+  font-size: var(--text-2xl);
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+.checkout-sub {
+  font-size: var(--text-sm);
+  color: var(--ink-card-dim);
+  margin: 4px 0 var(--space-4);
+}
+.checkout-pay + .checkout-pay {
+  margin-top: var(--space-2);
+}
+.checkout-error {
+  color: var(--danger-text);
+  font-size: var(--text-sm);
+  margin-top: var(--space-3);
+}
+
+/* Narrow phones: tighten the row so term + price stay comfortably on one line. */
+@media (max-width: 420px) {
+  .dur-line {
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-2);
+  }
+  .dur-term {
+    font-size: var(--text-base);
+  }
 }
 
