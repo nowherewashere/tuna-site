@@ -169,6 +169,16 @@ export interface SubscriptionOffers {
   current_subscription_status: string | null;
 }
 
+export interface PaymentInit {
+  payment_id: string;
+  payment_url: string | null;
+  purchase_type: string;
+  status: string;
+  is_free: boolean;
+  final_amount: string;
+  currency: string;
+}
+
 export interface OnboardingConfig {
   happ_import_template: string;
   refresh_video_url: string | null;
@@ -201,4 +211,12 @@ export const api = {
   // Plans/prices and referral program — both live in the backend, never hardcoded.
   subscriptionOffers: () => req<SubscriptionOffers>("GET", "/subscription/offers"),
   referralProgram: () => req<ReferralProgram>("GET", "/referral/program"),
+
+  // Create a payment for a plan/duration via a gateway → returns a redirect URL.
+  purchase: (planCode: string, durationDays: number, gatewayType: string) =>
+    req<PaymentInit>("POST", "/subscription/purchase", {
+      plan_code: planCode,
+      duration_days: durationDays,
+      gateway_type: gatewayType,
+    }),
 };

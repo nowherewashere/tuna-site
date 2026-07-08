@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import {
   api,
+  ApiError,
   type Device,
   type DurationOffer,
   type Me,
@@ -13,6 +14,7 @@ import {
 } from "@/lib/api";
 import InstallBlock from "@/components/InstallBlock";
 import { useHashTab } from "@/lib/useHashTab";
+import { redirectTo, reloadPage } from "@/lib/nav";
 
 type Tab = "overview" | "devices" | "sub" | "ref" | "support";
 type ChatMsg = { who: "them" | "me" | "sys"; text: string };
@@ -92,6 +94,9 @@ export default function CabinetPage() {
   const [maxDevices, setMaxDevices] = useState<number | null>(null);
   const [offers, setOffers] = useState<SubscriptionOffers | null>(null);
   const [referral, setReferral] = useState<ReferralProgram | null>(null);
+  const [selected, setSelected] = useState<{ planCode: string; days: number } | null>(null);
+  const [paying, setPaying] = useState(false);
+  const [payError, setPayError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [authed, setAuthed] = useState(true);
 
@@ -136,6 +141,26 @@ export default function CabinetPage() {
     setDevices((ds) => ds?.filter((d) => d.hwid !== hwid) ?? null);
     await api.deleteDevice(hwid).catch(() => {});
     loadDevices();
+  }
+
+  async function pay(planCode: string, days: number, gateway: string) {
+    setPaying(true);
+    setPayError(null);
+    try {
+      const res = await api.purchase(planCode, days, gateway);
+      if (res.payment_url) {
+        redirectTo(res.payment_url); // hand off to the gateway
+        return;
+      }
+      reloadPage(); // free / instant activation, no redirect
+    } catch (e) {
+      setPayError(
+        e instanceof ApiError
+          ? e.detail || "Не удалось создать платёж. Попробуй позже."
+          : "Сеть недоступна. Попробуй ещё раз.",
+      );
+      setPaying(false);
+    }
   }
 
   async function logout() {
@@ -340,8 +365,17 @@ export default function CabinetPage() {
                         <div className="term-row">
                           {p.durations.map((d) => {
                             const pr = pickPrice(d);
+                            const isSel =
+                              selected?.planCode === p.public_code && selected?.days === d.days;
                             return (
-                              <div key={d.days} className="term">
+                              <div
+                                key={d.days}
+                                className={`term${isSel ? " on" : ""}`}
+                                onClick={() => {
+                                  setSelected({ planCode: p.public_code, days: d.days });
+                                  setPayError(null);
+                                }}
+                              >
                                 <div className="t">{durationLabel(d.days)}</div>
                                 <div className="p">
                                   {pr ? `${pr.final_amount} ${pr.currency_symbol}` : "—"}
@@ -353,10 +387,40 @@ export default function CabinetPage() {
                             );
                           })}
                         </div>
+                        {(() => {
+                          const selDur =
+                            selected?.planCode === p.public_code
+                              ? p.durations.find((d) => d.days === selected.days)
+                              : null;
+                          if (!selDur || selDur.prices.length === 0) return null;
+                          return (
+                            <div style={{ marginTop: 14 }}>
+                              {selDur.prices.map((pr) => (
+                                <button
+                                  key={pr.gateway_type}
+                                  className="btn btn-amber btn-full"
+                                  style={{ marginTop: 8 }}
+                                  disabled={paying}
+                                  onClick={() => pay(p.public_code, selDur.days, pr.gateway_type)}
+                                >
+                                  {paying
+                                    ? "Переход к оплате…"
+                                    : `Оплатить · ${pr.final_amount} ${pr.currency_symbol}` +
+                                      (selDur.prices.length > 1 ? ` · ${pr.gateway_type}` : "")}
+                                </button>
+                              ))}
+                              {payError && (
+                                <p style={{ color: "var(--coral)", fontSize: 14, marginTop: 8 }}>
+                                  {payError}
+                                </p>
+                              )}
+                            </div>
+                          );
+                        })()}
                       </div>
                     );
                   })}
-                  <p className="modal-note">Оплата скоро · бета</p>
+                  <p className="modal-note">Выбери срок и нажми «Оплатить» — переведём на оплату.</p>
                 </>
               )}
             </div>
