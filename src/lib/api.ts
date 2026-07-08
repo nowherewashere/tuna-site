@@ -179,6 +179,10 @@ export interface PaymentInit {
   currency: string;
 }
 
+export interface PublicConfig {
+  turnstile_site_key: string | null;
+}
+
 export interface OnboardingConfig {
   happ_import_template: string;
   refresh_video_url: string | null;
@@ -190,9 +194,15 @@ export interface OnboardingConfig {
 // ── Calls ─────────────────────────────────────────────────────────────────────
 
 export const api = {
+  // Public frontend config (Turnstile site key, …).
+  publicConfig: () => req<PublicConfig>("GET", "/config"),
+
   // Passwordless auth
-  requestLoginCode: (email: string) =>
-    req<RequestCodeResult>("POST", "/auth/email/request-code", { email }),
+  requestLoginCode: (email: string, turnstileToken?: string) =>
+    req<RequestCodeResult>("POST", "/auth/email/request-code", {
+      email,
+      turnstile_token: turnstileToken,
+    }),
   verifyLoginCode: (email: string, code: string) =>
     req<AuthResult>("POST", "/auth/email/verify-code", { email, code }),
   me: () => req<Me>("GET", "/auth/me"),

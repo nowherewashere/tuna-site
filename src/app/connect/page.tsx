@@ -4,10 +4,13 @@ import Link from "next/link";
 import { useState } from "react";
 import { api, ApiError } from "@/lib/api";
 import InstallBlock from "@/components/InstallBlock";
+import Turnstile from "@/components/Turnstile";
+import { useTurnstile } from "@/lib/useTurnstile";
 
 type Step = "register" | "code" | "install";
 
 export default function ConnectPage() {
+  const ts = useTurnstile();
   const [step, setStep] = useState<Step>("register");
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
@@ -17,19 +20,28 @@ export default function ConnectPage() {
 
   async function requestCode() {
     if (!email.trim()) return;
+    if (ts.required && !ts.token) {
+      setError("Секунду — проверяем, что вы не робот…");
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
-      await api.requestLoginCode(email.trim());
+      await api.requestLoginCode(email.trim(), ts.token || undefined);
       setStep("code");
     } catch (e) {
-      setError(
-        e instanceof ApiError && e.status === 503
-          ? "Отправка кода временно недоступна. Попробуй позже."
-          : e instanceof ApiError && e.status === 429
-            ? "Слишком много запросов. Подожди немного и попробуй снова."
-            : "Проверь адрес почты и попробуй снова.",
-      );
+      if (e instanceof ApiError && e.status === 403) {
+        ts.reset();
+        setError("Проверка не пройдена. Попробуй ещё раз.");
+      } else {
+        setError(
+          e instanceof ApiError && e.status === 503
+            ? "Отправка кода временно недоступна. Попробуй позже."
+            : e instanceof ApiError && e.status === 429
+              ? "Слишком много запросов. Подожди немного и попробуй снова."
+              : "Проверь адрес почты и попробуй снова.",
+        );
+      }
     } finally {
       setLoading(false);
     }
@@ -82,18 +94,22 @@ export default function ConnectPage() {
                 onKeyDown={(e) => e.key === "Enter" && requestCode()}
                 disabled={loading}
               />
-              <button className="btn btn-amber" onClick={requestCode} disabled={loading}>
+              <button
+                className="btn btn-amber"
+                onClick={requestCode}
+                disabled={loading || (ts.required && !ts.token)}
+              >
                 {loading ? "Отправляем…" : "Получить код"}
               </button>
             </div>
+            {ts.siteKey && (
+              <Turnstile key={ts.resetKey} siteKey={ts.siteKey} onVerify={ts.setToken} />
+            )}
             {error && (
               <p style={{ color: "var(--coral)", fontSize: 14, margin: "4px 0 10px" }}>{error}</p>
             )}
             <p className="onb-alt">
               уже есть аккаунт? <Link href="/login">войти</Link>
-            </p>
-            <p className="turnstile-note">
-              🛡 Защита от ботов включена автоматически (Cloudflare Turnstile)
             </p>
           </div>
         </div>
