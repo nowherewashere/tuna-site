@@ -1,5 +1,6 @@
 import Link from "next/link";
 import AuthCta from "@/components/AuthCta";
+import Icon from "@/components/Icon";
 
 export default function LandingPage() {
   return (
@@ -39,8 +40,8 @@ export default function LandingPage() {
               <div className="hero-cta">
                 <AuthCta
                   className="btn btn-amber btn-lg"
-                  guest={{ href: "/connect", label: "🚀 Подключить" }}
-                  authed={{ href: "/cabinet", label: "🚀 Открыть кабинет" }}
+                  guest={{ href: "/connect", label: "Подключить" }}
+                  authed={{ href: "/cabinet", label: "Открыть кабинет" }}
                 />
                 <AuthCta
                   className="btn btn-ghost btn-lg"
@@ -60,19 +61,25 @@ export default function LandingPage() {
             <div className="steps-row">
               <div className="step">
                 <div className="n">01</div>
-                <div className="emoji">✉️</div>
+                <div className="emoji">
+                  <Icon name="mail" size={26} />
+                </div>
                 <h3>Получи доступ</h3>
                 <p>Регистрируешься — мы сразу выдаём подписку. Можно без почты.</p>
               </div>
               <div className="step">
                 <div className="n">02</div>
-                <div className="emoji">📲</div>
+                <div className="emoji">
+                  <Icon name="download" size={26} />
+                </div>
                 <h3>Установи Happ</h3>
                 <p>Приложение, через которое работает VPN. Ссылка под твою платформу.</p>
               </div>
               <div className="step">
                 <div className="n">03</div>
-                <div className="emoji">✅</div>
+                <div className="emoji">
+                  <Icon name="check" size={26} />
+                </div>
                 <h3>Добавь VPN профиль</h3>
                 <p>Одно нажатие — всё настроится само. Пользуйся интернетом без ограничений.</p>
               </div>
@@ -91,7 +98,9 @@ export default function LandingPage() {
           </p>
           <div className="feat-grid">
             <div className="feat">
-              <span className="ic">🐟</span>
+              <span className="ic">
+                <Icon name="shield" size={28} />
+              </span>
               <div>
                 <h3>Умный обход блокировок</h3>
                 <p>
@@ -101,21 +110,27 @@ export default function LandingPage() {
               </div>
             </div>
             <div className="feat">
-              <span className="ic">⚡</span>
+              <span className="ic">
+                <Icon name="bolt" size={28} />
+              </span>
               <div>
                 <h3>Быстро и удобно</h3>
                 <p>Подключение за минуту, автоподбор лучшего сервера. Никаких ручных настроек.</p>
               </div>
             </div>
             <div className="feat">
-              <span className="ic">📱</span>
+              <span className="ic">
+                <Icon name="phone" size={28} />
+              </span>
               <div>
                 <h3>Единый доступ на всё</h3>
                 <p>Телефон, ноутбук, телевизор — до 3 устройств на одной подписке.</p>
               </div>
             </div>
             <div className="feat">
-              <span className="ic">🔄</span>
+              <span className="ic">
+                <Icon name="refresh" size={28} />
+              </span>
               <div>
                 <h3>Автообновление</h3>
                 <p>Никаких запутанных интерфейсов — все обновления подключаются сами.</p>
@@ -184,13 +199,15 @@ export default function LandingPage() {
 
       <section className="final">
         <div className="wrap">
-          <span className="fishmoji">🐟</span>
+          <span className="fishmoji">
+            <Icon name="globe" size={44} />
+          </span>
           <h2>Открытый океан ждёт</h2>
           <p>Сутки бесплатно. Без карты. Мы уверены в своём качестве.</p>
           <AuthCta
             className="btn btn-amber btn-lg"
-            guest={{ href: "/connect", label: "🚀 Подключить" }}
-            authed={{ href: "/cabinet", label: "🚀 Открыть кабинет" }}
+            guest={{ href: "/connect", label: "Подключить" }}
+            authed={{ href: "/cabinet", label: "Открыть кабинет" }}
           />
         </div>
       </section>

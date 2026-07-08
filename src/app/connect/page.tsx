@@ -81,7 +81,7 @@ export default function ConnectPage() {
       <div className="onb">
         <div className="wrap">
           <div className="onb-card">
-            <h2>Получи доступ 🐟</h2>
+            <h2>Получи доступ</h2>
             <p className="lead">
               Введи почту — пришлём код, и сразу выдадим подписку. Почта нужна, чтобы входить с
               других устройств.
@@ -124,7 +124,7 @@ export default function ConnectPage() {
       <div className="onb">
         <div className="wrap">
           <div className="onb-card">
-            <h2>Введи код 🐟</h2>
+            <h2>Введи код</h2>
             <p className="lead">
               Отправили 6-значный код на <b>{email}</b>. Действует 15 минут.
             </p>

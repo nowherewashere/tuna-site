@@ -7,6 +7,7 @@ import { api, ApiError } from "@/lib/api";
 import Turnstile from "@/components/Turnstile";
 import { useTurnstile } from "@/lib/useTurnstile";
 import { invalidateAuth } from "@/lib/useAuth";
+import Icon from "@/components/Icon";
 
 type Step = "email" | "code";
 
@@ -71,7 +72,9 @@ export default function LoginPage() {
     <div className="login">
       <div className="wrap">
         <div className="login-card">
-          <span className="fishmoji">🐟</span>
+          <span className="fishmoji">
+            <Icon name="shield" size={40} />
+          </span>
           {step === "code" ? (
             <>
               <h2>Введи код</h2>

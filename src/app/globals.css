@@ -267,8 +267,9 @@ h1.hero-title {
   margin-bottom: 12px;
 }
 .step .emoji {
-  font-size: 30px;
-  margin-bottom: 12px;
+  color: var(--amber);
+  margin-bottom: 14px;
+  line-height: 0;
 }
 .step h3 {
   font-size: 18px;
@@ -320,9 +321,15 @@ section {
   color: var(--ink-card);
 }
 .feat .ic {
-  font-size: 32px;
+  color: var(--amber);
   flex-shrink: 0;
-  line-height: 1;
+  line-height: 0;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: rgba(245, 166, 35, 0.12);
 }
 .feat h3 {
   font-size: 19px;
@@ -386,9 +393,10 @@ details.q p {
   background: radial-gradient(120% 100% at 50% 0%, rgba(63, 154, 224, 0.3), transparent 55%);
 }
 .final .fishmoji {
-  font-size: 60px;
+  color: var(--amber);
   margin-bottom: 20px;
   display: block;
+  line-height: 0;
 }
 .final h2 {
   font-size: clamp(30px, 4.4vw, 46px);
@@ -510,9 +518,10 @@ footer {
   color: var(--ink-card);
 }
 .login-card .fishmoji {
-  font-size: 52px;
+  color: var(--amber);
   display: block;
   margin-bottom: 16px;
+  line-height: 0;
 }
 .login-card h2 {
   font-size: 26px;
@@ -800,7 +809,11 @@ footer {
   min-width: 0;
 }
 .dev-ic {
-  font-size: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--amber);
+  flex-shrink: 0;
 }
 .dev-name {
   font-weight: 600;
@@ -1019,7 +1032,14 @@ footer {
   align-items: flex-start;
 }
 .help-ic {
-  font-size: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: rgba(245, 166, 35, 0.12);
+  color: var(--amber);
   flex-shrink: 0;
 }
 .help-card b {
@@ -1134,6 +1154,20 @@ footer {
   font-size: 12px;
   color: var(--ink-card-dim);
   padding: 0 20px 16px;
+}
+.chat-note svg {
+  vertical-align: -3px;
+  color: var(--amber);
+}
+.eyebrow-legal {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--amber);
+  margin-bottom: 16px;
 }
 .chat-fab {
   position: fixed;

@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useOnboarding } from "@/lib/useOnboarding";
+import Icon from "@/components/Icon";
 
 /**
  * The single install UI used by both onboarding (connect) and the cabinet, so they
@@ -10,11 +11,11 @@ import { useOnboarding } from "@/lib/useOnboarding";
  */
 
 const PLATFORMS = [
-  { id: "ios", label: "📱 iPhone" },
-  { id: "android", label: "🤖 Android" },
-  { id: "windows", label: "💻 Windows" },
-  { id: "mac", label: "🍎 Mac" },
-  { id: "tv", label: "📺 TV" },
+  { id: "ios", label: "iPhone" },
+  { id: "android", label: "Android" },
+  { id: "windows", label: "Windows" },
+  { id: "mac", label: "Mac" },
+  { id: "tv", label: "TV" },
 ] as const;
 
 type PlatformId = (typeof PLATFORMS)[number]["id"];
@@ -45,7 +46,13 @@ function SubCopyRow({ subUrl }: { subUrl: string }) {
           setTimeout(() => setCopied(false), 1500);
         }}
       >
-        {copied ? "скопировано ✓" : "копировать"}
+        {copied ? (
+          <>
+            скопировано <Icon name="check" size={13} style={{ verticalAlign: "-2px" }} />
+          </>
+        ) : (
+          "копировать"
+        )}
       </span>
     </div>
   );
@@ -128,7 +135,7 @@ export default function InstallBlock({ subUrl }: { subUrl: string }) {
               <p>Приложение, через которое работает VPN.</p>
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 10 }}>
                 <a className="btn btn-ghost" href={storeUrl || undefined} target="_blank" rel="noreferrer">
-                  ⬇️ Скачать Happ
+                  <Icon name="download" size={17} /> Скачать Happ
                 </a>
                 {isApple && cfg?.store_link_ios_ru && (
                   <a
@@ -149,7 +156,7 @@ export default function InstallBlock({ subUrl }: { subUrl: string }) {
               <h4>Добавь Tuna</h4>
               <p>Одним тапом — настроится само.</p>
               <a className="btn btn-amber" style={{ marginTop: 10 }} href={deepLink || undefined}>
-                ⚡ Добавить подписку в Happ
+<Icon name="bolt" size={17} /> Добавить подписку в Happ
               </a>
               <SubCopyRow subUrl={subUrl} />
             </div>

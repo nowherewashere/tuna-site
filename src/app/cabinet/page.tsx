@@ -14,6 +14,7 @@ import {
   type SubscriptionOffers,
 } from "@/lib/api";
 import InstallBlock from "@/components/InstallBlock";
+import Icon, { type IconName } from "@/components/Icon";
 import { useHashTab } from "@/lib/useHashTab";
 import { redirectTo, reloadPage } from "@/lib/nav";
 import { invalidateAuth } from "@/lib/useAuth";
@@ -94,14 +95,12 @@ function fmtBytes(n: number): string {
   return `${(n / 1024 ** i).toFixed(i ? 1 : 0)} ${u[i]}`;
 }
 
-function platformEmoji(p?: string | null): string {
+function platformIcon(p?: string | null): IconName {
   const s = (p ?? "").toLowerCase();
-  if (s.includes("ios") || s.includes("iphone")) return "📱";
-  if (s.includes("mac")) return "💻";
-  if (s.includes("android")) return "🤖";
-  if (s.includes("windows")) return "🖥️";
-  if (s.includes("tv")) return "📺";
-  return "📱";
+  if (s.includes("mac")) return "laptop";
+  if (s.includes("windows")) return "monitor";
+  if (s.includes("tv")) return "tv";
+  return "phone";
 }
 
 export default function CabinetPage() {
@@ -110,11 +109,11 @@ export default function CabinetPage() {
   const [messages, setMessages] = useState<ChatMsg[]>([
     {
       who: "them",
-      text: "Привет! 🐟 Опиши, что не работает — поможем. К сообщению уже приложены твой ID и тариф, так что сразу видим контекст.",
+      text: "Привет! Опиши, что не работает — поможем. К сообщению уже приложены твой ID и тариф, так что сразу видим контекст.",
     },
     {
       who: "sys",
-      text: "📢 Апдейт · сегодня: обновили сервера, стало пробивать стабильнее. Если висит — нажми ⟳ в Happ.",
+      text: "Апдейт · сегодня: обновили сервера, стало пробивать стабильнее. Если висит — нажми «Обновить» в Happ.",
     },
   ]);
   const [draft, setDraft] = useState("");
@@ -215,7 +214,7 @@ export default function CabinetPage() {
     setMessages((m) => [...m, { who: "me", text: v }]);
     setDraft("");
     setTimeout(() => {
-      setMessages((m) => [...m, { who: "them", text: "Принял, смотрю 🐟 (демо-ответ)" }]);
+      setMessages((m) => [...m, { who: "them", text: "Принял, смотрю (демо-ответ)" }]);
     }, 700);
   }
 
@@ -274,7 +273,7 @@ export default function CabinetPage() {
               ) : (
                 <>
                   <div className="cab-user">
-                    <span>🐟</span> {displayName}{" "}
+                    {displayName}{" "}
                     <span className="status-pill">
                       <span className="d" /> {STATUS_LABEL[sub.status] ?? sub.status}
                     </span>
@@ -285,17 +284,23 @@ export default function CabinetPage() {
                       <div className="val">{sub.plan_name}</div>
                     </div>
                     <div className="cab-cell">
-                      <div className="lbl">📅 Истекает</div>
+                      <div className="lbl">
+                        <Icon name="calendar" size={14} /> Истекает
+                      </div>
                       <div className="val">{fmtDate(sub.expire_at)}</div>
                     </div>
                     <div className="cab-cell">
-                      <div className="lbl">↕ Трафик</div>
+                      <div className="lbl">
+                        <Icon name="gauge" size={14} /> Трафик
+                      </div>
                       <div className="val amber">
                         {fmtBytes(sub.used_traffic_bytes ?? 0)} / {trafficLimit}
                       </div>
                     </div>
                     <div className="cab-cell">
-                      <div className="lbl">📱 Устройства</div>
+                      <div className="lbl">
+                        <Icon name="phone" size={14} /> Устройства
+                      </div>
                       <div className="val">
                         {devices?.length ?? 0} / {maxDevices ?? sub.device_limit}
                       </div>
@@ -337,7 +342,9 @@ export default function CabinetPage() {
                   {devices.map((d) => (
                     <div className="dev" key={d.hwid}>
                       <div className="dev-info">
-                        <span className="dev-ic">{platformEmoji(d.platform)}</span>
+                        <span className="dev-ic">
+                          <Icon name={platformIcon(d.platform)} size={22} />
+                        </span>
                         <div>
                           <div className="dev-name">{d.device_model || d.platform || "Устройство"}</div>
                           <div className="dev-meta">
@@ -361,7 +368,7 @@ export default function CabinetPage() {
               <div className="panel-title">Подписка</div>
               {!offers || offers.plans.length === 0 ? (
                 <div className="card">
-                  Тарифы скоро появятся здесь. Пока пользуйся пробным периодом 🐟
+                  Тарифы скоро появятся здесь. Пока пользуйся пробным периодом
                 </div>
               ) : (
                 <>
@@ -376,7 +383,7 @@ export default function CabinetPage() {
                     return (
                       <div className="plan-card" key={p.id}>
                         <div className="plan-head">
-                          <span className="plan-name">🐟 {p.name}</span>
+                          <span className="plan-name">{p.name}</span>
                           {fromMonthly !== null && (
                             <span className="plan-price">
                               от {fromMonthly} {sym}
@@ -393,17 +400,23 @@ export default function CabinetPage() {
                               .filter(Boolean)
                               .map((line, i) => (
                                 <li key={i}>
-                                  <span className="ok">✓</span> {line}
+                                  <span className="ok">
+                                  <Icon name="check" size={15} />
+                                </span> {line}
                                 </li>
                               ))}
                           </ul>
                         ) : (
                           <ul className="plan-feats">
                             <li>
-                              <span className="ok">✓</span> До {p.device_limit} устройств
+                              <span className="ok">
+                                  <Icon name="check" size={15} />
+                                </span> До {p.device_limit} устройств
                             </li>
                             <li>
-                              <span className="ok">✓</span>{" "}
+                              <span className="ok">
+                                  <Icon name="check" size={15} />
+                                </span>{" "}
                               {p.traffic_limit === 0
                                 ? "Безлимитный трафик"
                                 : `${p.traffic_limit} ГБ трафика`}
@@ -480,7 +493,7 @@ export default function CabinetPage() {
               {!referral ? (
                 <div className="card">
                   Реферальная программа доступна при активной подписке. Оформи доступ — и приглашай
-                  друзей за бонусы 🐟
+                  друзей за бонусы
                 </div>
               ) : (
                 <>
@@ -544,21 +557,21 @@ export default function CabinetPage() {
 
               <div className="help-grid">
                 <div className="help-card">
-                  <span className="help-ic">🔄</span>
+                  <span className="help-ic"><Icon name="refresh" size={20} /></span>
                   <div>
                     <b>Обнови в Happ</b>
-                    <p>Открой Happ и нажми «Обновить» (⟳) — подтянет свежие сервера.</p>
+                    <p>Открой Happ и нажми «Обновить» — подтянет свежие сервера.</p>
                   </div>
                 </div>
                 <div className="help-card">
-                  <span className="help-ic">🌍</span>
+                  <span className="help-ic"><Icon name="globe" size={20} /></span>
                   <div>
                     <b>Смени локацию</b>
                     <p>Переключи локацию или протокол в Happ — иногда пробивает лучше.</p>
                   </div>
                 </div>
                 <div className="help-card">
-                  <span className="help-ic">📱</span>
+                  <span className="help-ic"><Icon name="phone" size={20} /></span>
                   <div>
                     <b>Переподключись</b>
                     <p>Отвяжи устройство во вкладке «Устройства» и добавь профиль заново.</p>
@@ -600,7 +613,7 @@ export default function CabinetPage() {
                   </button>
                 </div>
                 <p className="chat-note">
-                  🛡 Чат работает прямо здесь, без Telegram.{" "}
+                  <Icon name="shield" size={15} /> Чат работает прямо здесь, без Telegram.{" "}
                   <span style={{ opacity: 0.7 }}>[контейнер под Chatwoot — заглушка]</span>
                 </p>
               </div>
@@ -611,7 +624,7 @@ export default function CabinetPage() {
 
       {tab !== "support" && (
         <button className="chat-fab" onClick={openSupport}>
-          💬 Поддержка
+          <Icon name="message" size={18} /> Поддержка
         </button>
       )}
     </div>

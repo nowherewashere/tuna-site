@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import Icon from "@/components/Icon";
 
 export const metadata: Metadata = {
   title: "Публичная оферта — Tuna VPN",
@@ -26,7 +27,9 @@ export default function OfertaPage() {
       <main className="legal">
         <div className="wrap">
           <article className="legal-doc">
-            <div className="eyebrow-legal">📄 Публичная оферта</div>
+            <div className="eyebrow-legal">
+              <Icon name="file" size={15} /> Публичная оферта
+            </div>
             <h1>Публичная оферта</h1>
             <p className="legal-date">Дата вступления в силу: 7 июля 2026 года</p>
             <p className="legal-lead">
