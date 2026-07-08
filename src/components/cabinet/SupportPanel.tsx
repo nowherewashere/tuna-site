@@ -2,6 +2,7 @@
 
 import Icon, { type IconName } from "@/components/Icon";
 import type { SubscriptionInfo } from "@/lib/api";
+import { usePublicConfig } from "@/lib/usePublicConfig";
 
 const HELP: { icon: IconName; title: string; text: string }[] = [
   { icon: "refresh", title: "Обнови в Happ", text: "Открой Happ и нажми «Обновить» — подтянет свежие сервера." },
@@ -16,11 +17,15 @@ export default function SupportPanel({
   displayName: string;
   sub: SubscriptionInfo | null;
 }) {
-  function openChat() {
-    // Enrich the conversation with plan context for the agent, then open Chatwoot.
-    window.$chatwoot?.setCustomAttributes?.({ plan: sub?.plan_name ?? "—" });
-    window.$chatwoot?.toggle?.("open");
-  }
+  const cfg = usePublicConfig();
+  // Embed the Chatwoot widget inline — the same /widget URL the floating SDK loads
+  // in its iframe, just placed in the cabinet panel instead of a floating bubble.
+  // NOTE: identity/plan context isn't passed to this raw iframe yet — wired together
+  // with the HMAC identity follow-up.
+  const widgetUrl =
+    cfg?.chatwoot_base_url && cfg?.chatwoot_website_token
+      ? `${cfg.chatwoot_base_url}/widget?website_token=${encodeURIComponent(cfg.chatwoot_website_token)}`
+      : null;
 
   return (
     <div className="panel">
@@ -57,12 +62,13 @@ export default function SupportPanel({
             {displayName} · {sub?.plan_name ?? "—"}
           </span>
         </div>
-        <div className="chat-cta">
-          <p>Опиши проблему в чате — приложим твой ID и тариф, ответим прямо здесь.</p>
-          <button className="btn btn-amber" onClick={openChat}>
-            <Icon name="message" size={16} /> Открыть чат
-          </button>
-        </div>
+        {widgetUrl ? (
+          <iframe className="chat-frame" src={widgetUrl} title="Чат поддержки" />
+        ) : (
+          <p className="chat-note" style={{ paddingTop: 16 }}>
+            Чат временно недоступен. Попробуй позже.
+          </p>
+        )}
         <p className="chat-note">
           <Icon name="shield" size={15} /> Чат работает прямо здесь, без Telegram.
         </p>
