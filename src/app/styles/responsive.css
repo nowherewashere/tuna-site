@@ -1,0 +1,40 @@
+/* ── Responsive (shared) ─────────────────────────────────────────────────────
+   Component-owned responsive rules live next to each component (nav.css,
+   landing.css hero…). This file holds the remaining shared collapses until each
+   section is redesigned fluid-first. Scale: 600 / 900 / 1180 / 1400. */
+@media (max-width: 900px) {
+  .cab-grid,
+  .ref-stats,
+  .help-grid {
+    grid-template-columns: 1fr;
+  }
+  .foot-grid {
+    flex-direction: column;
+    text-align: center;
+  }
+  .cab-body {
+    padding-bottom: 88px; /* clear the fixed bottom tab bar */
+  }
+  .onb-card,
+  .login-card {
+    padding: 28px;
+  }
+}
+
+/* ── Motion sensitivity ──────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+  .reveal {
+    opacity: 1;
+    transform: none;
+  }
+  .ocean-fx,
+  .hero-fish-glow {
+    display: none;
+  }
+}

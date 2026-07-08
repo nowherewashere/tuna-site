@@ -7,6 +7,7 @@ import InstallBlock from "@/components/InstallBlock";
 import Turnstile from "@/components/Turnstile";
 import { useTurnstile } from "@/lib/useTurnstile";
 import { invalidateAuth } from "@/lib/useAuth";
+import { Button, TextField } from "@/components/ui";
 
 type Step = "register" | "code" | "install";
 
@@ -78,83 +79,87 @@ export default function ConnectPage() {
 
   if (step === "register") {
     return (
-      <div className="onb">
+      <main className="onb">
         <div className="wrap">
           <div className="onb-card">
-            <h2>Получи доступ</h2>
+            <h1>Получи доступ</h1>
             <p className="lead">
               Введи почту — пришлём код, и сразу выдадим подписку. Почта нужна, чтобы входить с
               других устройств.
             </p>
-            <div className="field-row">
-              <input
-                className="field"
-                type="email"
-                placeholder="твой@email.ру"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && requestCode()}
-                disabled={loading}
-              />
-              <button
-                className="btn btn-amber"
-                onClick={requestCode}
-                disabled={loading || (ts.required && !ts.token)}
-              >
-                {loading ? "Отправляем…" : "Получить код"}
-              </button>
-            </div>
+            <TextField
+              label="Электронная почта"
+              labelHidden
+              type="email"
+              autoComplete="email"
+              placeholder="твой@email.ру"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && requestCode()}
+              disabled={loading}
+              error={error}
+              trailing={
+                <Button
+                  variant="amber"
+                  onClick={requestCode}
+                  loading={loading}
+                  loadingLabel="Отправляем…"
+                  disabled={ts.required && !ts.token}
+                >
+                  Получить код
+                </Button>
+              }
+            />
             {ts.siteKey && (
               <Turnstile key={ts.resetKey} siteKey={ts.siteKey} onVerify={ts.setToken} />
-            )}
-            {error && (
-              <p style={{ color: "var(--coral)", fontSize: 14, margin: "4px 0 10px" }}>{error}</p>
             )}
             <p className="onb-alt">
               уже есть аккаунт? <Link href="/login">войти</Link>
             </p>
           </div>
         </div>
-      </div>
+      </main>
     );
   }
 
   if (step === "code") {
     return (
-      <div className="onb">
+      <main className="onb">
         <div className="wrap">
           <div className="onb-card">
-            <h2>Введи код</h2>
+            <h1>Введи код</h1>
             <p className="lead">
               Отправили 6-значный код на <b>{email}</b>. Действует 15 минут.
             </p>
-            <div className="field-row">
-              <input
-                className="field"
-                inputMode="numeric"
-                autoComplete="one-time-code"
-                maxLength={6}
-                placeholder="______"
-                value={code}
-                onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                onKeyDown={(e) => e.key === "Enter" && verifyAndProvision()}
-                disabled={loading}
-                autoFocus
-              />
-              <button
-                className="btn btn-amber"
-                onClick={verifyAndProvision}
-                disabled={loading || code.length !== 6}
-              >
-                {loading ? "Выдаём…" : "Подтвердить"}
-              </button>
-            </div>
-            {error && (
-              <p style={{ color: "var(--coral)", fontSize: 14, margin: "4px 0 10px" }}>{error}</p>
-            )}
+            <TextField
+              label="Код из письма"
+              labelHidden
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              maxLength={6}
+              placeholder="______"
+              value={code}
+              onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+              onKeyDown={(e) => e.key === "Enter" && verifyAndProvision()}
+              disabled={loading}
+              autoFocus
+              error={error}
+              trailing={
+                <Button
+                  variant="amber"
+                  onClick={verifyAndProvision}
+                  loading={loading}
+                  loadingLabel="Выдаём…"
+                  disabled={code.length !== 6}
+                >
+                  Подтвердить
+                </Button>
+              }
+            />
             <p className="onb-alt">
               не пришло?{" "}
-              <a
+              <Button
+                variant="link"
                 onClick={() => {
                   setStep("register");
                   setCode("");
@@ -162,32 +167,32 @@ export default function ConnectPage() {
                 }}
               >
                 ввести другую почту
-              </a>
+              </Button>
             </p>
           </div>
         </div>
-      </div>
+      </main>
     );
   }
 
   return (
-    <div className="onb" style={{ minHeight: "auto", padding: "56px 0" }}>
+    <main className="onb onb-install">
       <div className="wrap">
-        <div className="onb-card" style={{ maxWidth: 660 }}>
-          <div className="status-pill" style={{ marginBottom: 16 }}>
+        <div className="onb-card onb-card-wide">
+          <div className="status-pill status-pill-mb">
             <span className="d" /> Подписка активна · пробный период
           </div>
-          <h2>Осталось подключить</h2>
+          <h1>Осталось подключить</h1>
           <p className="lead">Три шага — и ты в сети. Выбери устройство:</p>
 
           <InstallBlock subUrl={subUrl} />
 
           <div className="onb-divider" />
-          <Link className="btn btn-amber btn-full btn-lg" href="/cabinet">
+          <Button variant="amber" size="lg" full href="/cabinet">
             Открыть личный кабинет →
-          </Link>
+          </Button>
         </div>
       </div>
-    </div>
+    </main>
   );
 }

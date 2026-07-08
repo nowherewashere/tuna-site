@@ -1,0 +1,122 @@
+/* ── Onboarding / login cards ────────────────────────────────────────────── */
+.onb {
+  min-height: 70vh;
+  display: flex;
+  align-items: center;
+  padding: 60px 0;
+}
+.onb-card {
+  background: linear-gradient(180deg, rgba(16, 63, 102, 0.82), rgba(10, 37, 64, 0.86));
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  padding: 40px;
+  max-width: 560px;
+  margin: 0 auto;
+  width: 100%;
+  color: var(--ink-card);
+  box-shadow: var(--shadow-card);
+  backdrop-filter: blur(6px);
+}
+.onb-card :is(h1, h2) {
+  font-size: 30px;
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+.onb-card .lead {
+  color: var(--ink-card-dim);
+  margin-bottom: 26px;
+  font-size: 16px;
+}
+.field {
+  flex: 1;
+  min-width: 0;
+  background: var(--card-2);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 14px 16px;
+  color: #fff;
+  font-size: 15px;
+  font-family: var(--font-body), sans-serif;
+  transition: border-color 0.15s ease;
+}
+.field:focus {
+  outline: none;
+  border-color: var(--amber);
+}
+.field::placeholder {
+  color: var(--ink-card-dim);
+}
+.onb-alt {
+  text-align: center;
+  color: var(--ink-card-dim);
+  font-size: 14px;
+  margin: 10px 0 22px;
+}
+.onb-alt a {
+  color: var(--amber);
+  text-decoration: underline;
+  cursor: pointer;
+}
+.onb-divider {
+  height: 1px;
+  background: var(--line);
+  margin: 24px 0;
+}
+.turnstile-note {
+  font-size: 12px;
+  color: var(--ink-card-dim);
+  text-align: center;
+  margin-top: 14px;
+  opacity: 0.85;
+}
+.login {
+  min-height: 80vh;
+  display: flex;
+  align-items: center;
+  padding: 60px 0;
+}
+.login-card {
+  background: linear-gradient(180deg, rgba(16, 63, 102, 0.82), rgba(10, 37, 64, 0.86));
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  padding: 44px;
+  max-width: 440px;
+  margin: 0 auto;
+  width: 100%;
+  text-align: center;
+  color: var(--ink-card);
+  box-shadow: var(--shadow-card);
+  backdrop-filter: blur(6px);
+}
+.login-card .fishmoji {
+  color: var(--amber);
+  display: block;
+  margin-bottom: 16px;
+  line-height: 0;
+}
+.login-card :is(h1, h2) {
+  font-size: 26px;
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+.login-card .lead {
+  color: var(--ink-card-dim);
+  font-size: 15px;
+  margin-bottom: 26px;
+}
+
+/* Helper modifiers (replace former inline styles on connect/login). */
+.onb-install {
+  min-height: auto;
+  padding: 56px 0;
+}
+.onb-card-wide {
+  max-width: 660px;
+}
+.status-pill-mb {
+  margin-bottom: 16px;
+}
+.onb-alt-lg {
+  margin-top: 20px;
+}
+

@@ -1,0 +1,24 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   Layer 3 — COMPONENT TOKENS
+   Only where a component needs its own knob. Points at the semantic layer.
+   Kept intentionally minimal — most components read semantic tokens directly.
+   ════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* Button */
+  --btn-radius: var(--radius-md);
+  --btn-radius-lg: var(--radius-lg);
+  --btn-pad-y: 11px;
+  --btn-pad-x: 20px;
+
+  /* Card */
+  --card-radius: var(--radius-xl);
+  --card-pad: var(--space-6);
+  --card-fill: var(--fill-card);
+
+  /* Field / input */
+  --field-radius: var(--radius-md);
+  --field-bg: var(--fill-input);
+  --field-pad-y: 14px;
+  --field-pad-x: 16px;
+}

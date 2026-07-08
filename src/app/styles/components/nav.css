@@ -1,0 +1,172 @@
+/* ── Nav ─────────────────────────────────────────────────────────────────────
+   Breakpoint scale used across the site (media queries can't read CSS vars, so
+   these literals are the shared convention):
+     phone ≤600 · tablet-portrait 601–900 · tablet-landscape 901–1180 · desktop 1181+
+   Nav is mobile-first: burger by default, inline links from 901px up.
+   ────────────────────────────────────────────────────────────────────────── */
+.site-nav {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: color-mix(in srgb, var(--bg-deep) 74%, transparent);
+  backdrop-filter: blur(16px) saturate(1.3);
+  border-bottom: 1px solid var(--border-soft);
+}
+.site-nav .wrap {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  height: 64px;
+}
+.logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 11px;
+  font-family: var(--font-display), sans-serif;
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: -0.02em;
+  flex-shrink: 0;
+}
+.logo-mark {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--amber);
+  box-shadow: var(--glow-amber-ring);
+  flex-shrink: 0;
+}
+.nav-links {
+  display: flex;
+  gap: 28px;
+  align-items: center;
+  font-size: 15px;
+  color: var(--ink-dim);
+}
+.nav-links a:not(.btn):hover {
+  color: #fff;
+}
+.nav-cta {
+  padding: 9px 18px;
+}
+
+/* Desktop vs mobile clusters. Mobile-first: inline links hidden by default. */
+.nav-desktop-only {
+  display: none;
+}
+.nav-mobile-only {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+.nav-cta-sm {
+  padding: 8px 16px;
+  font-size: 14px;
+}
+/* On narrow phones the inline CTA + logo + burger stop fitting — drop it (the
+   burger menu and the hero both carry a Подключить). */
+@media (max-width: 420px) {
+  .nav-cta-sm {
+    display: none;
+  }
+}
+
+/* Burger */
+.nav-burger {
+  display: inline-flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  width: 42px;
+  height: 42px;
+  padding: 0 9px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.06);
+  cursor: pointer;
+}
+.nav-burger span {
+  display: block;
+  height: 2px;
+  width: 100%;
+  background: var(--ink);
+  border-radius: 2px;
+  transition: transform var(--dur-base) var(--ease-out), opacity var(--dur-fast) var(--ease-std);
+}
+.nav-burger.is-open span:nth-child(1) {
+  transform: translateY(7px) rotate(45deg);
+}
+.nav-burger.is-open span:nth-child(2) {
+  opacity: 0;
+}
+.nav-burger.is-open span:nth-child(3) {
+  transform: translateY(-7px) rotate(-45deg);
+}
+
+/* Mobile drawer overlay */
+.nav-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 49;
+}
+.nav-scrim {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+  padding: 0;
+  background: rgba(5, 16, 31, 0.62);
+  backdrop-filter: blur(3px);
+  cursor: pointer;
+  animation: nav-fade var(--dur-base) var(--ease-out);
+}
+.nav-drawer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: 80px var(--space-6) var(--space-8);
+  background: color-mix(in srgb, var(--bg-ocean) 96%, transparent);
+  border-bottom: 1px solid var(--border);
+  box-shadow: var(--shadow-card);
+  animation: nav-slide var(--dur-slow) var(--ease-out);
+}
+.nav-drawer-link {
+  font-family: var(--font-display), sans-serif;
+  font-weight: 600;
+  font-size: 20px;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  padding: 14px 4px;
+  border-bottom: 1px solid var(--border-soft);
+}
+.nav-drawer-cta {
+  margin-top: var(--space-4);
+}
+@keyframes nav-fade {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes nav-slide {
+  from {
+    opacity: 0;
+    transform: translateY(-12px);
+  }
+}
+
+@media (min-width: 901px) {
+  .nav-desktop-only {
+    display: flex;
+    align-items: center;
+    gap: 28px;
+  }
+  .nav-mobile-only {
+    display: none;
+  }
+}

@@ -1,0 +1,106 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   Layer 1 — PRIMITIVES
+   Raw, theme-agnostic ramps and scales. Never referenced directly by
+   components — the semantic layer (semantic.css) maps meaning onto these.
+   Values are the exact literals already used across the design so adoption is
+   pixel-for-pixel. See plan: reactive-growing-crystal.md (Phase 0).
+   ════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ── Palette: the depth ramp (bright surface → abyss) ──────────────────── */
+  --blue-300: #2f93de; /* surface, watched light */
+  --blue-400: #1e78c8; /* committed brand primary */
+  --blue-500: #17639f;
+  --blue-600: #0e3d67;
+  --blue-700: #0a2540; /* ocean, deep sections */
+  --blue-900: #05101f; /* abyss */
+  --blue-card: #16588c; /* cards, a shade darker than their water */
+  --blue-card-2: #103f66; /* inputs / deepest card */
+
+  /* ── Palette: signal + status ─────────────────────────────────────────── */
+  --amber-400: #f5a623; /* the one warm signal */
+  --amber-300: #ffce63; /* lighter amber */
+  --amber-ink: #241703; /* ink on amber fills */
+  --red-500: #e5564b; /* danger / destructive */
+  --green-500: #3fc07a; /* success */
+  --cyan-300: #82c4ef; /* hairline / caustic highlight */
+  --white: #ffffff;
+  --ink-100: #f2f8fe; /* near-white on cards */
+  --ink-200: #cbe1f4; /* dim on water */
+  --ink-300: #a9c6e0; /* dim on cards */
+
+  /* ── Alpha primitives (white/dark washes reused as borders & fills) ────── */
+  --alpha-white-14: rgba(255, 255, 255, 0.14);
+  --alpha-white-08: rgba(255, 255, 255, 0.08);
+  --alpha-white-05: rgba(255, 255, 255, 0.05);
+
+  /* ── Spacing — 4px base, single ladder (replaces ~150 magic numbers) ───── */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 28px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-11: 44px;
+  --space-12: 48px;
+  --space-15: 60px;
+  --space-16: 64px;
+  --space-20: 80px;
+  --space-21: 84px;
+  --space-24: 96px;
+
+  /* ── Radius — replaces the 6/9/10/12/14/16/18/24/100 sprawl ────────────── */
+  --radius-xs: 6px;
+  --radius-sm: 10px;
+  --radius-md: 12px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+  --radius-2xl: 24px;
+  --radius-pill: 100px;
+  --radius-round: 50%;
+
+  /* ── Type scale ───────────────────────────────────────────────────────── */
+  --text-2xs: 11px;
+  --text-xs: 12px;
+  --text-sm: 13px;
+  --text-base: 15px;
+  --text-md: 17px;
+  --text-lg: 19px;
+  --text-xl: 22px;
+  --text-2xl: 24px;
+  --text-3xl: 26px;
+  --text-4xl: 30px;
+  /* fluid moments */
+  --text-display-sm: clamp(30px, 4vw, 46px); /* section titles */
+  --text-display-md: clamp(32px, 5vw, 56px); /* final CTA */
+  --text-display-lg: clamp(52px, 8vw, 104px); /* hero */
+
+  --leading-tight: 1.04;
+  --leading-snug: 1.25;
+  --leading-normal: 1.55;
+  --tracking-tight: -0.025em;
+  --tracking-tighter: -0.04em;
+  --tracking-wide: 0.14em;
+  --tracking-wider: 0.16em;
+
+  /* ── Elevation ────────────────────────────────────────────────────────── */
+  --shadow-card: 0 30px 80px rgba(4, 16, 31, 0.4);
+  --shadow-amber: 0 6px 22px rgba(245, 166, 35, 0.32);
+  --shadow-amber-hover: 0 10px 30px rgba(245, 166, 35, 0.5);
+  --shadow-fab: 0 10px 30px rgba(6, 16, 31, 0.4);
+  --glow-amber-ring: 0 0 0 4px rgba(245, 166, 35, 0.22), 0 0 14px 2px rgba(245, 166, 35, 0.6);
+
+  /* ── Motion ───────────────────────────────────────────────────────────── */
+  --dur-fast: 0.14s;
+  --dur-base: 0.2s;
+  --dur-slow: 0.3s;
+  --dur-reveal: 0.7s;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-std: ease;
+
+  /* ── Layout ───────────────────────────────────────────────────────────── */
+  --container-max: 1140px;
+}

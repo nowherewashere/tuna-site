@@ -1,0 +1,82 @@
+/* ── Install block (shared) ──────────────────────────────────────────────── */
+.plat-picker {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 22px 0 26px;
+}
+.plat-select {
+  margin: 20px 0 24px;
+}
+.plat-select-label {
+  display: block;
+  font-size: 13px;
+  color: var(--ink-card-dim);
+  margin-bottom: 8px;
+}
+.plat-dropdown {
+  width: 100%;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 40px;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none' stroke='%23a9c6e0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M1 1.5l5 5 5-5'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 16px center;
+}
+.plat-dropdown option {
+  color: #fff;
+  background: var(--card-2);
+}
+.plat {
+  font-size: 14px;
+  padding: 9px 15px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--card-2);
+  cursor: pointer;
+  transition: 0.15s ease;
+  font-family: var(--font-body), sans-serif;
+  color: var(--ink-card);
+}
+.plat:hover {
+  border-color: var(--amber);
+}
+.plat.on {
+  border-color: var(--amber);
+  background: rgba(245, 166, 35, 0.1);
+  color: var(--amber);
+}
+.istep {
+  display: flex;
+  gap: 16px;
+  padding: 20px 0;
+  border-top: 1px solid var(--line);
+}
+.istep:first-of-type {
+  border-top: none;
+}
+.istep-n {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--amber);
+  color: var(--amber-ink);
+  display: grid;
+  place-items: center;
+  font-family: var(--font-mono), monospace;
+  font-weight: 600;
+  font-size: 15px;
+}
+.istep-body h4 {
+  font-family: var(--font-body), sans-serif;
+  font-size: 17px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.istep-body p {
+  font-size: 14.5px;
+  color: var(--ink-card-dim);
+}
+

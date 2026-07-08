@@ -1,0 +1,59 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   Tailwind v4 bridge — export the SEMANTIC layer (not raw hexes) so utilities
+   (bg-accent, text-secondary, rounded-card …) and hand-written component CSS
+   read the same source of truth and can never drift.
+   `inline` keeps the var() reference in generated utilities, so a future theme
+   override of the semantic layer flows through automatically.
+   ════════════════════════════════════════════════════════════════════════ */
+
+@theme inline {
+  /* Backgrounds / ramp */
+  --color-bg-surface: var(--bg-surface);
+  --color-bg-azure: var(--bg-azure);
+  --color-bg-azure-deep: var(--bg-azure-deep);
+  --color-bg-deep: var(--bg-deep);
+  --color-bg-ocean: var(--bg-ocean);
+  --color-bg-abyss: var(--bg-abyss);
+
+  /* Surfaces */
+  --color-card: var(--fill-card);
+  --color-card-solid: var(--fill-card-solid);
+  --color-input: var(--fill-input);
+
+  /* Text */
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-on-card: var(--text-on-card);
+  --color-text-on-card-dim: var(--text-on-card-dim);
+
+  /* Accent + status */
+  --color-accent: var(--accent);
+  --color-accent-hi: var(--accent-hi);
+  --color-accent-ink: var(--accent-ink);
+  --color-danger: var(--danger);
+  --color-success: var(--success);
+  --color-hairline: var(--hairline);
+
+  /* Borders */
+  --color-border: var(--border);
+  --color-border-soft: var(--border-soft);
+
+  /* Legacy color names kept for continuity with the previous @theme export */
+  --color-surface: var(--bg-surface);
+  --color-azure: var(--bg-azure);
+  --color-azure-deep: var(--bg-azure-deep);
+  --color-ocean: var(--bg-ocean);
+  --color-abyss: var(--bg-abyss);
+  --color-amber: var(--accent);
+  --color-coral: var(--danger);
+  --color-green: var(--success);
+
+  /* Radius scale */
+  --radius-xs: var(--radius-xs);
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
+  --radius-2xl: var(--radius-2xl);
+  --radius-pill: var(--radius-pill);
+}

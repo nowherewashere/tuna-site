@@ -1,0 +1,614 @@
+/* ── Hero (underwater scene) ─────────────────────────────────────────────── */
+.hero {
+  position: relative;
+  overflow: clip; /* clips decorative bleed → never a source of horizontal scroll */
+  isolation: isolate;
+  padding: clamp(84px, 11vh, 132px) 0 clamp(60px, 9vh, 104px);
+}
+/* Depth scrim behind the copy (left) — darker water that also lifts text
+   contrast to AA over the bright surface band; fades out before the fish. */
+.hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(
+    100deg,
+    rgba(5, 16, 31, 0.55) 0%,
+    rgba(5, 16, 31, 0.26) 34%,
+    transparent 62%
+  );
+}
+.hero-grid {
+  position: relative;
+  z-index: 3;
+  display: grid;
+  grid-template-columns: minmax(0, 600px);
+  align-content: center;
+  min-height: clamp(420px, 56vh, 600px);
+}
+.hero-copy {
+  position: relative;
+  z-index: 3;
+  min-width: 0;
+}
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font-family: var(--font-mono), monospace;
+  font-size: 12.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  border: 1px solid var(--line);
+  padding: 8px 15px;
+  border-radius: 100px;
+  margin-bottom: 28px;
+  background: rgba(10, 37, 64, 0.28);
+  backdrop-filter: blur(6px);
+  color: var(--ink-dim);
+}
+.eyebrow .dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--amber);
+  box-shadow: 0 0 0 3px rgba(245, 166, 35, 0.28);
+  animation: ping 2.6s ease-in-out infinite;
+}
+@keyframes ping {
+  0%,
+  100% {
+    box-shadow: 0 0 0 3px rgba(245, 166, 35, 0.28);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(245, 166, 35, 0);
+  }
+}
+h1.hero-title {
+  font-size: clamp(52px, 8vw, 104px);
+  font-weight: 800;
+  line-height: 0.94;
+  letter-spacing: -0.04em;
+  text-shadow: 0 4px 40px rgba(4, 16, 31, 0.35);
+}
+h1.hero-title .amber {
+  text-shadow: 0 4px 34px rgba(245, 166, 35, 0.45);
+}
+.hero-sub {
+  margin: 28px 0 8px;
+  font-size: clamp(19px, 2vw, 23px);
+  color: var(--ink-dim);
+  max-width: 26ch;
+  line-height: 1.45;
+}
+.hero-cta {
+  display: flex;
+  gap: 14px;
+  margin-top: 36px;
+  flex-wrap: wrap;
+}
+.hero-cta .btn-lg {
+  padding: 17px 36px;
+  font-size: 18px;
+}
+.hero-note {
+  margin-top: 22px;
+  font-family: var(--font-mono), monospace;
+  font-size: 13.5px;
+  letter-spacing: 0.01em;
+  color: var(--ink-dim);
+}
+.hero-note .mono {
+  color: #fff;
+}
+/* Scene: every decorative layer, absolutely placed and clipped by .hero. */
+.hero-scene {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: clip;
+  pointer-events: none;
+}
+.hero-scene > * {
+  position: absolute;
+}
+
+/* Light shafts raking down from the surface. */
+.hero-shafts {
+  inset: -12% -12% 0;
+  background:
+    linear-gradient(72deg, transparent 44%, rgba(190, 228, 255, 0.1) 49%, transparent 55%),
+    linear-gradient(96deg, transparent 55%, rgba(190, 228, 255, 0.07) 61%, transparent 68%),
+    radial-gradient(120% 60% at 60% -14%, rgba(200, 232, 255, 0.22), transparent 62%);
+  mix-blend-mode: screen;
+  transform-origin: 60% 0;
+  animation: hero-sway 16s ease-in-out infinite alternate;
+}
+.hero-caustic {
+  inset: 0;
+  opacity: 0.6;
+  background:
+    radial-gradient(40% 30% at 24% 24%, rgba(130, 196, 239, 0.12), transparent 70%),
+    radial-gradient(46% 34% at 80% 60%, rgba(130, 196, 239, 0.1), transparent 70%);
+  animation: hero-drift 24s ease-in-out infinite alternate;
+}
+.hero-particles {
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* Parallax planes (scroll + pointer) wrapping the fish. */
+.hero-tuna-layer,
+.hero-tuna-wrap {
+  inset: 0;
+}
+.hero-tuna {
+  position: absolute;
+  right: clamp(-140px, -4vw, -24px);
+  top: 46%;
+  width: clamp(460px, 56vw, 1040px);
+  aspect-ratio: 3 / 2;
+  height: auto;
+  transform: translateY(-50%);
+  filter: drop-shadow(0 40px 70px rgba(4, 16, 31, 0.55));
+}
+/* Dark-water halo + amber backlight so the fish emerges from the deep. */
+.hero-fish-glow {
+  right: clamp(-40px, 2vw, 60px);
+  top: 46%;
+  width: clamp(420px, 52vw, 940px);
+  aspect-ratio: 3 / 2;
+  transform: translateY(-50%);
+  filter: blur(14px);
+  background:
+    radial-gradient(closest-side at 42% 50%, rgba(245, 166, 35, 0.16), transparent 58%),
+    radial-gradient(closest-side, rgba(4, 16, 31, 0.5), rgba(4, 16, 31, 0.22) 55%, transparent 74%);
+}
+/* Caustic light clipped to the fish silhouette (same 3:2 PNG as a mask) so light
+   ripples across its body instead of floating in front of it. */
+.hero-caustic-fish {
+  right: clamp(-140px, -4vw, -24px);
+  top: 46%;
+  width: clamp(460px, 56vw, 1040px);
+  aspect-ratio: 3 / 2;
+  transform: translateY(-50%);
+  background:
+    radial-gradient(34% 44% at 30% 34%, rgba(198, 232, 255, 0.55), transparent 60%),
+    radial-gradient(30% 40% at 62% 62%, rgba(150, 210, 250, 0.4), transparent 65%);
+  mix-blend-mode: screen;
+  opacity: 0.5;
+  -webkit-mask: url("/assets/images/hero-tuna.png") center / contain no-repeat;
+  mask: url("/assets/images/hero-tuna.png") center / contain no-repeat;
+  animation: hero-shimmer 9s ease-in-out infinite alternate;
+}
+/* Depth-pressure vignette handing the eye off into the next section. */
+.hero-vignette {
+  inset: auto 0 0 0;
+  height: 32%;
+  background: linear-gradient(180deg, transparent, rgba(5, 16, 31, 0.28));
+}
+
+@keyframes hero-sway {
+  from {
+    transform: translateX(-2%) skewX(-1.4deg);
+  }
+  to {
+    transform: translateX(2%) skewX(1.4deg);
+  }
+}
+@keyframes hero-drift {
+  from {
+    transform: translate3d(-2%, -1%, 0);
+  }
+  to {
+    transform: translate3d(3%, 2%, 0);
+  }
+}
+@keyframes hero-shimmer {
+  from {
+    opacity: 0.32;
+  }
+  to {
+    opacity: 0.6;
+  }
+}
+
+/* Tablet / phone: the fish becomes a quieter motif behind the copy. */
+@media (max-width: 900px) {
+  .hero-tuna,
+  .hero-caustic-fish {
+    width: clamp(300px, 92vw, 520px);
+    right: -14%;
+    top: 8%;
+    transform: none;
+    opacity: 0.5;
+  }
+  .hero-fish-glow {
+    width: clamp(360px, 96vw, 560px);
+    right: -14%;
+    top: 2%;
+    transform: none;
+  }
+  .hero-grid {
+    min-height: auto;
+    grid-template-columns: minmax(0, 1fr);
+  }
+  h1.hero-title {
+    font-size: clamp(44px, 12vw, 72px);
+  }
+}
+
+/* Staggered page-load reveal — the one orchestrated motion moment. */
+.reveal {
+  opacity: 0;
+  transform: translateY(16px);
+  animation: rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+.d1 {
+  animation-delay: 0.05s;
+}
+.d2 {
+  animation-delay: 0.15s;
+}
+.d3 {
+  animation-delay: 0.27s;
+}
+.d4 {
+  animation-delay: 0.39s;
+}
+.d5 {
+  animation-delay: 0.51s;
+}
+@keyframes rise {
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ── Section rhythm ──────────────────────────────────────────────────────── */
+section {
+  padding: clamp(56px, 8vw, 92px) 0;
+  position: relative;
+}
+/* Descent tempo: tighter near the surface, opening out into the deep, then a
+   big drop of open water before the final call. */
+.why {
+  padding-block: clamp(72px, 10vw, 124px);
+}
+.final {
+  padding-block: clamp(88px, 12vw, 148px);
+}
+.sec-eyebrow {
+  font-family: var(--font-mono), monospace;
+  font-size: 12px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--amber);
+  margin-bottom: 16px;
+}
+.sec-title {
+  font-size: clamp(30px, 4vw, 46px);
+  font-weight: 800;
+  margin-bottom: 16px;
+  max-width: 20ch;
+}
+.sec-intro {
+  color: var(--ink-dim);
+  max-width: 52ch;
+  font-size: 17px;
+  margin-bottom: 46px;
+}
+
+/* ── Dive path (3 steps) ─────────────────────────────────────────────────── */
+.dive {
+  padding-top: 44px;
+}
+.sec-kicker {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-family: var(--font-display), sans-serif;
+  font-weight: 700;
+  font-size: clamp(22px, 2.8vw, 30px);
+  letter-spacing: -0.02em;
+  margin-bottom: 40px;
+}
+.kick-mono {
+  font-family: var(--font-mono), monospace;
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--amber);
+}
+/* Vertical descent: a spine threading three numbered nodes, cards stepping down
+   — the layout now agrees with the "dive" metaphor and shines on mobile. */
+.dive-track {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(18px, 3vw, 30px);
+  max-width: 760px;
+}
+.dive-track::before {
+  content: "";
+  position: absolute;
+  left: 26px;
+  top: 14px;
+  bottom: 14px;
+  width: 2px;
+  background: repeating-linear-gradient(
+    180deg,
+    rgba(245, 166, 35, 0.5) 0 7px,
+    transparent 7px 15px
+  );
+}
+.dive-step {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 54px minmax(0, 1fr);
+  gap: clamp(16px, 3vw, 24px);
+  align-items: start;
+}
+.ds-mark {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: var(--ocean); /* opaque node covers the spine behind it */
+  border: 1px solid rgba(245, 166, 35, 0.45);
+  display: grid;
+  place-items: center;
+}
+.ds-n {
+  font-family: var(--font-mono), monospace;
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--amber);
+}
+.ds-body {
+  background: linear-gradient(180deg, rgba(22, 88, 140, 0.5), rgba(16, 63, 102, 0.5));
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 20px 22px;
+  color: var(--ink-card);
+  backdrop-filter: blur(4px);
+}
+.ds-ic {
+  color: var(--amber);
+  margin-bottom: 10px;
+  line-height: 0;
+}
+.dive-step h3 {
+  font-size: 18px;
+  margin-bottom: 6px;
+}
+.dive-step p {
+  font-size: 14.5px;
+  color: var(--ink-card-dim);
+}
+
+/* ── Why (instrument readouts) ───────────────────────────────────────────── */
+.why {
+  border-top: 1px solid var(--line-soft);
+  border-bottom: 1px solid var(--line-soft);
+}
+/* Bento: one primary card carrying the value prop + three supporting. */
+.feat-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+.feat {
+  position: relative;
+  background: linear-gradient(180deg, rgba(16, 63, 102, 0.66), rgba(10, 37, 64, 0.66));
+  border: 1px solid var(--line);
+  border-left: 2px solid var(--amber);
+  border-radius: var(--radius-lg);
+  padding: 24px 24px 24px 22px;
+  display: flex;
+  gap: 18px;
+  align-items: flex-start;
+  color: var(--ink-card);
+  transition:
+    transform var(--dur-fast) var(--ease-std),
+    border-color var(--dur-fast) var(--ease-std),
+    box-shadow var(--dur-fast) var(--ease-std);
+}
+.feat:hover {
+  transform: translateY(-3px);
+  border-left-color: var(--amber-2);
+  box-shadow: 0 14px 34px rgba(4, 16, 31, 0.32);
+}
+.feat-primary {
+  grid-column: 1 / -1;
+  align-items: center;
+  padding: clamp(24px, 3vw, 34px);
+  background:
+    radial-gradient(120% 160% at 0% 0%, rgba(245, 166, 35, 0.08), transparent 55%),
+    linear-gradient(120deg, rgba(22, 88, 140, 0.6), rgba(16, 63, 102, 0.5));
+  border-left-width: 3px;
+}
+.feat .ic {
+  color: var(--amber);
+  flex-shrink: 0;
+  line-height: 0;
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: var(--radius-md);
+  background: rgba(245, 166, 35, 0.12);
+}
+.feat-primary .ic {
+  width: 58px;
+  height: 58px;
+}
+.feat-kick {
+  display: block;
+  font-family: var(--font-mono), monospace;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--current);
+  margin-bottom: 8px;
+}
+.feat h3 {
+  font-size: 19px;
+  margin-bottom: 7px;
+}
+.feat-primary h3 {
+  font-size: clamp(21px, 2.4vw, 27px);
+}
+.feat p {
+  font-size: 15px;
+  color: var(--ink-card-dim);
+}
+.feat-primary p {
+  max-width: 60ch;
+}
+
+/* Bento reflow: 3-up → 2-up (tablet) → stacked (phone). Primary spans full. */
+@media (max-width: 1180px) {
+  .feat-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 600px) {
+  .feat-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ── FAQ ─────────────────────────────────────────────────────────────────── */
+.faq-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 820px;
+}
+details.q {
+  background: rgba(16, 63, 102, 0.5);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 2px 22px;
+  transition: border-color 0.15s ease, background 0.15s ease;
+  color: var(--ink-card);
+}
+details.q[open] {
+  border-color: rgba(245, 166, 35, 0.5);
+  background: rgba(16, 63, 102, 0.72);
+}
+details.q summary {
+  cursor: pointer;
+  list-style: none;
+  padding: 20px 0;
+  font-family: var(--font-body), sans-serif;
+  font-weight: 600;
+  font-size: 17.5px;
+  letter-spacing: -0.01em;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+details.q summary::-webkit-details-marker {
+  display: none;
+}
+details.q summary .chev {
+  position: relative;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  transition: transform var(--dur-base) var(--ease-out);
+}
+details.q summary .chev::before,
+details.q summary .chev::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 14px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--amber);
+  transform: translate(-50%, -50%);
+}
+details.q summary .chev::after {
+  transform: translate(-50%, -50%) rotate(90deg);
+}
+details.q[open] summary .chev {
+  transform: rotate(45deg);
+}
+details.q p {
+  padding: 0 0 22px;
+  color: var(--ink-card-dim);
+  font-size: 15.5px;
+  max-width: 70ch;
+}
+
+/* ── Final CTA (deepest water) ───────────────────────────────────────────── */
+.final {
+  text-align: center;
+  overflow: hidden;
+}
+.final-glow {
+  position: absolute;
+  left: 50%;
+  top: 30%;
+  width: 620px;
+  height: 620px;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  background: radial-gradient(closest-side, rgba(245, 166, 35, 0.2), transparent 70%);
+  z-index: 0;
+}
+.final .wrap {
+  position: relative;
+  z-index: 1;
+}
+.final-depth {
+  font-size: 12px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--amber);
+  margin-bottom: 18px;
+}
+.final h2 {
+  font-size: clamp(32px, 5vw, 56px);
+  font-weight: 800;
+  margin-bottom: 16px;
+}
+.final p {
+  color: var(--ink-dim);
+  font-size: 18px;
+  margin-bottom: 30px;
+}
+
+/* ── Footer ──────────────────────────────────────────────────────────────── */
+footer {
+  border-top: 1px solid var(--line-soft);
+  padding: 44px 0;
+  color: var(--ink-dim);
+  font-size: 14px;
+  background: var(--abyss);
+}
+.foot-grid {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+.foot-links {
+  display: flex;
+  gap: 24px;
+}
+.foot-links a:hover {
+  color: #fff;
+}
+

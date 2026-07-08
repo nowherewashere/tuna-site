@@ -1,0 +1,81 @@
+/* ── Base ────────────────────────────────────────────────────────────────── */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+html {
+  scroll-behavior: smooth;
+  background: var(--ocean);
+}
+body {
+  font-family: var(--font-body), system-ui, sans-serif;
+  /* One continuous ocean: the gradient spans the whole document, so scrolling
+     literally descends from surface light into the abyss. */
+  background:
+    linear-gradient(
+      180deg,
+      var(--surface) 0%,
+      var(--azure) 16%,
+      var(--azure-deep) 38%,
+      var(--deep) 60%,
+      var(--ocean) 82%,
+      var(--abyss) 100%
+    )
+    no-repeat;
+  color: var(--ink);
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+h1,
+h2 {
+  font-family: var(--font-display), sans-serif;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  line-height: 1.04;
+}
+/* Small headings stay quiet — the display face is spent on the big moments only. */
+h3 {
+  font-family: var(--font-body), sans-serif;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+}
+.mono {
+  font-family: var(--font-mono), monospace;
+}
+a {
+  color: inherit;
+  text-decoration: none;
+}
+.wrap {
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: 0 24px;
+}
+.amber {
+  color: var(--amber);
+}
+:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+/* Skip link — first tab stop, jumps keyboard/SR users past the nav to content. */
+.skip-link {
+  position: fixed;
+  top: -60px;
+  left: 12px;
+  z-index: 100;
+  background: var(--amber);
+  color: var(--amber-ink);
+  padding: 10px 16px;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  transition: top var(--dur-base) var(--ease-out);
+}
+.skip-link:focus {
+  top: 12px;
+}
+

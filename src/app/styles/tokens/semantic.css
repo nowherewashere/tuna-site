@@ -1,0 +1,84 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   Layer 2 — SEMANTIC
+   What the UI *means*. Components point here, never at primitives. This is the
+   single theming seam (a future [data-theme] would override only this block).
+   Also aliases the LEGACY variable names the current stylesheet still uses, so
+   Phase 0 is pixel-for-pixel — Phase 1 migrates consumers to the new names.
+   ════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ── Backgrounds: the depth ramp used by the page gradient ─────────────── */
+  --bg-surface: var(--blue-300);
+  --bg-azure: var(--blue-400);
+  --bg-azure-deep: var(--blue-500);
+  --bg-deep: var(--blue-600);
+  --bg-ocean: var(--blue-700);
+  --bg-abyss: var(--blue-900);
+
+  /* ── Surfaces / fills ─────────────────────────────────────────────────── */
+  /* The "card on ocean" fill that appears ~10× verbatim as rgba(15,44,74,.82). */
+  --fill-card: rgba(15, 44, 74, 0.82);
+  --fill-card-solid: var(--blue-card);
+  --fill-input: var(--blue-card-2);
+  --fill-subtle: var(--alpha-white-05);
+  --fill-accent-soft: rgba(245, 166, 35, 0.1);
+
+  /* ── Text ─────────────────────────────────────────────────────────────── */
+  --text-primary: var(--white);
+  --text-secondary: var(--ink-200); /* dim text on the mid/deep water */
+  --text-on-card: var(--ink-100);
+  /* Lifted from #a9c6e0 → clears WCAG AA (4.5:1) on the card fills. */
+  --text-on-card-dim: #bcd4ea;
+  /* Light-zone ink: for the bright top band (nav / hero / .why) where light
+     inks fail contrast. Consumers adopted in Phase 5 a11y pass. */
+  --text-on-light: #07203a;
+  --text-on-light-dim: #14507d;
+
+  /* ── Accent + status ──────────────────────────────────────────────────── */
+  --accent: var(--amber-400);
+  --accent-hi: var(--amber-300);
+  --accent-ink: var(--amber-ink);
+  --danger: var(--red-500);
+  /* Lighter coral for danger *text* — raw --danger (#e5564b) fails AA (≈3:1) on
+     card fills; this clears 4.5:1. Use --danger for fills/borders, this for text. */
+  --danger-text: #ff9d92;
+  --success: var(--green-500);
+  --hairline: var(--cyan-300);
+
+  /* ── Lines / borders / focus ──────────────────────────────────────────── */
+  --border: var(--alpha-white-14);
+  --border-soft: var(--alpha-white-08);
+  --focus-ring: var(--accent);
+
+  /* ══════════════════════════════════════════════════════════════════════
+     LEGACY ALIASES — every name the current globals.css consumes, mapped onto
+     the layers above with identical resolved values. Removed per-name as
+     Phase 1 migrates each consumer to the semantic tokens.
+     ════════════════════════════════════════════════════════════════════ */
+  --surface: var(--bg-surface);
+  --azure: var(--bg-azure);
+  --azure-deep: var(--bg-azure-deep);
+  --deep: var(--bg-deep);
+  --ocean: var(--bg-ocean);
+  --abyss: var(--bg-abyss);
+  --card: var(--blue-card);
+  --card-2: var(--blue-card-2);
+
+  --amber: var(--accent);
+  --amber-2: var(--accent-hi);
+  /* --amber-ink is a primitive; consumed directly. */
+  --coral: var(--danger);
+  --green: var(--success);
+  --current: var(--hairline);
+
+  --ink: var(--text-primary);
+  --ink-dim: var(--text-secondary);
+  --ink-card: var(--text-on-card);
+  --ink-card-dim: var(--text-on-card-dim);
+
+  --line: var(--border);
+  --line-soft: var(--border-soft);
+
+  --radius: var(--radius-xl);
+  --maxw: var(--container-max);
+}

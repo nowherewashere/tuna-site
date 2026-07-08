@@ -8,6 +8,7 @@ import Turnstile from "@/components/Turnstile";
 import { useTurnstile } from "@/lib/useTurnstile";
 import { invalidateAuth } from "@/lib/useAuth";
 import Icon from "@/components/Icon";
+import { Button, TextField } from "@/components/ui";
 
 type Step = "email" | "code";
 
@@ -69,45 +70,47 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="login">
+    <main className="login">
       <div className="wrap">
         <div className="login-card">
-          <span className="fishmoji">
+          <span className="fishmoji" aria-hidden="true">
             <Icon name="shield" size={40} />
           </span>
           {step === "code" ? (
             <>
-              <h2>Введи код</h2>
+              <h1>Введи код</h1>
               <p className="lead">
                 Мы отправили 6-значный код на <b>{email}</b>. Действует 15 минут.
               </p>
-              <div className="field-row">
-                <input
-                  className="field"
-                  inputMode="numeric"
-                  autoComplete="one-time-code"
-                  maxLength={6}
-                  placeholder="______"
-                  value={code}
-                  onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                  onKeyDown={(e) => e.key === "Enter" && verifyCode()}
-                  disabled={loading}
-                  autoFocus
-                />
-              </div>
-              {error && (
-                <p style={{ color: "var(--coral)", fontSize: 14, marginBottom: 10 }}>{error}</p>
-              )}
-              <button
-                className="btn btn-amber btn-full btn-lg"
+              <TextField
+                label="Код из письма"
+                labelHidden
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                maxLength={6}
+                placeholder="______"
+                value={code}
+                onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                onKeyDown={(e) => e.key === "Enter" && verifyCode()}
+                disabled={loading}
+                autoFocus
+                error={error}
+              />
+              <Button
+                variant="amber"
+                size="lg"
+                full
                 onClick={verifyCode}
-                disabled={loading || code.length !== 6}
+                loading={loading}
+                loadingLabel="Проверяем…"
+                disabled={code.length !== 6}
               >
-                {loading ? "Проверяем…" : "Войти"}
-              </button>
-              <p className="onb-alt" style={{ marginTop: 20 }}>
+                Войти
+              </Button>
+              <p className="onb-alt onb-alt-lg">
                 не пришло?{" "}
-                <a
+                <Button
+                  variant="link"
                   onClick={() => {
                     setStep("email");
                     setCode("");
@@ -115,44 +118,46 @@ export default function LoginPage() {
                   }}
                 >
                   ввести другую почту
-                </a>
+                </Button>
               </p>
             </>
           ) : (
             <>
-              <h2>Вход в Tuna</h2>
+              <h1>Вход в Tuna</h1>
               <p className="lead">Введи почту — пришлём код для входа. Без пароля.</p>
-              <div className="field-row">
-                <input
-                  className="field"
-                  type="email"
-                  placeholder="твой@email.ру"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && requestCode()}
-                  disabled={loading}
-                />
-              </div>
+              <TextField
+                label="Электронная почта"
+                labelHidden
+                type="email"
+                autoComplete="email"
+                placeholder="твой@email.ру"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && requestCode()}
+                disabled={loading}
+                error={error}
+              />
               {ts.siteKey && (
                 <Turnstile key={ts.resetKey} siteKey={ts.siteKey} onVerify={ts.setToken} />
               )}
-              {error && (
-                <p style={{ color: "var(--coral)", fontSize: 14, marginBottom: 10 }}>{error}</p>
-              )}
-              <button
-                className="btn btn-amber btn-full btn-lg"
+              <Button
+                variant="amber"
+                size="lg"
+                full
                 onClick={requestCode}
-                disabled={loading || (ts.required && !ts.token)}
+                loading={loading}
+                loadingLabel="Отправляем…"
+                disabled={ts.required && !ts.token}
               >
-                {loading ? "Отправляем…" : "Получить код"}
-              </button>
-              <p className="onb-alt" style={{ marginTop: 20 }}>
+                Получить код
+              </Button>
+              <p className="onb-alt onb-alt-lg">
                 нет аккаунта? <Link href="/connect">получить доступ</Link>
               </p>
             </>
           )}
         </div>
       </div>
-    </div>
+    </main>
   );
 }
