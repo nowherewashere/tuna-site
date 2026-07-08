@@ -66,16 +66,19 @@ export default function InstallBlock({ subUrl }: { subUrl: string }) {
 
   return (
     <div className="install-block">
-      <div className="plat-picker">
-        {PLATFORMS.map((p) => (
-          <span
-            key={p.id}
-            className={`plat${platform === p.id ? " on" : ""}`}
-            onClick={() => setPlatform(p.id)}
-          >
-            {p.label}
-          </span>
-        ))}
+      <div className="plat-select">
+        <span className="plat-select-label">Устройство — определили автоматически:</span>
+        <select
+          className="field plat-dropdown"
+          value={platform}
+          onChange={(e) => setPlatform(e.target.value as PlatformId)}
+        >
+          {PLATFORMS.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.label}
+            </option>
+          ))}
+        </select>
       </div>
 
       {isTv ? (

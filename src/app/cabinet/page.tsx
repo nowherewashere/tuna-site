@@ -30,16 +30,46 @@ const TABS: { id: Tab; label: string }[] = [
 ];
 const TAB_IDS: Tab[] = TABS.map((t) => t.id);
 
+function plural(n: number, one: string, few: string, many: string): string {
+  const m10 = n % 10;
+  const m100 = n % 100;
+  if (m10 === 1 && m100 !== 11) return one;
+  if (m10 >= 2 && m10 <= 4 && (m100 < 10 || m100 >= 20)) return few;
+  return many;
+}
+
 function durationLabel(days: number): string {
   if (days === 0) return "Навсегда";
-  if (days % 365 === 0) return `${days / 365} г`;
-  if (days % 30 === 0) return `${days / 30} мес`;
-  return `${days} дн`;
+  if (days % 365 === 0) {
+    const y = days / 365;
+    return `${y} ${plural(y, "год", "года", "лет")}`;
+  }
+  if (days % 30 === 0) {
+    const mo = days / 30;
+    return `${mo} ${plural(mo, "месяц", "месяца", "месяцев")}`;
+  }
+  return `${days} ${plural(days, "день", "дня", "дней")}`;
 }
 
 // Pick a display price for a duration: prefer a RUB gateway, else the first.
 function pickPrice(d: DurationOffer) {
   return d.prices.find((p) => p.currency === "RUB") ?? d.prices[0] ?? null;
+}
+
+// Per-month effective price for a duration (for the ladder savings badge).
+function monthlyPrice(d: DurationOffer): number | null {
+  const pr = pickPrice(d);
+  if (!pr || d.days <= 0) return null;
+  const amount = parseFloat(pr.final_amount);
+  return Number.isFinite(amount) ? amount / (d.days / 30) : null;
+}
+
+// Savings vs the plan's shortest duration (the "−30% на 12 месяцев" ladder).
+function ladderSavings(d: DurationOffer, base: DurationOffer): number {
+  const m = monthlyPrice(d);
+  const b = monthlyPrice(base);
+  if (m === null || b === null || b <= 0) return 0;
+  return Math.round((1 - m / b) * 100);
 }
 
 const STATUS_LABEL: Record<string, string> = {
@@ -337,15 +367,20 @@ export default function CabinetPage() {
                 <>
                   <div className="panel-sub">Доступные тарифы и сроки.</div>
                   {offers.plans.map((p) => {
-                    const headPrice = p.durations[0] ? pickPrice(p.durations[0]) : null;
+                    const baseDur = [...p.durations].sort((a, b) => a.days - b.days)[0] ?? null;
+                    const monthlies = p.durations
+                      .map(monthlyPrice)
+                      .filter((m): m is number => m !== null);
+                    const fromMonthly = monthlies.length ? Math.round(Math.min(...monthlies)) : null;
+                    const sym = baseDur ? (pickPrice(baseDur)?.currency_symbol ?? "") : "";
                     return (
                       <div className="plan-card" key={p.id}>
                         <div className="plan-head">
                           <span className="plan-name">🐟 {p.name}</span>
-                          {headPrice && (
+                          {fromMonthly !== null && (
                             <span className="plan-price">
-                              {headPrice.final_amount} {headPrice.currency_symbol}
-                              <small>/{durationLabel(p.durations[0].days)}</small>
+                              от {fromMonthly} {sym}
+                              <small>/месяц</small>
                             </span>
                           )}
                         </div>
@@ -393,8 +428,8 @@ export default function CabinetPage() {
                                 <div className="p">
                                   {pr ? `${pr.final_amount} ${pr.currency_symbol}` : "—"}
                                 </div>
-                                {pr && pr.discount_percent > 0 && (
-                                  <div className="save">−{pr.discount_percent}%</div>
+                                {baseDur && ladderSavings(d, baseDur) > 0 && (
+                                  <div className="save">−{ladderSavings(d, baseDur)}%</div>
                                 )}
                               </div>
                             );
