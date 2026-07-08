@@ -73,9 +73,6 @@ export default function LoginPage() {
     <main className="login">
       <div className="wrap">
         <div className="login-card">
-          <span className="fishmoji" aria-hidden="true">
-            <Icon name="shield" size={40} />
-          </span>
           {step === "code" ? (
             <>
               <h1>Введи код</h1>

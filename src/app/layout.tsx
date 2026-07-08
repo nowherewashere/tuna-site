@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Unbounded, Golos_Text, JetBrains_Mono } from "next/font/google";
+import { Unbounded, Golos_Text, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import ChatwootWidget from "@/components/ChatwootWidget";
 
@@ -22,8 +22,9 @@ const body = Golos_Text({
   display: "swap",
 });
 
-// Technical values / config links / depth readouts: JetBrains Mono.
-const mono = JetBrains_Mono({
+// Technical values / config links / depth readouts: IBM Plex Mono — a refined,
+// Cyrillic-capable monospace for the instrument-style labels, readouts and gauge.
+const mono = IBM_Plex_Mono({
   subsets: ["latin", "cyrillic"],
   weight: ["400", "500"],
   variable: "--font-mono",
