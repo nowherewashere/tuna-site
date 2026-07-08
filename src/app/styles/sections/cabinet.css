@@ -376,13 +376,30 @@
 }
 
 /* Subscription */
+/* Plans as cards: a single column on phone/tablet, sitting side by side once
+   there's desktop room. Spacing comes from the grid gap, not per-card margins. */
+.plan-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-items: flex-start;
+}
 .plan-card {
   background: var(--fill-card);
   border: 1px solid var(--line);
   border-radius: 16px;
   padding: 26px;
   max-width: 520px;
-  margin-bottom: 16px;
+}
+@media (min-width: 900px) {
+  .plan-grid {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+  .plan-grid .plan-card {
+    flex: 1 1 320px;
+    max-width: 440px;
+  }
 }
 .plan-head {
   display: flex;

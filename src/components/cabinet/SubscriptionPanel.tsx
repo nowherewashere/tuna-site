@@ -29,9 +29,12 @@ export default function SubscriptionPanel({
       ) : (
         <>
           <div className="panel-sub">Доступные тарифы и сроки.</div>
+          <div className="plan-grid">
           {offers.plans.map((p) => {
-            const baseDur = [...p.durations].sort((a, b) => a.days - b.days)[0] ?? null;
-            const monthlies = p.durations
+            // Show durations shortest → longest (1 → 12 мес), not raw API order.
+            const durations = [...p.durations].sort((a, b) => a.days - b.days);
+            const baseDur = durations[0] ?? null;
+            const monthlies = durations
               .map(monthlyPrice)
               .filter((m): m is number => m !== null);
             const fromMonthly = monthlies.length ? Math.round(Math.min(...monthlies)) : null;
@@ -82,7 +85,7 @@ export default function SubscriptionPanel({
                   </ul>
                 )}
                 <div className="term-ladder" role="group" aria-label="Срок подписки">
-                  {p.durations.map((d) => {
+                  {durations.map((d) => {
                     const pr = pickPrice(d);
                     const isSel =
                       selected?.planCode === p.public_code && selected?.days === d.days;
@@ -140,6 +143,7 @@ export default function SubscriptionPanel({
               </div>
             );
           })}
+          </div>
           <p className="modal-note">Выбери срок и нажми «Оплатить» — переведём на оплату.</p>
         </>
       )}

@@ -145,6 +145,16 @@ h1.hero-title .amber {
 .hero-tuna-wrap {
   inset: 0;
 }
+/* Idle-glide plane — sits inside the parallax wrappers and carries a slow bob +
+   a hair of rotation pivoted near the fish, so the whole fish + its light drift
+   together like a living swim. Nested transform composes with scroll/pointer;
+   the global prefers-reduced-motion rule stills the animation. */
+.hero-tuna-idle {
+  position: absolute;
+  inset: 0;
+  transform-origin: 76% 46%;
+  animation: hero-glide 11s ease-in-out infinite;
+}
 .hero-tuna {
   position: absolute;
   right: clamp(-140px, -4vw, -24px);
@@ -213,6 +223,15 @@ h1.hero-title .amber {
   }
   to {
     opacity: 0.6;
+  }
+}
+@keyframes hero-glide {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
+  50% {
+    transform: translate3d(-4px, -13px, 0) rotate(-0.8deg);
   }
 }
 

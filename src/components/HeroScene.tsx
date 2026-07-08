@@ -41,12 +41,17 @@ export default function HeroScene() {
       {!reduce && <OceanParticles />}
       <motion.div className="hero-tuna-layer" style={reduce ? undefined : { y: tunaScroll }}>
         <motion.div className="hero-tuna-wrap" style={reduce ? undefined : { x: px, y: py }}>
-          <span className="hero-fish-glow" />
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img className="hero-tuna" src="/assets/images/hero-tuna.png" alt="" />
-          {/* Caustic clipped to the fish silhouette (same PNG as mask) so light
-              ripples across its body instead of floating in front of it. */}
-          <span className="hero-caustic-fish" />
+          {/* Idle glide: the fish and its light drift as one plane — a slow bob +
+              a hair of rotation about the fish, so it reads as a living swim.
+              CSS-driven, so the global prefers-reduced-motion rule stills it. */}
+          <div className="hero-tuna-idle">
+            <span className="hero-fish-glow" />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img className="hero-tuna" src="/assets/images/hero-tuna.png" alt="" />
+            {/* Caustic clipped to the fish silhouette (same PNG as mask) so light
+                ripples across its body instead of floating in front of it. */}
+            <span className="hero-caustic-fish" />
+          </div>
         </motion.div>
       </motion.div>
       <span className="hero-vignette" />
