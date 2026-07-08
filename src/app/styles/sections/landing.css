@@ -554,17 +554,19 @@ details.q p {
 /* ── Final CTA (deepest water) ───────────────────────────────────────────── */
 .final {
   text-align: center;
-  overflow: hidden;
+  overflow: clip; /* clips only the invisible glow edges; no scroll container */
 }
 .final-glow {
   position: absolute;
   left: 50%;
-  top: 30%;
-  width: 620px;
-  height: 620px;
+  top: 50%;
+  width: min(620px, 110%);
+  aspect-ratio: 1 / 1;
   transform: translate(-50%, -50%);
   pointer-events: none;
-  background: radial-gradient(closest-side, rgba(245, 166, 35, 0.2), transparent 70%);
+  /* Fades to transparent well inside its box (66%) so it never shows a hard
+     clipped edge against the section boundary. */
+  background: radial-gradient(closest-side, rgba(245, 166, 35, 0.22), transparent 66%);
   z-index: 0;
 }
 .final .wrap {

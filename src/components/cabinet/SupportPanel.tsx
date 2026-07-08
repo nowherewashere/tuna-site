@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Icon from "@/components/Icon";
+import Icon, { type IconName } from "@/components/Icon";
 import type { SubscriptionInfo } from "@/lib/api";
 
 type ChatMsg = { who: "them" | "me" | "sys"; text: string };
@@ -15,6 +15,12 @@ const INITIAL_MESSAGES: ChatMsg[] = [
     who: "sys",
     text: "Апдейт · сегодня: обновили сервера, стало пробивать стабильнее. Если висит — нажми «Обновить» в Happ.",
   },
+];
+
+const HELP: { icon: IconName; title: string; text: string }[] = [
+  { icon: "refresh", title: "Обнови в Happ", text: "Открой Happ и нажми «Обновить» — подтянет свежие сервера." },
+  { icon: "globe", title: "Смени локацию", text: "Переключи локацию или протокол в Happ — иногда пробивает лучше." },
+  { icon: "phone", title: "Переподключись", text: "Отвяжи устройство во вкладке «Устройства» и добавь профиль заново." },
 ];
 
 export default function SupportPanel({
@@ -44,35 +50,23 @@ export default function SupportPanel({
         Не подключается? Чаще всего помогает — попробуй сам за минуту. Не вышло — напиши в чат.
       </div>
 
-      <div className="help-grid">
-        <div className="help-card">
-          <span className="help-ic">
-            <Icon name="refresh" size={20} />
-          </span>
-          <div>
-            <b>Обнови в Happ</b>
-            <p>Открой Happ и нажми «Обновить» — подтянет свежие сервера.</p>
-          </div>
-        </div>
-        <div className="help-card">
-          <span className="help-ic">
-            <Icon name="globe" size={20} />
-          </span>
-          <div>
-            <b>Смени локацию</b>
-            <p>Переключи локацию или протокол в Happ — иногда пробивает лучше.</p>
-          </div>
-        </div>
-        <div className="help-card">
-          <span className="help-ic">
-            <Icon name="phone" size={20} />
-          </span>
-          <div>
-            <b>Переподключись</b>
-            <p>Отвяжи устройство во вкладке «Устройства» и добавь профиль заново.</p>
-          </div>
-        </div>
-      </div>
+      <section className="console" aria-label="Быстрая помощь">
+        <div className="console-corner console-corner-tl" aria-hidden="true" />
+        <div className="console-corner console-corner-tr" aria-hidden="true" />
+        <ul className="help-rows">
+          {HELP.map((h) => (
+            <li className="help-row" key={h.title}>
+              <span className="help-ic">
+                <Icon name={h.icon} size={20} />
+              </span>
+              <div className="help-body">
+                <b>{h.title}</b>
+                <p>{h.text}</p>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </section>
 
       <div className="chat-box">
         <div className="chat-head">

@@ -81,28 +81,29 @@ export default function SubscriptionPanel({
                     </li>
                   </ul>
                 )}
-                <div className="term-row">
+                <div className="term-ladder" role="group" aria-label="Срок подписки">
                   {p.durations.map((d) => {
                     const pr = pickPrice(d);
                     const isSel =
                       selected?.planCode === p.public_code && selected?.days === d.days;
+                    const save = baseDur ? ladderSavings(d, baseDur) : 0;
                     return (
-                      <div
+                      <button
+                        type="button"
                         key={d.days}
                         className={`term${isSel ? " on" : ""}`}
+                        aria-pressed={isSel}
                         onClick={() => {
                           setSelected({ planCode: p.public_code, days: d.days });
                           clearPayError();
                         }}
                       >
-                        <div className="t">{durationLabel(d.days)}</div>
-                        <div className="p">
+                        <span className="term-t">{durationLabel(d.days)}</span>
+                        <span className="term-p">
                           {pr ? `${pr.final_amount} ${pr.currency_symbol}` : "—"}
-                        </div>
-                        {baseDur && ladderSavings(d, baseDur) > 0 && (
-                          <div className="save">−{ladderSavings(d, baseDur)}%</div>
-                        )}
-                      </div>
+                        </span>
+                        {save > 0 && <span className="term-save">−{save}%</span>}
+                      </button>
                     );
                   })}
                 </div>

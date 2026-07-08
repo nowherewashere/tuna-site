@@ -22,6 +22,11 @@
   --fill-input: var(--blue-card-2);
   --fill-subtle: var(--alpha-white-05);
   --fill-accent-soft: rgba(245, 166, 35, 0.1);
+  /* Recessed "console" surface — darker than the page so it reads as carved into
+     the deep, not a bright panel pasted on top (see cabinet redesign).
+     Plain rgba (= --bg-abyss #05101f @ 62%): color-mix inside a custom-property
+     value trips the Tailwind v4 minifier and drops the whole token :root. */
+  --fill-console: rgba(5, 16, 31, 0.62);
 
   /* ── Text ─────────────────────────────────────────────────────────────── */
   --text-primary: var(--white);

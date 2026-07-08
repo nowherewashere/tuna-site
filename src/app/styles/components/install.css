@@ -69,6 +69,10 @@
   font-weight: 600;
   font-size: 15px;
 }
+.istep-body {
+  flex: 1;
+  min-width: 0; /* let the long sub-URL row truncate instead of widening the layout */
+}
 .istep-body h4 {
   font-family: var(--font-body), sans-serif;
   font-size: 17px;

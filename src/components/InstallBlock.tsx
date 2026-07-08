@@ -34,7 +34,15 @@ function SubCopyRow({ subUrl }: { subUrl: string }) {
   const [copied, setCopied] = useState(false);
   return (
     <div className="copy-link" style={{ marginTop: 10 }}>
-      <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+      <span
+        style={{
+          flex: 1,
+          minWidth: 0,
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          whiteSpace: "nowrap",
+        }}
+      >
         {subUrl || "—"}
       </span>
       <span
@@ -156,7 +164,7 @@ export default function InstallBlock({ subUrl }: { subUrl: string }) {
               <h4>Добавь Tuna</h4>
               <p>Одним тапом — настроится само.</p>
               <a className="btn btn-amber" style={{ marginTop: 10 }} href={deepLink || undefined}>
-<Icon name="bolt" size={17} /> Добавить подписку в Happ
+                <Icon name="bolt" size={17} /> Добавить подписку в Happ
               </a>
               <SubCopyRow subUrl={subUrl} />
             </div>
