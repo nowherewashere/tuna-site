@@ -2,7 +2,16 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { api, type Device, type Me, type SubscriptionInfo } from "@/lib/api";
+import {
+  api,
+  type Device,
+  type DurationOffer,
+  type Me,
+  type PlanOffer,
+  type ReferralProgram,
+  type SubscriptionInfo,
+  type SubscriptionOffers,
+} from "@/lib/api";
 import InstallBlock from "@/components/InstallBlock";
 
 type Tab = "overview" | "devices" | "sub" | "ref" | "support";
@@ -16,12 +25,17 @@ const TABS: { id: Tab; label: string }[] = [
   { id: "support", label: "Поддержка" },
 ];
 
-const TERMS = [
-  { t: "1 мес", p: "249 ₽", save: null },
-  { t: "3 мес", p: "674 ₽", save: "−10%" },
-  { t: "6 мес", p: "1199 ₽", save: "−20%" },
-  { t: "12 мес", p: "2099 ₽", save: "−30%" },
-];
+function durationLabel(days: number): string {
+  if (days === 0) return "Навсегда";
+  if (days % 365 === 0) return `${days / 365} г`;
+  if (days % 30 === 0) return `${days / 30} мес`;
+  return `${days} дн`;
+}
+
+// Pick a display price for a duration: prefer a RUB gateway, else the first.
+function pickPrice(d: DurationOffer) {
+  return d.prices.find((p) => p.currency === "RUB") ?? d.prices[0] ?? null;
+}
 
 const STATUS_LABEL: Record<string, string> = {
   ACTIVE: "Активна",
@@ -76,6 +90,8 @@ export default function CabinetPage() {
   const [sub, setSub] = useState<SubscriptionInfo | null>(null);
   const [devices, setDevices] = useState<Device[] | null>(null);
   const [maxDevices, setMaxDevices] = useState<number | null>(null);
+  const [offers, setOffers] = useState<SubscriptionOffers | null>(null);
+  const [referral, setReferral] = useState<ReferralProgram | null>(null);
   const [loading, setLoading] = useState(true);
   const [authed, setAuthed] = useState(true);
 
@@ -91,6 +107,13 @@ export default function CabinetPage() {
         setLoading(false);
       }
     })();
+  }, []);
+
+  // Plans/prices and referral come from the backend (403 for referral when the
+  // user has no active subscription — handled by falling back to null).
+  useEffect(() => {
+    api.subscriptionOffers().then(setOffers).catch(() => setOffers(null));
+    api.referralProgram().then(setReferral).catch(() => setReferral(null));
   }, []);
 
   function loadDevices() {
@@ -137,6 +160,11 @@ export default function CabinetPage() {
 
   const displayName = me?.username || me?.email || me?.name || "user";
   const trafficLimit = sub && sub.traffic_limit === 0 ? "∞" : sub ? `${sub.traffic_limit} ГБ` : "—";
+
+  const plan: PlanOffer | null = offers?.plans?.[0] ?? null;
+  const durations: DurationOffer[] = plan?.durations ?? [];
+  const selDuration =
+    durations.length > 0 ? durations[Math.min(term, durations.length - 1)] : null;
 
   return (
     <div className="cab-wrap" ref={topRef}>
@@ -268,75 +296,133 @@ export default function CabinetPage() {
           {tab === "sub" && (
             <div className="panel">
               <div className="panel-title">Подписка</div>
-              <div className="panel-sub">Тариф Standard. Выбери срок — чем длиннее, тем выгоднее.</div>
-              <div className="plan-card">
-                <div className="plan-head">
-                  <span className="plan-name">🐟 Standard</span>
-                  <span className="plan-price">
-                    249 ₽<small>/мес</small>
-                  </span>
+              {!plan || durations.length === 0 ? (
+                <div className="card">
+                  Тарифы скоро появятся здесь. Пока пользуйся пробным периодом 🐟
                 </div>
-                <div className="plan-amber-line" />
-                <ul className="plan-feats">
-                  <li>
-                    <span className="ok">✓</span> Российские сервисы — как будто без VPN
-                  </li>
-                  <li>
-                    <span className="ok">✓</span> До 3 устройств
-                  </li>
-                  <li>
-                    <span className="ok">✓</span> Высокая скорость по всей России
-                  </li>
-                </ul>
-                <div className="term-row">
-                  {TERMS.map((tm, i) => (
-                    <div
-                      key={tm.t}
-                      className={`term${term === i ? " on" : ""}`}
-                      onClick={() => setTerm(i)}
-                    >
-                      <div className="t">{tm.t}</div>
-                      <div className="p">{tm.p}</div>
-                      {tm.save && <div className="save">{tm.save}</div>}
+              ) : (
+                <>
+                  <div className="panel-sub">
+                    Тариф {plan.name}. Выбери срок — чем длиннее, тем выгоднее.
+                  </div>
+                  <div className="plan-card">
+                    <div className="plan-head">
+                      <span className="plan-name">🐟 {plan.name}</span>
+                      {(() => {
+                        const p0 = pickPrice(durations[0]);
+                        return p0 ? (
+                          <span className="plan-price">
+                            {p0.final_amount} {p0.currency_symbol}
+                            <small>/{durationLabel(durations[0].days)}</small>
+                          </span>
+                        ) : null;
+                      })()}
                     </div>
-                  ))}
-                </div>
-                <button className="btn btn-amber btn-full">Оплатить</button>
-                <p className="modal-note">Оплата скоро · бета</p>
-              </div>
+                    <div className="plan-amber-line" />
+                    <ul className="plan-feats">
+                      <li>
+                        <span className="ok">✓</span> Российские сервисы — как будто без VPN
+                      </li>
+                      <li>
+                        <span className="ok">✓</span> До {plan.device_limit} устройств
+                      </li>
+                      <li>
+                        <span className="ok">✓</span>{" "}
+                        {plan.traffic_limit === 0
+                          ? "Безлимитный трафик"
+                          : `${plan.traffic_limit} ГБ трафика`}
+                      </li>
+                    </ul>
+                    <div className="term-row">
+                      {durations.map((d, i) => {
+                        const pr = pickPrice(d);
+                        return (
+                          <div
+                            key={d.days}
+                            className={`term${term === i ? " on" : ""}`}
+                            onClick={() => setTerm(i)}
+                          >
+                            <div className="t">{durationLabel(d.days)}</div>
+                            <div className="p">
+                              {pr ? `${pr.final_amount} ${pr.currency_symbol}` : "—"}
+                            </div>
+                            {pr && pr.discount_percent > 0 && (
+                              <div className="save">−{pr.discount_percent}%</div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <button className="btn btn-amber btn-full">
+                      Оплатить
+                      {selDuration && pickPrice(selDuration)
+                        ? ` · ${pickPrice(selDuration)!.final_amount} ${pickPrice(selDuration)!.currency_symbol}`
+                        : ""}
+                    </button>
+                    <p className="modal-note">Оплата скоро · бета</p>
+                  </div>
+                </>
+              )}
             </div>
           )}
 
           {tab === "ref" && (
             <div className="panel">
               <div className="panel-title">Приглашай друзей</div>
-              <div className="panel-sub">
-                За каждого приглашённого — бонусные дни и баллы. Другу — тоже бонус по твоей ссылке.
-              </div>
-              <div className="ref-hero">
-                <div className="ref-link-box">
-                  <div className="lbl">Ссылка для бота</div>
-                  <div className="ref-link">
-                    <input
-                      readOnly
-                      value={
-                        me?.telegram_id
-                          ? "https://t.me/tunavpn_bot?start=invite"
-                          : "Привяжи Telegram, чтобы получить ссылку для бота"
-                      }
-                    />
-                    <button className="btn btn-ghost">копировать</button>
-                  </div>
+              {!referral ? (
+                <div className="card">
+                  Реферальная программа доступна при активной подписке. Оформи доступ — и приглашай
+                  друзей за бонусы 🐟
                 </div>
-                <div className="ref-link-box">
-                  <div className="lbl">Ссылка для сайта</div>
-                  <div className="ref-link">
-                    <input readOnly value="https://tuna-vpn.com/r/…" />
-                    <button className="btn btn-ghost">копировать</button>
+              ) : (
+                <>
+                  <div className="panel-sub">
+                    За каждого приглашённого — бонус по твоей ссылке. Твой код:{" "}
+                    <b>{referral.referral_code}</b>.
                   </div>
-                </div>
-              </div>
-              <p className="ref-note">Статистика приглашений и начислений появится здесь. Бета.</p>
+                  <div className="ref-hero">
+                    <div className="ref-link-box">
+                      <div className="lbl">Ссылка для бота</div>
+                      <div className="ref-link">
+                        <input readOnly value={referral.bot_referral_url} />
+                        <button
+                          className="btn btn-ghost"
+                          onClick={() => navigator.clipboard?.writeText(referral.bot_referral_url)}
+                        >
+                          копировать
+                        </button>
+                      </div>
+                    </div>
+                    {referral.site_referral_url && (
+                      <div className="ref-link-box">
+                        <div className="lbl">Ссылка для сайта</div>
+                        <div className="ref-link">
+                          <input readOnly value={referral.site_referral_url} />
+                          <button
+                            className="btn btn-ghost"
+                            onClick={() =>
+                              referral.site_referral_url &&
+                              navigator.clipboard?.writeText(referral.site_referral_url)
+                            }
+                          >
+                            копировать
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  <div className="ref-stats">
+                    <div className="ref-stat">
+                      <div className="num">{referral.invited_count}</div>
+                      <div className="cap">Приглашено</div>
+                    </div>
+                    <div className="ref-stat">
+                      <div className="num">{referral.invited_with_payment_count}</div>
+                      <div className="cap">Из них платят</div>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           )}
 

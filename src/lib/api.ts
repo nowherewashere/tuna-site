@@ -105,6 +105,54 @@ export interface AuthResult {
   refresh_expires_at: string;
 }
 
+export interface ReferralProgram {
+  enabled: boolean;
+  referral_code: string;
+  bot_referral_url: string;
+  site_referral_url: string | null;
+  invited_count: number;
+  invited_with_payment_count: number;
+  reward_type: string;
+  reward_strategy: string;
+  accrual_strategy: string;
+  max_level: number;
+  reward_levels: { level: number; value: number }[];
+}
+
+export interface DurationPrice {
+  gateway_type: string;
+  currency: string;
+  currency_symbol: string;
+  original_amount: string;
+  discount_percent: number;
+  final_amount: string;
+  is_free: boolean;
+}
+
+export interface DurationOffer {
+  days: number;
+  prices: DurationPrice[];
+}
+
+export interface PlanOffer {
+  id: number;
+  public_code: string;
+  name: string;
+  description: string | null;
+  traffic_limit: number;
+  device_limit: number;
+  type: string;
+  recommended_purchase_type: string;
+  durations: DurationOffer[];
+}
+
+export interface SubscriptionOffers {
+  gateways: { gateway_type: string; currency: string; currency_symbol: string }[];
+  plans: PlanOffer[];
+  has_current_subscription: boolean;
+  current_subscription_status: string | null;
+}
+
 export interface OnboardingConfig {
   happ_import_template: string;
   refresh_video_url: string | null;
@@ -133,4 +181,8 @@ export const api = {
 
   // Canonical Happ install links (single source: the bot's OnboardingConfig).
   onboardingConfig: () => req<OnboardingConfig>("GET", "/onboarding/config"),
+
+  // Plans/prices and referral program — both live in the backend, never hardcoded.
+  subscriptionOffers: () => req<SubscriptionOffers>("GET", "/subscription/offers"),
+  referralProgram: () => req<ReferralProgram>("GET", "/referral/program"),
 };
