@@ -312,17 +312,31 @@ export default function CabinetPage() {
                           )}
                         </div>
                         <div className="plan-amber-line" />
-                        <ul className="plan-feats">
-                          <li>
-                            <span className="ok">✓</span> До {p.device_limit} устройств
-                          </li>
-                          <li>
-                            <span className="ok">✓</span>{" "}
-                            {p.traffic_limit === 0
-                              ? "Безлимитный трафик"
-                              : `${p.traffic_limit} ГБ трафика`}
-                          </li>
-                        </ul>
+                        {p.description ? (
+                          <ul className="plan-feats">
+                            {p.description
+                              .split("\n")
+                              .map((line) => line.trim())
+                              .filter(Boolean)
+                              .map((line, i) => (
+                                <li key={i}>
+                                  <span className="ok">✓</span> {line}
+                                </li>
+                              ))}
+                          </ul>
+                        ) : (
+                          <ul className="plan-feats">
+                            <li>
+                              <span className="ok">✓</span> До {p.device_limit} устройств
+                            </li>
+                            <li>
+                              <span className="ok">✓</span>{" "}
+                              {p.traffic_limit === 0
+                                ? "Безлимитный трафик"
+                                : `${p.traffic_limit} ГБ трафика`}
+                            </li>
+                          </ul>
+                        )}
                         <div className="term-row">
                           {p.durations.map((d) => {
                             const pr = pickPrice(d);
