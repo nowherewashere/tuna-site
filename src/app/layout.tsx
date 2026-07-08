@@ -1,26 +1,29 @@
 import type { Metadata } from "next";
-import { Inter, JetBrains_Mono, Manrope } from "next/font/google";
+import { Unbounded, Golos_Text, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 
-// Headlines: Manrope — clean, modern, full Cyrillic support.
-const display = Manrope({
+// Display / headlines: Unbounded — a wide, geometric, Cyrillic-first face. Used
+// big and tight; it carries the whole personality of the brand, so nothing else
+// competes with it.
+const display = Unbounded({
   subsets: ["latin", "cyrillic"],
-  weight: ["600", "700", "800"],
+  weight: ["500", "600", "700", "800"],
   variable: "--font-display",
   display: "swap",
 });
 
-// Body / UI: Inter.
-const body = Inter({
+// Body / UI: Golos Text — a Russian-native humanist grotesque (Paratype). Quiet
+// on purpose so the display face and the amber signal do the talking.
+const body = Golos_Text({
   subsets: ["latin", "cyrillic"],
   weight: ["400", "500", "600"],
   variable: "--font-body",
   display: "swap",
 });
 
-// Technical values / config links: JetBrains Mono.
+// Technical values / config links / depth readouts: JetBrains Mono.
 const mono = JetBrains_Mono({
-  subsets: ["latin"],
+  subsets: ["latin", "cyrillic"],
   weight: ["400", "500"],
   variable: "--font-mono",
   display: "swap",
