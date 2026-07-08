@@ -233,14 +233,14 @@
   font-size: var(--text-md);
   color: var(--ink-card-dim);
 }
-.gauge {
+.tmeter {
   position: relative;
   height: 10px;
   border-radius: var(--radius-pill);
   background: var(--fill-subtle);
   overflow: hidden;
 }
-.gauge-fill {
+.tmeter-fill {
   display: block;
   height: 100%;
   border-radius: var(--radius-pill);
@@ -248,7 +248,7 @@
   transition: width var(--dur-reveal) var(--ease-out);
 }
 /* Scale ticks at 25 / 50 / 75 / 100 %. */
-.gauge::after {
+.tmeter::after {
   content: "";
   position: absolute;
   inset: 0;
@@ -259,10 +259,10 @@
     var(--border-soft) calc(25% - 1px) 25%
   );
 }
-.gauge-warn .gauge-fill {
+.tmeter-warn .tmeter-fill {
   background: linear-gradient(90deg, #ff9d74, var(--danger));
 }
-.gauge-flow .gauge-fill {
+.tmeter-flow .tmeter-fill {
   background: var(--fill-accent-soft);
 }
 

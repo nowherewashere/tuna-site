@@ -32,7 +32,7 @@ const mono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: "Tuna VPN — открытый интернет за минуту",
   description:
-    "Рассекаем волны блокировок. VPN работает, пока другие отваливаются. Пробный период 24 часа, без карты, до 3 устройств.",
+    "Рассекаем волны блокировок. VPN работает, пока другие отваливаются. Пробный период 3 дня, без карты.",
 };
 
 export default function RootLayout({

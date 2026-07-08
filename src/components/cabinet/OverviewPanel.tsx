@@ -97,7 +97,7 @@ export default function OverviewPanel({
             </span>
           </div>
           <div
-            className={`gauge${isUnlimited ? " gauge-flow" : ""}${nearLimit ? " gauge-warn" : ""}`}
+            className={`tmeter${isUnlimited ? " tmeter-flow" : ""}${nearLimit ? " tmeter-warn" : ""}`}
             role="img"
             aria-label={
               isUnlimited
@@ -105,7 +105,7 @@ export default function OverviewPanel({
                 : `Использовано ${trafficPct}% трафика`
             }
           >
-            <span className="gauge-fill" style={{ width: isUnlimited ? "100%" : `${trafficPct}%` }} />
+            <span className="tmeter-fill" style={{ width: isUnlimited ? "100%" : `${trafficPct}%` }} />
           </div>
         </div>
 
