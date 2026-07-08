@@ -65,13 +65,8 @@ export default function SupportPanel({
         {widgetUrl ? (
           <iframe className="chat-frame" src={widgetUrl} title="Чат поддержки" />
         ) : (
-          <p className="chat-note" style={{ paddingTop: 16 }}>
-            Чат временно недоступен. Попробуй позже.
-          </p>
+          <p className="chat-fallback">Чат временно недоступен. Попробуй позже.</p>
         )}
-        <p className="chat-note">
-          <Icon name="shield" size={15} /> Чат работает прямо здесь, без Telegram.
-        </p>
       </div>
     </div>
   );

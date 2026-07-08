@@ -455,7 +455,6 @@
   border: 1px solid var(--line);
   border-radius: 16px;
   overflow: hidden;
-  max-width: 640px;
 }
 .chat-head {
   display: flex;
@@ -501,14 +500,11 @@
   height: 520px;
   border: 0;
 }
-.chat-note {
-  font-size: 12px;
+.chat-fallback {
+  font-size: 14px;
   color: var(--ink-card-dim);
-  padding: 0 20px 16px;
-}
-.chat-note svg {
-  vertical-align: -3px;
-  color: var(--amber);
+  padding: 24px 20px;
+  margin: 0;
 }
 .eyebrow-legal {
   display: inline-flex;
