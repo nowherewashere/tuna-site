@@ -115,12 +115,20 @@ export default function CabinetPage() {
     })();
   }, []);
 
-  // Plans/prices and referral come from the backend (403 for referral when the
-  // user has no active subscription — handled by falling back to null).
+  // Lazy per-tab loading: a tab's data is fetched only when it is first opened,
+  // then cached in state for the session. Keeps the heavy offers pricing/discount
+  // computation and the referral endpoint off unrelated tabs and off every reload.
+  const fetchedTabs = useRef<Set<Tab>>(new Set());
   useEffect(() => {
-    api.subscriptionOffers().then(setOffers).catch(() => setOffers(null));
-    api.referralProgram().then(setReferral).catch(() => setReferral(null));
-  }, []);
+    if (tab === "sub" && !fetchedTabs.current.has("sub")) {
+      fetchedTabs.current.add("sub");
+      api.subscriptionOffers().then(setOffers).catch(() => {});
+    }
+    if (tab === "ref" && !fetchedTabs.current.has("ref")) {
+      fetchedTabs.current.add("ref");
+      api.referralProgram().then(setReferral).catch(() => {});
+    }
+  }, [tab]);
 
   function loadDevices() {
     api
