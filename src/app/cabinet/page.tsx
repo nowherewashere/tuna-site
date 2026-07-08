@@ -7,7 +7,6 @@ import {
   type Device,
   type DurationOffer,
   type Me,
-  type PlanOffer,
   type ReferralProgram,
   type SubscriptionInfo,
   type SubscriptionOffers,
@@ -74,7 +73,6 @@ function platformEmoji(p?: string | null): string {
 export default function CabinetPage() {
   const router = useRouter();
   const [tab, setTab] = useHashTab(TAB_IDS, "overview");
-  const [term, setTerm] = useState(0);
   const [messages, setMessages] = useState<ChatMsg[]>([
     {
       who: "them",
@@ -162,11 +160,6 @@ export default function CabinetPage() {
 
   const displayName = me?.username || me?.email || me?.name || "user";
   const trafficLimit = sub && sub.traffic_limit === 0 ? "∞" : sub ? `${sub.traffic_limit} ГБ` : "—";
-
-  const plan: PlanOffer | null = offers?.plans?.[0] ?? null;
-  const durations: DurationOffer[] = plan?.durations ?? [];
-  const selDuration =
-    durations.length > 0 ? durations[Math.min(term, durations.length - 1)] : null;
 
   return (
     <div className="cab-wrap" ref={topRef}>
@@ -298,71 +291,58 @@ export default function CabinetPage() {
           {tab === "sub" && (
             <div className="panel">
               <div className="panel-title">Подписка</div>
-              {!plan || durations.length === 0 ? (
+              {!offers || offers.plans.length === 0 ? (
                 <div className="card">
                   Тарифы скоро появятся здесь. Пока пользуйся пробным периодом 🐟
                 </div>
               ) : (
                 <>
-                  <div className="panel-sub">
-                    Тариф {plan.name}. Выбери срок — чем длиннее, тем выгоднее.
-                  </div>
-                  <div className="plan-card">
-                    <div className="plan-head">
-                      <span className="plan-name">🐟 {plan.name}</span>
-                      {(() => {
-                        const p0 = pickPrice(durations[0]);
-                        return p0 ? (
-                          <span className="plan-price">
-                            {p0.final_amount} {p0.currency_symbol}
-                            <small>/{durationLabel(durations[0].days)}</small>
-                          </span>
-                        ) : null;
-                      })()}
-                    </div>
-                    <div className="plan-amber-line" />
-                    <ul className="plan-feats">
-                      <li>
-                        <span className="ok">✓</span> Российские сервисы — как будто без VPN
-                      </li>
-                      <li>
-                        <span className="ok">✓</span> До {plan.device_limit} устройств
-                      </li>
-                      <li>
-                        <span className="ok">✓</span>{" "}
-                        {plan.traffic_limit === 0
-                          ? "Безлимитный трафик"
-                          : `${plan.traffic_limit} ГБ трафика`}
-                      </li>
-                    </ul>
-                    <div className="term-row">
-                      {durations.map((d, i) => {
-                        const pr = pickPrice(d);
-                        return (
-                          <div
-                            key={d.days}
-                            className={`term${term === i ? " on" : ""}`}
-                            onClick={() => setTerm(i)}
-                          >
-                            <div className="t">{durationLabel(d.days)}</div>
-                            <div className="p">
-                              {pr ? `${pr.final_amount} ${pr.currency_symbol}` : "—"}
-                            </div>
-                            {pr && pr.discount_percent > 0 && (
-                              <div className="save">−{pr.discount_percent}%</div>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                    <button className="btn btn-amber btn-full">
-                      Оплатить
-                      {selDuration && pickPrice(selDuration)
-                        ? ` · ${pickPrice(selDuration)!.final_amount} ${pickPrice(selDuration)!.currency_symbol}`
-                        : ""}
-                    </button>
-                    <p className="modal-note">Оплата скоро · бета</p>
-                  </div>
+                  <div className="panel-sub">Доступные тарифы и сроки.</div>
+                  {offers.plans.map((p) => {
+                    const headPrice = p.durations[0] ? pickPrice(p.durations[0]) : null;
+                    return (
+                      <div className="plan-card" key={p.id}>
+                        <div className="plan-head">
+                          <span className="plan-name">🐟 {p.name}</span>
+                          {headPrice && (
+                            <span className="plan-price">
+                              {headPrice.final_amount} {headPrice.currency_symbol}
+                              <small>/{durationLabel(p.durations[0].days)}</small>
+                            </span>
+                          )}
+                        </div>
+                        <div className="plan-amber-line" />
+                        <ul className="plan-feats">
+                          <li>
+                            <span className="ok">✓</span> До {p.device_limit} устройств
+                          </li>
+                          <li>
+                            <span className="ok">✓</span>{" "}
+                            {p.traffic_limit === 0
+                              ? "Безлимитный трафик"
+                              : `${p.traffic_limit} ГБ трафика`}
+                          </li>
+                        </ul>
+                        <div className="term-row">
+                          {p.durations.map((d) => {
+                            const pr = pickPrice(d);
+                            return (
+                              <div key={d.days} className="term">
+                                <div className="t">{durationLabel(d.days)}</div>
+                                <div className="p">
+                                  {pr ? `${pr.final_amount} ${pr.currency_symbol}` : "—"}
+                                </div>
+                                {pr && pr.discount_percent > 0 && (
+                                  <div className="save">−{pr.discount_percent}%</div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
+                  <p className="modal-note">Оплата скоро · бета</p>
                 </>
               )}
             </div>
