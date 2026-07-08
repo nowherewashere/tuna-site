@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { api, type Device, type Me, type SubscriptionInfo } from "@/lib/api";
+import InstallBlock from "@/components/InstallBlock";
 
 type Tab = "overview" | "devices" | "sub" | "ref" | "support";
 type ChatMsg = { who: "them" | "me" | "sys"; text: string };
@@ -15,7 +16,6 @@ const TABS: { id: Tab; label: string }[] = [
   { id: "support", label: "Поддержка" },
 ];
 
-const CLIENTS = ["Happ · рекоменд.", "FlClashX", "Prizrak-Box"];
 const TERMS = [
   { t: "1 мес", p: "249 ₽", save: null },
   { t: "3 мес", p: "674 ₽", save: "−10%" },
@@ -58,7 +58,6 @@ function platformEmoji(p?: string | null): string {
 export default function CabinetPage() {
   const router = useRouter();
   const [tab, setTab] = useState<Tab>("overview");
-  const [client, setClient] = useState(0);
   const [term, setTerm] = useState(0);
   const [messages, setMessages] = useState<ChatMsg[]>([
     {
@@ -214,42 +213,8 @@ export default function CabinetPage() {
                   <div className="card">
                     <div className="install-head">
                       <h4>Установка</h4>
-                      <span className="platform">iPhone ▾</span>
                     </div>
-                    <div className="client-row">
-                      {CLIENTS.map((c, i) => (
-                        <span
-                          key={c}
-                          className={`client${client === i ? " on" : ""}`}
-                          onClick={() => setClient(i)}
-                        >
-                          {c}
-                        </span>
-                      ))}
-                    </div>
-                    <a
-                      className="btn btn-amber btn-full"
-                      href={sub.url ? `happ://add/${sub.url}` : undefined}
-                    >
-                      ⚡ Добавить подписку в Happ
-                    </a>
-                    <div className="copy-link">
-                      <span
-                        style={{
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          whiteSpace: "nowrap",
-                        }}
-                      >
-                        {sub.url}
-                      </span>
-                      <span
-                        className="amber"
-                        onClick={() => sub.url && navigator.clipboard?.writeText(sub.url)}
-                      >
-                        копировать
-                      </span>
-                    </div>
+                    <InstallBlock subUrl={sub.url} />
                   </div>
                 </>
               )}

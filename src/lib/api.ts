@@ -105,6 +105,14 @@ export interface AuthResult {
   refresh_expires_at: string;
 }
 
+export interface OnboardingConfig {
+  happ_import_template: string;
+  refresh_video_url: string | null;
+  store_links: { ios: string; android: string; windows: string; mac: string; linux: string };
+  store_link_ios_ru: string;
+  tv: { web_import_url: string; faq: { apple_tv: string; android_tv: string } };
+}
+
 // ── Calls ─────────────────────────────────────────────────────────────────────
 
 export const api = {
@@ -122,4 +130,7 @@ export const api = {
   deleteDevice: (hwid: string) =>
     req<{ deleted: boolean }>("DELETE", `/subscription/devices/${encodeURIComponent(hwid)}`),
   activateTrial: () => req<TrialActivate>("POST", "/subscription/trial"),
+
+  // Canonical Happ install links (single source: the bot's OnboardingConfig).
+  onboardingConfig: () => req<OnboardingConfig>("GET", "/onboarding/config"),
 };
