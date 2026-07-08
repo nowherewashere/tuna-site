@@ -1,21 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import Icon, { type IconName } from "@/components/Icon";
 import type { SubscriptionInfo } from "@/lib/api";
-
-type ChatMsg = { who: "them" | "me" | "sys"; text: string };
-
-const INITIAL_MESSAGES: ChatMsg[] = [
-  {
-    who: "them",
-    text: "Привет! Опиши, что не работает — поможем. К сообщению уже приложены твой ID и тариф, так что сразу видим контекст.",
-  },
-  {
-    who: "sys",
-    text: "Апдейт · сегодня: обновили сервера, стало пробивать стабильнее. Если висит — нажми «Обновить» в Happ.",
-  },
-];
 
 const HELP: { icon: IconName; title: string; text: string }[] = [
   { icon: "refresh", title: "Обнови в Happ", text: "Открой Happ и нажми «Обновить» — подтянет свежие сервера." },
@@ -30,17 +16,10 @@ export default function SupportPanel({
   displayName: string;
   sub: SubscriptionInfo | null;
 }) {
-  const [messages, setMessages] = useState<ChatMsg[]>(INITIAL_MESSAGES);
-  const [draft, setDraft] = useState("");
-
-  function sendMsg() {
-    const v = draft.trim();
-    if (!v) return;
-    setMessages((m) => [...m, { who: "me", text: v }]);
-    setDraft("");
-    setTimeout(() => {
-      setMessages((m) => [...m, { who: "them", text: "Принял, смотрю (демо-ответ)" }]);
-    }, 700);
+  function openChat() {
+    // Enrich the conversation with plan context for the agent, then open Chatwoot.
+    window.$chatwoot?.setCustomAttributes?.({ plan: sub?.plan_name ?? "—" });
+    window.$chatwoot?.toggle?.("open");
   }
 
   return (
@@ -78,28 +57,14 @@ export default function SupportPanel({
             {displayName} · {sub?.plan_name ?? "—"}
           </span>
         </div>
-        <div className="chat-log">
-          {messages.map((m, i) => (
-            <div key={i} className={`msg ${m.who}`}>
-              {m.who === "sys" ? <span>{m.text}</span> : <div className="bubble">{m.text}</div>}
-            </div>
-          ))}
-        </div>
-        <div className="chat-input">
-          <input
-            className="field"
-            placeholder="Опиши проблему…"
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && sendMsg()}
-          />
-          <button className="btn btn-amber" onClick={sendMsg}>
-            Отправить
+        <div className="chat-cta">
+          <p>Опиши проблему в чате — приложим твой ID и тариф, ответим прямо здесь.</p>
+          <button className="btn btn-amber" onClick={openChat}>
+            <Icon name="message" size={16} /> Открыть чат
           </button>
         </div>
         <p className="chat-note">
-          <Icon name="shield" size={15} /> Чат работает прямо здесь, без Telegram.{" "}
-          <span style={{ opacity: 0.7 }}>[контейнер под Chatwoot — заглушка]</span>
+          <Icon name="shield" size={15} /> Чат работает прямо здесь, без Telegram.
         </p>
       </div>
     </div>
