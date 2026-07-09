@@ -3,12 +3,14 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { api, ApiError } from "@/lib/api";
+import { api, ApiError, type TelegramAuthUser } from "@/lib/api";
 import Turnstile from "@/components/Turnstile";
 import { useTurnstile } from "@/lib/useTurnstile";
 import { invalidateAuth } from "@/lib/useAuth";
 import Icon from "@/components/Icon";
 import { Button, TextField } from "@/components/ui";
+import TelegramLoginButton from "@/components/TelegramLoginButton";
+import { TELEGRAM_BOT } from "@/lib/config";
 
 type Step = "email" | "code";
 
@@ -20,6 +22,7 @@ export default function LoginPage() {
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [tgError, setTgError] = useState<string | null>(null);
 
   async function requestCode() {
     if (!email.trim()) return;
@@ -46,6 +49,24 @@ export default function LoginPage() {
         );
       }
     } finally {
+      setLoading(false);
+    }
+  }
+
+  async function loginWithTelegram(user: TelegramAuthUser) {
+    setLoading(true);
+    setTgError(null);
+    try {
+      await api.telegramLogin(user);
+      invalidateAuth();
+      router.push("/cabinet");
+    } catch (e) {
+      // 403 = the account is blocked; anything else (bad hash, network) is transient.
+      setTgError(
+        e instanceof ApiError && e.status === 403
+          ? "Аккаунт заблокирован — напиши в поддержку."
+          : "Не получилось войти через Telegram. Попробуй ещё раз.",
+      );
       setLoading(false);
     }
   }
@@ -157,6 +178,14 @@ export default function LoginPage() {
               >
                 Получить код
               </Button>
+              {TELEGRAM_BOT && (
+                <div className="auth-tg">
+                  <div className="auth-sep">или</div>
+                  <p className="auth-tg-note">Уже заходили через Telegram? Войди одним нажатием.</p>
+                  <TelegramLoginButton botUsername={TELEGRAM_BOT} onAuth={loginWithTelegram} />
+                  {tgError && <p className="auth-tg-err">{tgError}</p>}
+                </div>
+              )}
               <p className="onb-alt onb-alt-lg">
                 нет аккаунта? <Link href="/connect">получить доступ</Link>
               </p>

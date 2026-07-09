@@ -1053,3 +1053,48 @@
   }
 }
 
+/* ══ Telegram / account console ══════════════════════════════════════════════
+   The link surface in the overview: attach the bot to a site account (merging a
+   pre-existing bot account server-side), or confirm + open the bot once linked. */
+.tg-console {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+.tg-kicker {
+  font-size: var(--text-2xs);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--accent); /* amber — the single signal light in cold water */
+}
+.tg-console-title {
+  font-family: var(--font-display), sans-serif;
+  font-weight: 700;
+  font-size: var(--text-lg);
+  letter-spacing: var(--tracking-tight);
+  color: var(--text-on-card);
+}
+.tg-console-sub {
+  color: var(--ink-card-dim);
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+  max-width: 48ch;
+}
+.tg-linked {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap; /* a long @username wraps instead of widening the console */
+  gap: var(--space-2);
+  color: var(--success);
+  font-size: var(--text-base);
+}
+.tg-linked b {
+  color: var(--text-on-card);
+  font-weight: 600;
+}
+.tg-console-err {
+  color: var(--danger-text);
+  font-size: var(--text-sm);
+}
+

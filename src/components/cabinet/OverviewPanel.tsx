@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import InstallBlock from "@/components/InstallBlock";
-import type { Device, SubscriptionInfo } from "@/lib/api";
+import TelegramConsole from "@/components/cabinet/TelegramConsole";
+import type { Device, Me, SubscriptionInfo, TelegramAuthUser } from "@/lib/api";
 import { STATUS_LABEL, fmtBytes, fmtDate } from "@/lib/format";
 
 export default function OverviewPanel({
@@ -12,6 +13,9 @@ export default function OverviewPanel({
   devices,
   maxDevices,
   displayName,
+  me,
+  onLinkTelegram,
+  linkError,
 }: {
   loading: boolean;
   authed: boolean;
@@ -19,6 +23,9 @@ export default function OverviewPanel({
   devices: Device[] | null;
   maxDevices: number | null;
   displayName: string;
+  me: Me | null;
+  onLinkTelegram: (user: TelegramAuthUser) => void;
+  linkError: string | null;
 }) {
   const isUnlimited = !!sub && sub.traffic_limit === 0;
   const usedBytes = sub?.used_traffic_bytes ?? 0;
@@ -69,6 +76,7 @@ export default function OverviewPanel({
             Получить доступ
           </a>
         </div>
+        <TelegramConsole me={me} onLink={onLinkTelegram} error={linkError} />
       </div>
     );
   }
@@ -136,6 +144,8 @@ export default function OverviewPanel({
         <div className="console-title">Установка</div>
         <InstallBlock subUrl={sub.url} />
       </section>
+
+      <TelegramConsole me={me} onLink={onLinkTelegram} error={linkError} />
     </div>
   );
 }
