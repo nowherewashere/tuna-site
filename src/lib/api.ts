@@ -156,6 +156,13 @@ export interface TelegramAuthUser {
   hash: string;
 }
 
+// Result of linking Telegram. `merged` is true only when a separate bot account
+// was absorbed into this one — the cabinet uses it to reassure the user that
+// devices dropped by the merge re-appear on their own.
+export interface TelegramLinkResult extends Me {
+  merged: boolean;
+}
+
 export interface ReferralProgram {
   enabled: boolean;
   referral_code: string;
@@ -262,7 +269,8 @@ export const api = {
   // `two_active_subscriptions` / `already_linked_other` detail when it can't.
   // The widget payload is posted verbatim; the backend verifies its hash.
   telegramLogin: (user: TelegramAuthUser) => req<AuthResult>("POST", "/auth/telegram", user),
-  telegramLink: (user: TelegramAuthUser) => req<Me>("POST", "/auth/telegram/link", user),
+  telegramLink: (user: TelegramAuthUser) =>
+    req<TelegramLinkResult>("POST", "/auth/telegram/link", user),
 
   // Subscription. `/current` returns null when the user has no subscription yet.
   currentSubscription: () => req<SubscriptionInfo | null>("GET", "/subscription/current"),

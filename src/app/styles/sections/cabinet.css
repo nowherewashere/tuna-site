@@ -1149,3 +1149,69 @@
   font-size: var(--text-sm);
 }
 
+/* ══ Toast — transient confirmation (e.g. the post-merge device notice) ═══════ */
+.cab-toast {
+  position: fixed;
+  bottom: var(--space-6);
+  left: var(--space-4);
+  right: var(--space-4);
+  margin-inline: auto;
+  width: fit-content;
+  max-width: min(440px, calc(100vw - 2 * var(--space-4)));
+  z-index: 60;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-5);
+  background: var(--fill-console);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  color: var(--text-on-card);
+  animation: cab-toast-in var(--dur-base) var(--ease-out);
+}
+.cab-toast-ic {
+  flex-shrink: 0;
+  margin-top: 1px;
+  color: var(--success);
+}
+.cab-toast p {
+  margin: 0;
+  font-size: var(--text-sm);
+  line-height: 1.5;
+}
+.cab-toast-x {
+  flex-shrink: 0;
+  padding: 0 0 0 var(--space-2);
+  background: none;
+  border: 0;
+  color: var(--ink-card-dim);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+.cab-toast-x:hover {
+  color: var(--text-on-card);
+}
+@keyframes cab-toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+/* Lift above the floating support button on phones. */
+@media (max-width: 640px) {
+  .cab-toast {
+    bottom: 84px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cab-toast {
+    animation: none;
+  }
+}
+

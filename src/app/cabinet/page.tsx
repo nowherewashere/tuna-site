@@ -45,6 +45,14 @@ export default function CabinetPage() {
   const [loading, setLoading] = useState(true);
   const [authed, setAuthed] = useState(true);
   const [linkError, setLinkError] = useState<string | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
+
+  // Auto-dismiss the toast; the merge notice is longer, so give it time to read.
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(() => setToast(null), 10000);
+    return () => clearTimeout(t);
+  }, [toast]);
 
   useEffect(() => {
     (async () => {
@@ -132,6 +140,14 @@ export default function CabinetPage() {
     try {
       const updated = await api.telegramLink(user);
       setMe(updated);
+      if (updated.merged) {
+        // A merge keeps only the winning subscription's devices; the rest re-register
+        // themselves the next time Happ runs, so no manual action is needed.
+        setToast(
+          "Аккаунты объединены. Если каких-то устройств не видно — они появятся сами, " +
+            "когда откроешь на них Happ. Вручную ничего делать не нужно.",
+        );
+      }
     } catch (e) {
       // Keep the raw error in the console so the exact status/detail is visible
       // when diagnosing a failed link.
@@ -224,6 +240,16 @@ export default function CabinetPage() {
         <button className="chat-fab" onClick={openSupport}>
           <Icon name="message" size={18} /> Поддержка
         </button>
+      )}
+
+      {toast && (
+        <div className="cab-toast" role="status">
+          <Icon name="check" size={18} className="cab-toast-ic" />
+          <p>{toast}</p>
+          <button className="cab-toast-x" aria-label="Закрыть" onClick={() => setToast(null)}>
+            ×
+          </button>
+        </div>
       )}
     </div>
   );
