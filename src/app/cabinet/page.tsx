@@ -12,14 +12,19 @@ import {
   type ReferralProgram,
   type SubscriptionInfo,
   type SubscriptionOffers,
+  type TelegramAuthUser,
 } from "@/lib/api";
 import InstallBlock from "@/components/InstallBlock";
+import TelegramLoginButton from "@/components/TelegramLoginButton";
 import Icon, { type IconName } from "@/components/Icon";
 import { useHashTab } from "@/lib/useHashTab";
 import { redirectTo, reloadPage } from "@/lib/nav";
 import { invalidateAuth } from "@/lib/useAuth";
 
 type Tab = "overview" | "devices" | "sub" | "ref" | "support";
+
+// Bot username for the Telegram Login Widget (public); empty ⇒ linking hidden.
+const TELEGRAM_BOT = process.env.NEXT_PUBLIC_TELEGRAM_BOT ?? "";
 type ChatMsg = { who: "them" | "me" | "sys"; text: string };
 
 const TABS: { id: Tab; label: string }[] = [
@@ -130,6 +135,7 @@ export default function CabinetPage() {
   const [payError, setPayError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [authed, setAuthed] = useState(true);
+  const [linkError, setLinkError] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -223,6 +229,20 @@ export default function CabinetPage() {
     topRef.current?.scrollIntoView({ behavior: "smooth" });
   }
 
+  async function linkTelegram(user: TelegramAuthUser) {
+    setLinkError(null);
+    try {
+      const updated = await api.telegramLink(user);
+      setMe(updated);
+    } catch (e) {
+      setLinkError(
+        e instanceof ApiError && e.status === 409
+          ? "Этот Telegram уже привязан к другому аккаунту."
+          : "Не удалось подключить Telegram. Попробуй ещё раз.",
+      );
+    }
+  }
+
   const displayName = me?.username || me?.email || me?.name || "user";
   const trafficLimit = sub && sub.traffic_limit === 0 ? "∞" : sub ? `${sub.traffic_limit} ГБ` : "—";
 
@@ -313,6 +333,35 @@ export default function CabinetPage() {
                     <InstallBlock subUrl={sub.url} />
                   </div>
                 </>
+              )}
+              {!loading && authed && (
+                <div className="card cab-connect">
+                  <div className="cab-connect-head">
+                    <Icon name="link" size={18} />
+                    <h4>Аккаунт</h4>
+                  </div>
+                  {me?.telegram_id ? (
+                    <p className="cab-connect-on">
+                      <Icon name="check" size={16} /> Telegram подключён
+                      {me.username ? (
+                        <>
+                          {" · "}
+                          <b>@{me.username}</b>
+                        </>
+                      ) : null}
+                    </p>
+                  ) : (
+                    <>
+                      <p className="cab-connect-sub">
+                        Подключи Telegram, чтобы входить в один аккаунт и с сайта, и из бота.
+                      </p>
+                      {TELEGRAM_BOT && (
+                        <TelegramLoginButton botUsername={TELEGRAM_BOT} onAuth={linkTelegram} />
+                      )}
+                    </>
+                  )}
+                  {linkError && <p className="cab-connect-err">{linkError}</p>}
+                </div>
               )}
             </div>
           )}

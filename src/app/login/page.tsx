@@ -3,13 +3,18 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { api, ApiError } from "@/lib/api";
+import { api, ApiError, type TelegramAuthUser } from "@/lib/api";
 import Turnstile from "@/components/Turnstile";
+import TelegramLoginButton from "@/components/TelegramLoginButton";
 import { useTurnstile } from "@/lib/useTurnstile";
 import { invalidateAuth } from "@/lib/useAuth";
 import Icon from "@/components/Icon";
 
 type Step = "email" | "code";
+
+// Bot username for the Telegram Login Widget (public). Empty ⇒ the button is
+// hidden, so the email flow keeps working if the env var is not set.
+const TELEGRAM_BOT = process.env.NEXT_PUBLIC_TELEGRAM_BOT ?? "";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -64,6 +69,23 @@ export default function LoginPage() {
           : "Неверный код. Проверь и попробуй снова.",
       );
     } finally {
+      setLoading(false);
+    }
+  }
+
+  async function loginWithTelegram(user: TelegramAuthUser) {
+    setLoading(true);
+    setError(null);
+    try {
+      await api.telegramLogin(user);
+      invalidateAuth();
+      router.push("/cabinet");
+    } catch (e) {
+      setError(
+        e instanceof ApiError && e.status === 403
+          ? "Не удалось подтвердить вход через Telegram. Попробуй ещё раз."
+          : "Не получилось войти через Telegram. Попробуй ещё раз.",
+      );
       setLoading(false);
     }
   }
@@ -146,6 +168,12 @@ export default function LoginPage() {
               >
                 {loading ? "Отправляем…" : "Получить код"}
               </button>
+              {TELEGRAM_BOT && (
+                <>
+                  <div className="auth-sep">или</div>
+                  <TelegramLoginButton botUsername={TELEGRAM_BOT} onAuth={loginWithTelegram} />
+                </>
+              )}
               <p className="onb-alt" style={{ marginTop: 20 }}>
                 нет аккаунта? <Link href="/connect">получить доступ</Link>
               </p>

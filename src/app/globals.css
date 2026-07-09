@@ -896,6 +896,28 @@ footer {
   font-size: 15px;
   margin-bottom: 26px;
 }
+/* Labelled "or" separator between the email form and the Telegram button. */
+.auth-sep {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 22px 0 18px;
+  color: var(--ink-card-dim);
+  font-size: 13px;
+}
+.auth-sep::before,
+.auth-sep::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+}
+/* Centers the Telegram Login Widget iframe. */
+.tg-auth {
+  display: flex;
+  justify-content: center;
+  min-height: 40px;
+}
 
 /* ── Install block (shared) ──────────────────────────────────────────────── */
 .plat-picker {
@@ -1064,6 +1086,43 @@ footer {
   border: 1px solid var(--line);
   border-radius: var(--radius);
   padding: 26px;
+}
+/* Account connections card (link Telegram to the current account). */
+.cab-connect {
+  margin-top: 16px;
+}
+.cab-connect-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--amber);
+  margin-bottom: 14px;
+}
+.cab-connect-head h4 {
+  font-family: var(--font-display), sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+}
+.cab-connect-sub {
+  color: var(--ink-card-dim);
+  font-size: 14px;
+  margin-bottom: 16px;
+}
+.cab-connect-on {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--green);
+  font-size: 15px;
+}
+.cab-connect-on b {
+  color: #fff;
+}
+.cab-connect-err {
+  color: var(--coral);
+  font-size: 14px;
+  margin-top: 12px;
 }
 .cab-grid {
   display: grid;
