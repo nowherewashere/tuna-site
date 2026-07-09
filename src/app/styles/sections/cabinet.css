@@ -377,8 +377,10 @@
 
 /* ══ Subscription — one "dive-plan" console per tariff (no cards). Longer commit
    = deeper descent = lower price per month; the duration ladder is the hero. ══ */
-/* Current-subscription status console, above the plans. */
+/* Current-subscription status console, above the plans. Extra top gap so it
+   doesn't crowd the "Подписка" title (tight on phones). */
 .sub-current {
+  margin-top: var(--space-5);
   margin-bottom: var(--space-5);
 }
 /* "Your plan" badge + a subtle amber ring marking the tariff you're already on. */
@@ -560,6 +562,106 @@
   text-transform: uppercase;
   color: var(--amber);
   margin-bottom: 16px;
+}
+
+/* ── Legal documents (Оферта / Конфиденциальность) ───────────────────────────
+   Long-form prose. Tailwind's preflight zeroes heading/paragraph margins, so
+   without these rules every clause collapses together — restore reading rhythm. */
+.legal {
+  padding: clamp(40px, 7vw, 88px) 0 clamp(56px, 9vw, 104px);
+}
+.legal-doc {
+  max-width: 760px;
+  margin: 0 auto;
+  color: var(--ink-dim);
+  font-size: 15.5px;
+  line-height: 1.72;
+}
+.legal-doc h1 {
+  font-size: clamp(30px, 4.5vw, 42px);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  color: var(--ink);
+  margin-bottom: 12px;
+}
+.legal-date {
+  font-family: var(--font-mono), monospace;
+  font-size: 13px;
+  letter-spacing: 0.02em;
+  color: var(--amber);
+  margin-bottom: 20px;
+}
+.legal-lead {
+  font-size: clamp(17px, 2vw, 19px);
+  line-height: 1.6;
+  color: var(--ink);
+  margin-bottom: 8px;
+  padding-bottom: 28px;
+  border-bottom: 1px solid var(--line-soft);
+}
+.legal-doc h2 {
+  font-size: clamp(19px, 2.4vw, 23px);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  margin-top: 44px;
+  margin-bottom: 14px;
+}
+.legal-doc h2 .num {
+  margin-right: 8px;
+  color: var(--amber);
+  font-variant-numeric: tabular-nums;
+}
+.legal-doc p {
+  margin-bottom: 16px;
+}
+.legal-doc p .cl {
+  margin-right: 6px;
+  color: var(--ink);
+  font-weight: 600;
+  font-family: var(--font-mono), monospace;
+  font-size: 0.92em;
+}
+.legal-doc ul {
+  list-style: none;
+  margin: 0 0 16px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.legal-doc li {
+  position: relative;
+  padding-left: 22px;
+}
+.legal-doc li::before {
+  content: "";
+  position: absolute;
+  left: 6px;
+  top: 0.72em;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--amber);
+}
+.legal-doc a {
+  color: var(--amber);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.legal-doc a:hover {
+  color: var(--amber-2);
+}
+.legal-back {
+  display: inline-block;
+  margin-top: 40px;
+  font-family: var(--font-mono), monospace;
+  font-size: 13.5px;
+  color: var(--ink-dim);
+}
+.legal-back:hover {
+  color: var(--amber);
 }
 .chat-fab {
   position: fixed;

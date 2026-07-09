@@ -234,7 +234,6 @@ export default function OfertaPage() {
           <div className="foot-grid">
             <div className="logo">Tuna VPN</div>
             <div className="foot-links">
-              <a href="#">Поддержка</a>
               <Link href="/oferta">Оферта</Link>
               <Link href="/privacy">Конфиденциальность</Link>
             </div>
