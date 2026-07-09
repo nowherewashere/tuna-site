@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Unbounded, Golos_Text, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
+import RefCapture from "@/components/RefCapture";
 
 // Display / headlines: Unbounded — a wide, geometric, Cyrillic-first face. Used
 // big and tight; it carries the whole personality of the brand, so nothing else
@@ -55,7 +56,10 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="ru" className={`${display.variable} ${body.variable} ${mono.variable}`}>
-      <body>{children}</body>
+      <body>
+        <RefCapture />
+        {children}
+      </body>
     </html>
   );
 }

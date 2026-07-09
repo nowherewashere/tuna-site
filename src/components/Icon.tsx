@@ -77,6 +77,20 @@ const PATHS: Record<string, ReactNode> = {
       <path d="M22 3l-7 18-4-8-8-4 19-6z" />
     </>
   ),
+  wallet: (
+    <>
+      <rect x="3" y="6" width="18" height="13" rx="2.5" />
+      <path d="M3 10.5h18" />
+      <circle cx="16.5" cy="14.75" r="1.15" />
+    </>
+  ),
+  coin: (
+    <>
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M12 7.5v9" />
+      <path d="M14.6 9.4c-.7-.6-1.7-.9-2.6-.9-1.4 0-2.4.8-2.4 1.8 0 2.4 5 1.2 5 3.6 0 1.1-1 1.9-2.5 1.9-1 0-2-.4-2.7-1.1" />
+    </>
+  ),
 };
 
 export type IconName = keyof typeof PATHS;

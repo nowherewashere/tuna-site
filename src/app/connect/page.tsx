@@ -1,13 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { api, ApiError } from "@/lib/api";
 import InstallBlock from "@/components/InstallBlock";
 import Icon from "@/components/Icon";
 import Turnstile from "@/components/Turnstile";
 import { useTurnstile } from "@/lib/useTurnstile";
 import { invalidateAuth } from "@/lib/useAuth";
+import { readRefCode } from "@/lib/referral";
+import { durationLabel } from "@/lib/format";
 import { Button, TextField } from "@/components/ui";
 
 type Step = "register" | "code" | "install";
@@ -20,6 +22,23 @@ export default function ConnectPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [subUrl, setSubUrl] = useState<string>("");
+  // Referral attribution captured from a /r/<code> visit (RefCapture). Read on the
+  // client only (localStorage/cookie); useSyncExternalStore returns null on the
+  // server so the SSG markup matches the first client render (no hydration flash).
+  const refCode = useSyncExternalStore(
+    () => () => {},
+    () => readRefCode(),
+    () => null,
+  );
+  // Referred-friend trial bonus length, data-driven from the INVITED trial plan
+  // (public config). Drives the pill text so it stays correct if the plan changes.
+  const [referredTrialDays, setReferredTrialDays] = useState<number | null>(null);
+  useEffect(() => {
+    api
+      .publicConfig()
+      .then((c) => setReferredTrialDays(c.referred_trial_days))
+      .catch(() => {});
+  }, []);
 
   async function requestCode() {
     if (!email.trim()) return;
@@ -30,7 +49,9 @@ export default function ConnectPage() {
     setLoading(true);
     setError(null);
     try {
-      await api.requestLoginCode(email.trim(), ts.token || undefined);
+      // Pass the captured /r/<code> ref (if any) so the new account is attributed
+      // to the referrer at creation and gets the invited-plan bonus trial.
+      await api.requestLoginCode(email.trim(), ts.token || undefined, refCode || undefined);
       setStep("code");
     } catch (e) {
       if (e instanceof ApiError && e.status === 403) {
@@ -83,6 +104,11 @@ export default function ConnectPage() {
       <main className="onb">
         <div className="wrap">
           <div className="onb-card">
+            {refCode && referredTrialDays ? (
+              <div className="status-pill status-pill-mb">
+                <span className="d" /> {durationLabel(referredTrialDays)} бесплатно
+              </div>
+            ) : null}
             <h1>Получи доступ</h1>
             <p className="lead">
               Введи почту — пришлём код, и сразу выдадим подписку. Почта нужна, чтобы входить с

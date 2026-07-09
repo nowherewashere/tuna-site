@@ -886,6 +886,12 @@
 }
 .uri-copy {
   flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  /* WCAG 2.5.8 target size: 44px tall hit area; negative margin keeps layout put. */
+  min-height: 44px;
+  padding: 0 var(--space-2);
+  margin: 0 calc(-1 * var(--space-2));
   border: none;
   background: none;
   color: var(--amber);
@@ -919,12 +925,166 @@
   font-family: var(--font-mono), monospace;
   font-size: var(--text-3xl);
   letter-spacing: 0.08em;
-  color: var(--amber);
+  /* Not amber: size + spacing + the "Твой код" label already set it apart, so amber
+     stays reserved for the one number that matters (Баланс) — the console's one-accent rule. */
+  color: var(--text-primary);
 }
 .ref-readouts {
   padding-top: var(--space-4);
   margin-top: var(--space-4);
   border-top: 1px solid var(--border-soft);
+}
+/* Equal-height flex columns + space-between: if the longest label ("Потрачено на
+   VPN") ever wraps to two lines in the tight 860–920px band, the values still line
+   up on a common bottom baseline instead of stepping. A no-op when nothing wraps. */
+.ref-readouts.console-readouts .readout {
+  justify-content: space-between;
+}
+
+/* Five readouts is one too many for a hairline row on a laptop — stack them into
+   label-left / value-right rows earlier than the generic 560px collapse so the
+   longest label never crowds its neighbours. */
+@media (max-width: 860px) {
+  .ref-readouts.console-readouts {
+    flex-direction: column;
+    gap: 0;
+  }
+  .ref-readouts.console-readouts .readout {
+    flex-direction: row;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-4);
+    padding: var(--space-3) 0;
+  }
+  .ref-readouts.console-readouts .readout + .readout {
+    padding-left: 0;
+    border-left: none;
+    border-top: 1px solid var(--border-soft);
+  }
+}
+
+/* Footer line under the readouts — lifetime income, kept quiet (mono, dim). */
+.ref-lifetime {
+  margin-top: var(--space-3);
+  font-family: var(--font-mono), monospace;
+  font-size: var(--text-sm);
+  color: var(--ink-card-dim);
+}
+
+/* Action row: amber "Вывести" + ghost "Оплатить балансом", split by a hairline. */
+.ref-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-top: var(--space-5);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border-soft);
+}
+@media (max-width: 560px) {
+  .ref-actions {
+    flex-direction: column;
+  }
+  .ref-actions .btn {
+    width: 100%;
+  }
+}
+/* Open-payout status (pulsing console light) + below-minimum hint. */
+.ref-processing {
+  margin-top: var(--space-3);
+}
+.ref-hint {
+  margin-top: var(--space-3);
+  font-family: var(--font-mono), monospace;
+  font-size: var(--text-sm);
+  color: var(--ink-card-dim);
+}
+
+/* Inline action sub-consoles (payout / pay-with-balance) — the anti-modal. An
+   amber ring ties each back to the CTA that opened it. */
+.ref-inline {
+  border-color: rgba(245, 166, 35, 0.4);
+  box-shadow:
+    inset 0 1px 0 var(--border-soft),
+    0 0 0 1px rgba(245, 166, 35, 0.14);
+  scroll-margin-top: 80px;
+  animation: fade 0.2s ease;
+}
+.ref-inline-lead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-2);
+}
+.ref-amount {
+  font-family: var(--font-mono), monospace;
+  font-weight: 500;
+  color: var(--amber);
+}
+.ref-inline-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+/* Success confirmation inside a sub-console. */
+.ref-done {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+.ref-done-ic {
+  color: var(--success);
+  flex-shrink: 0;
+}
+.ref-done p {
+  flex: 1;
+  min-width: 16ch;
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+}
+
+/* Plan segmented control for the pay-with-balance picker (durations reuse the
+   .dur-ladder below it). */
+.ref-plan-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+.ref-plan-tab {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 10px 16px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border-soft);
+  background: none;
+  color: var(--ink-card);
+  font-family: var(--font-body), sans-serif;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background var(--dur-fast) var(--ease-std),
+    border-color var(--dur-fast) var(--ease-std),
+    color var(--dur-fast) var(--ease-std);
+}
+.ref-plan-tab:hover {
+  border-color: var(--border);
+}
+.ref-plan-tab.on {
+  background: var(--amber);
+  border-color: var(--amber);
+  color: var(--amber-ink);
+  font-weight: 600;
+}
+/* "Not enough balance" tag on an unaffordable duration row. */
+.ref-nofunds {
+  font-family: var(--font-mono), monospace;
+  font-size: var(--text-2xs);
+  color: var(--danger-text);
 }
 
 /* The duration ladder: full-width selectable rows, hairline-divided — a descent
