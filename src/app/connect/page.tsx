@@ -93,7 +93,7 @@ export default function ConnectPage() {
               labelHidden
               type="email"
               autoComplete="email"
-              placeholder="твой@email.ру"
+              placeholder="you@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && requestCode()}

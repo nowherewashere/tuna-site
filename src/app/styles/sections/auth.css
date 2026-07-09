@@ -6,6 +6,7 @@
   min-height: 100dvh;
   display: flex;
   align-items: center;
+  justify-content: center;
   padding: 60px 0;
   overflow-x: clip;
 }
@@ -112,6 +113,7 @@
   min-height: 100dvh;
   display: flex;
   align-items: center;
+  justify-content: center;
   padding: 60px 0;
   overflow-x: clip;
 }
