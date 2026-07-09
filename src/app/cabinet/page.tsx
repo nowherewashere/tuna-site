@@ -11,6 +11,7 @@ import {
   type ReferralProgram,
   type SubscriptionInfo,
   type SubscriptionOffers,
+  type TelegramAuthUser,
 } from "@/lib/api";
 import { useHashTab } from "@/lib/useHashTab";
 import { redirectTo, reloadPage } from "@/lib/nav";
@@ -43,6 +44,7 @@ export default function CabinetPage() {
   const [payError, setPayError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [authed, setAuthed] = useState(true);
+  const [linkError, setLinkError] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -121,6 +123,30 @@ export default function CabinetPage() {
     router.push("/");
   }
 
+  // Attach a Telegram identity to this (site) account. When the Telegram already
+  // has its own bot account the backend merges the two into one and returns the
+  // combined profile; a 409 means it can't merge automatically (both sides have
+  // an active subscription, or the actor is already linked to a different one).
+  async function linkTelegram(user: TelegramAuthUser) {
+    setLinkError(null);
+    try {
+      const updated = await api.telegramLink(user);
+      setMe(updated);
+    } catch (e) {
+      if (e instanceof ApiError && e.status === 409) {
+        setLinkError(
+          e.detail === "two_active_subscriptions"
+            ? "У обоих аккаунтов активная подписка — напиши в поддержку, объединим вручную."
+            : "Этот Telegram уже привязан к другому аккаунту.",
+        );
+      } else if (e instanceof ApiError && e.status === 403) {
+        setLinkError("Этот Telegram-аккаунт заблокирован.");
+      } else {
+        setLinkError("Не удалось подключить Telegram. Попробуй ещё раз.");
+      }
+    }
+  }
+
   // Switching tabs returns the view to the top — on mobile the tab content can be
   // scrolled far down, so a plain tab change otherwise leaves you mid-page.
   function changeTab(t: Tab) {
@@ -158,6 +184,9 @@ export default function CabinetPage() {
               devices={devices}
               maxDevices={maxDevices}
               displayName={displayName}
+              me={me}
+              onLinkTelegram={linkTelegram}
+              linkError={linkError}
             />
           )}
           {tab === "devices" && (

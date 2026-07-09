@@ -22,9 +22,12 @@ export class ApiError extends Error {
   }
 }
 
-// Auth-entry endpoints where a 401 is a real failure, not an expired session —
-// never trigger a token refresh for these (and never for /refresh itself).
-const AUTH_ENTRY = /^\/auth\/(refresh|login|email\/|telegram)/;
+// Session-establishing endpoints where a 401 is a real failure, not an expired
+// session — never trigger a token refresh for these (and never for /refresh
+// itself). Matches /auth/telegram and /auth/telegram/webapp exactly, but NOT the
+// authenticated /auth/telegram/link, where a 401 usually means an expired access
+// token that the silent refresh below should recover.
+const AUTH_ENTRY = /^\/auth\/(refresh|login|email\/|telegram(\/webapp)?$)/;
 
 // Single-flight token refresh. On a hard reload with an expired access token,
 // several calls (me, subscription, devices, useAuth…) 401 in parallel and would
@@ -141,6 +144,18 @@ export interface AuthResult {
   refresh_expires_at: string;
 }
 
+// Signed payload from the Telegram Login Widget — mirrors the backend's
+// `TelegramAuthRequest`; posted as-is so the backend can verify the hash.
+export interface TelegramAuthUser {
+  id: number;
+  first_name: string;
+  last_name?: string;
+  username?: string;
+  photo_url?: string;
+  auth_date: number;
+  hash: string;
+}
+
 export interface ReferralProgram {
   enabled: boolean;
   referral_code: string;
@@ -243,6 +258,14 @@ export const api = {
     req<AuthResult>("POST", "/auth/email/verify-code", { email, code }),
   me: () => req<Me>("GET", "/auth/me"),
   logout: () => req<{ success: boolean }>("POST", "/auth/logout"),
+
+  // Telegram Login Widget: sign in / create an account, or link Telegram to the
+  // already-authenticated account. Linking a Telegram that already has its own
+  // bot account merges the two into one; the backend returns a 409 with a
+  // `two_active_subscriptions` / `already_linked_other` detail when it can't.
+  // The widget payload is posted verbatim; the backend verifies its hash.
+  telegramLogin: (user: TelegramAuthUser) => req<AuthResult>("POST", "/auth/telegram", user),
+  telegramLink: (user: TelegramAuthUser) => req<Me>("POST", "/auth/telegram/link", user),
 
   // Subscription. `/current` returns null when the user has no subscription yet.
   currentSubscription: () => req<SubscriptionInfo | null>("GET", "/subscription/current"),

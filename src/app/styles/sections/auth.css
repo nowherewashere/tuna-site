@@ -167,6 +167,49 @@
   margin-bottom: 26px;
 }
 
+/* ── Telegram sign-in (login) ─────────────────────────────────────────────── */
+.auth-tg {
+  margin-top: var(--space-5);
+}
+/* Labelled hairline divider between the email form and the Telegram button. */
+.auth-sep {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: 0 0 var(--space-4);
+  color: var(--ink-card-dim);
+  font-size: var(--text-sm);
+}
+.auth-sep::before,
+.auth-sep::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+}
+.auth-tg-note {
+  color: var(--ink-card-dim);
+  font-size: var(--text-sm);
+  margin-bottom: var(--space-3);
+}
+/* Wraps Telegram's own fixed-width widget iframe; can't widen its card. Left
+   aligned by default (cabinet console); centered on the centered login card. */
+.tg-auth {
+  display: flex;
+  justify-content: flex-start;
+  max-width: 100%;
+  overflow-x: clip;
+  min-height: var(--space-10); /* 40px — reserve the widget's height, no layout shift */
+}
+.auth-tg .tg-auth {
+  justify-content: center;
+}
+.auth-tg-err {
+  color: var(--danger-text);
+  font-size: var(--text-sm);
+  margin-top: var(--space-3);
+}
+
 /* Helper modifiers (replace former inline styles on connect/login). */
 .onb-install {
   min-height: auto;
