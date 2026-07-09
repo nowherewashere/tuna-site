@@ -170,11 +170,38 @@ export interface ReferralProgram {
   site_referral_url: string | null;
   invited_count: number;
   invited_with_payment_count: number;
+  // Money referral (amounts in kopecks; ₽ formatting is view-side via fmtRub).
+  balance_kop: number;
+  withdrawn_kop: number;
+  spent_kop: number;
+  lifetime_kop: number;
+  payout_min_kop: number;
+  has_open_payout: boolean;
+  crypto_asset: string;
+  crypto_network: string;
+  last_wallet: string | null; // masked, prefill for repeat payouts
+  // Legacy reward config (vestigial — active accrual is the money commission).
   reward_type: string;
   reward_strategy: string;
   accrual_strategy: string;
   max_level: number;
   reward_levels: { level: number; value: number }[];
+}
+
+export interface PayoutResult {
+  id: number;
+  status: string;
+  amount_kop: number;
+  method: string;
+  crypto_asset: string | null;
+  crypto_network: string | null;
+}
+
+export interface PayWithBalanceResult {
+  ok: boolean;
+  amount_kop: number;
+  new_expire_at: string;
+  balance_kop: number;
 }
 
 export interface DurationPrice {
@@ -236,6 +263,9 @@ export interface PaymentInit {
 
 export interface PublicConfig {
   turnstile_site_key: string | null;
+  // Trial length (days) referred friends get — drives the "N дней бесплатно" pill.
+  // Null when there is no invited-only trial plan (no referral bonus).
+  referred_trial_days: number | null;
 }
 
 export interface OnboardingConfig {
@@ -253,10 +283,12 @@ export const api = {
   publicConfig: () => req<PublicConfig>("GET", "/config"),
 
   // Passwordless auth
-  requestLoginCode: (email: string, turnstileToken?: string) =>
+  requestLoginCode: (email: string, turnstileToken?: string, referralCode?: string) =>
     req<RequestCodeResult>("POST", "/auth/email/request-code", {
       email,
       turnstile_token: turnstileToken,
+      // Referral attribution from a /r/<code> visit — attributed at account creation.
+      referral_code: referralCode,
     }),
   verifyLoginCode: (email: string, code: string) =>
     req<AuthResult>("POST", "/auth/email/verify-code", { email, code }),
@@ -288,6 +320,18 @@ export const api = {
   // Plans/prices and referral program — both live in the backend, never hardcoded.
   subscriptionOffers: () => req<SubscriptionOffers>("GET", "/subscription/offers"),
   referralProgram: () => req<ReferralProgram>("GET", "/referral/program"),
+
+  // Request a crypto cash-out of the full balance (≥ payout_min_kop). The operator
+  // settles it in the weekly Monday batch; status flows back via bot + this endpoint.
+  requestCryptoPayout: (wallet: string) =>
+    req<PayoutResult>("POST", "/referral/payout/crypto", { wallet }),
+
+  // Pay for the user's own subscription from the referral balance (full-cover only).
+  payWithBalance: (planId: number, durationDays: number) =>
+    req<PayWithBalanceResult>("POST", "/referral/pay-with-balance", {
+      plan_id: planId,
+      duration_days: durationDays,
+    }),
 
   // Create a payment for a plan/duration via a gateway → returns a redirect URL.
   purchase: (planCode: string, durationDays: number, gatewayType: string) =>

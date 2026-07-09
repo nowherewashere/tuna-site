@@ -71,6 +71,17 @@ export function expiryAfterAdding(fromIso: string | null, days: number, nowMs: n
   return fmtDate(new Date(base + days * 86_400_000).toISOString());
 }
 
+/** Format kopecks as a ₽ amount string. Whole rubles drop the decimals; thousands
+ *  are grouped with a thin space (RU convention). Mirrors the backend kop_to_rub. */
+export function fmtRub(kop: number): string {
+  const whole = kop % 100 === 0;
+  const rub = kop / 100;
+  return new Intl.NumberFormat("ru-RU", {
+    minimumFractionDigits: whole ? 0 : 2,
+    maximumFractionDigits: whole ? 0 : 2,
+  }).format(rub);
+}
+
 export function fmtBytes(n: number): string {
   if (!n) return "0 Б";
   const u = ["Б", "КБ", "МБ", "ГБ", "ТБ"];

@@ -83,6 +83,14 @@ export default function CabinetPage() {
     }
   }, [tab]);
 
+  // Re-pull referral + subscription after a payout or a pay-with-balance action:
+  // the balance changes on both, and pay-with-balance also extends the subscription,
+  // so the Subscription/Overview tabs stay in sync (single source of truth).
+  function refreshReferral() {
+    api.referralProgram().then(setReferral).catch(() => {});
+    api.currentSubscription().then(setSub).catch(() => {});
+  }
+
   function loadDevices() {
     api
       .devices()
@@ -231,7 +239,7 @@ export default function CabinetPage() {
               clearPayError={() => setPayError(null)}
             />
           )}
-          {tab === "ref" && <ReferralPanel referral={referral} />}
+          {tab === "ref" && <ReferralPanel referral={referral} onRefresh={refreshReferral} />}
           {tab === "support" && <SupportPanel displayName={displayName} sub={sub} />}
         </div>
       </div>
