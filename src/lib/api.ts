@@ -26,6 +26,31 @@ export class ApiError extends Error {
 // never trigger a token refresh for these (and never for /refresh itself).
 const AUTH_ENTRY = /^\/auth\/(refresh|login|email\/|telegram)/;
 
+// Single-flight token refresh. On a hard reload with an expired access token,
+// several calls (me, subscription, devices, useAuth…) 401 in parallel and would
+// each POST /auth/refresh. The backend rotates refresh tokens (single-use), so
+// parallel refreshes revoke each other and spuriously log the user out ("нужно
+// войти" / empty plans on refresh). Collapse concurrent refreshes into one
+// shared request; every 401'd caller awaits it, then replays. Rotation — and its
+// security benefit — is preserved: exactly one token is consumed per storm.
+let refreshInflight: Promise<boolean> | null = null;
+
+function refreshSession(): Promise<boolean> {
+  if (!refreshInflight) {
+    refreshInflight = fetch(`${BASE}/auth/refresh`, {
+      method: "POST",
+      credentials: "include",
+      cache: "no-store",
+    })
+      .then((r) => r.ok)
+      .catch(() => false)
+      .finally(() => {
+        refreshInflight = null;
+      });
+  }
+  return refreshInflight;
+}
+
 async function req<T>(method: string, path: string, body?: unknown, retried = false): Promise<T> {
   const res = await fetch(`${BASE}${path}`, {
     method,
@@ -39,12 +64,7 @@ async function req<T>(method: string, path: string, body?: unknown, retried = fa
   // using the 30-day refresh cookie, then replay the request — so a reload or an
   // expired access token never logs the user out while the refresh token is valid.
   if (res.status === 401 && !retried && !AUTH_ENTRY.test(path)) {
-    const refreshed = await fetch(`${BASE}/auth/refresh`, {
-      method: "POST",
-      credentials: "include",
-      cache: "no-store",
-    });
-    if (refreshed.ok) return req<T>(method, path, body, true);
+    if (await refreshSession()) return req<T>(method, path, body, true);
   }
 
   if (!res.ok) {
