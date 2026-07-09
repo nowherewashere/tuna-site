@@ -133,16 +133,27 @@ export default function CabinetPage() {
       const updated = await api.telegramLink(user);
       setMe(updated);
     } catch (e) {
+      // Keep the raw error in the console so the exact status/detail is visible
+      // when diagnosing a failed link.
+      console.error("Telegram link failed:", e);
       if (e instanceof ApiError && e.status === 409) {
         setLinkError(
           e.detail === "two_active_subscriptions"
             ? "У обоих аккаунтов активная подписка — напиши в поддержку, объединим вручную."
             : "Этот Telegram уже привязан к другому аккаунту.",
         );
+      } else if (e instanceof ApiError && e.status === 401) {
+        // The link endpoint needs a live session; a 401 here means it expired
+        // (and the silent refresh couldn't recover it) between page load and click.
+        setLinkError("Сессия истекла. Обнови страницу, войди снова и повтори привязку.");
       } else if (e instanceof ApiError && e.status === 403) {
         setLinkError("Этот Telegram-аккаунт заблокирован.");
       } else {
-        setLinkError("Не удалось подключить Telegram. Попробуй ещё раз.");
+        setLinkError(
+          e instanceof ApiError && e.detail
+            ? `Не удалось подключить Telegram: ${e.detail}`
+            : "Не удалось подключить Telegram. Попробуй ещё раз.",
+        );
       }
     }
   }
