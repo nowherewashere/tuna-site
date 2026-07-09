@@ -34,11 +34,14 @@ export const metadata: Metadata = {
   title: "Tuna VPN — открытый интернет за минуту",
   description:
     "Рассекаем волны блокировок. Свободный доступ к мировому океану интернета. Бесплатный пробный период, без карты.",
-  // favicon.ico is auto-served from src/app/favicon.ico; declare the PNG sizes,
-  // the Apple touch icon and the PWA manifest (android-chrome 192/512) here.
+  // All icons live in public/ and are linked here. favicon.ico is kept in public/
+  // (NOT src/app/) on purpose: the App Router favicon.ico convention runs the file
+  // through Turbopack's image pipeline, which fails to decode a non-RGBA ICO
+  // ("The PNG is not in RGBA format"). public/ serves it untouched.
   manifest: "/site.webmanifest",
   icons: {
     icon: [
+      { url: "/favicon.ico", sizes: "any" },
       { url: "/favicon-16x16.png", type: "image/png", sizes: "16x16" },
       { url: "/favicon-32x32.png", type: "image/png", sizes: "32x32" },
       { url: "/favicon-48x48.png", type: "image/png", sizes: "48x48" },
