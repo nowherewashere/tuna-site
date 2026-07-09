@@ -229,9 +229,6 @@ export interface PaymentInit {
 
 export interface PublicConfig {
   turnstile_site_key: string | null;
-  // Chatwoot live-chat widget; both null when the website chat is disabled.
-  chatwoot_base_url: string | null;
-  chatwoot_website_token: string | null;
 }
 
 export interface OnboardingConfig {

@@ -1,8 +1,21 @@
 "use client";
 
+import { useState } from "react";
 import Icon, { type IconName } from "@/components/Icon";
 import type { SubscriptionInfo } from "@/lib/api";
-import { usePublicConfig } from "@/lib/usePublicConfig";
+
+type ChatMsg = { who: "them" | "me" | "sys"; text: string };
+
+const INITIAL_MESSAGES: ChatMsg[] = [
+  {
+    who: "them",
+    text: "Привет! Опиши, что не работает — поможем. К сообщению уже приложены твой ID и тариф, так что сразу видим контекст.",
+  },
+  {
+    who: "sys",
+    text: "Апдейт · сегодня: обновили сервера, стало пробивать стабильнее. Если висит — нажми «Обновить» в Happ.",
+  },
+];
 
 const HELP: { icon: IconName; title: string; text: string }[] = [
   { icon: "refresh", title: "Обнови в Happ", text: "Открой Happ и нажми «Обновить» — подтянет свежие сервера." },
@@ -17,15 +30,18 @@ export default function SupportPanel({
   displayName: string;
   sub: SubscriptionInfo | null;
 }) {
-  const cfg = usePublicConfig();
-  // Embed the Chatwoot widget inline — the same /widget URL the floating SDK loads
-  // in its iframe, just placed in the cabinet panel instead of a floating bubble.
-  // NOTE: identity/plan context isn't passed to this raw iframe yet — wired together
-  // with the HMAC identity follow-up.
-  const widgetUrl =
-    cfg?.chatwoot_base_url && cfg?.chatwoot_website_token
-      ? `${cfg.chatwoot_base_url}/widget?website_token=${encodeURIComponent(cfg.chatwoot_website_token)}`
-      : null;
+  const [messages, setMessages] = useState<ChatMsg[]>(INITIAL_MESSAGES);
+  const [draft, setDraft] = useState("");
+
+  function sendMsg() {
+    const v = draft.trim();
+    if (!v) return;
+    setMessages((m) => [...m, { who: "me", text: v }]);
+    setDraft("");
+    setTimeout(() => {
+      setMessages((m) => [...m, { who: "them", text: "Принял, смотрю (демо-ответ)" }]);
+    }, 700);
+  }
 
   return (
     <div className="panel">
@@ -62,11 +78,25 @@ export default function SupportPanel({
             {displayName} · {sub?.plan_name ?? "—"}
           </span>
         </div>
-        {widgetUrl ? (
-          <iframe className="chat-frame" src={widgetUrl} title="Чат поддержки" />
-        ) : (
-          <p className="chat-fallback">Чат временно недоступен. Попробуй позже.</p>
-        )}
+        <div className="chat-log">
+          {messages.map((m, i) => (
+            <div key={i} className={`msg ${m.who}`}>
+              {m.who === "sys" ? <span>{m.text}</span> : <div className="bubble">{m.text}</div>}
+            </div>
+          ))}
+        </div>
+        <div className="chat-input">
+          <input
+            className="field"
+            placeholder="Опиши проблему…"
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && sendMsg()}
+          />
+          <button className="btn btn-amber" onClick={sendMsg}>
+            Отправить
+          </button>
+        </div>
       </div>
     </div>
   );
