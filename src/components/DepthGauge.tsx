@@ -15,6 +15,7 @@ const MARKS = [
   { id: "surface", label: "поверхность", depth: "0 м" },
   { id: "how", label: "погружение", depth: "−120 м" },
   { id: "why", label: "открытая вода", depth: "−1200 м" },
+  { id: "pricing", label: "выбор глубины", depth: "−2600 м" },
   { id: "faq", label: "глубина", depth: "−3800 м" },
   { id: "final", label: "открытый океан", depth: "∞" },
 ] as const;
@@ -41,25 +42,46 @@ export default function DepthGauge() {
     window.addEventListener("resize", onScroll);
 
     // Light up the mark for whichever section owns the middle of the viewport.
-    const sections = MARKS.map((m) => document.getElementById(m.id));
+    // Match entries by id (robust to observe order) and rescan via a
+    // MutationObserver, so data-driven sections that mount after us — e.g. the
+    // pricing section, which renders only once its plans arrive — are tracked too.
     const io = new IntersectionObserver(
       (entries) => {
         for (const e of entries) {
           if (e.isIntersecting) {
-            const idx = sections.indexOf(e.target as HTMLElement);
+            const idx = MARKS.findIndex((m) => m.id === (e.target as HTMLElement).id);
             if (idx >= 0) setActive(idx);
           }
         }
       },
       { rootMargin: "-48% 0px -48% 0px" },
     );
-    sections.forEach((s) => s && io.observe(s));
+
+    const observed = new Set<string>();
+    let mo: MutationObserver | null = null;
+    const scan = () => {
+      for (const m of MARKS) {
+        if (observed.has(m.id)) continue;
+        const el = document.getElementById(m.id);
+        if (el) {
+          observed.add(m.id);
+          io.observe(el);
+        }
+      }
+      if (observed.size === MARKS.length) mo?.disconnect();
+    };
+    mo = new MutationObserver(scan);
+    scan();
+    if (observed.size < MARKS.length) {
+      mo.observe(document.body, { childList: true, subtree: true });
+    }
 
     return () => {
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onScroll);
       if (raf.current != null) cancelAnimationFrame(raf.current);
       io.disconnect();
+      mo?.disconnect();
     };
   }, []);
 

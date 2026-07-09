@@ -7,6 +7,7 @@ import AuthCta from "./AuthCta";
 const LINKS = [
   { href: "#why", label: "Почему Tuna" },
   { href: "#how", label: "Подключение" },
+  { href: "#pricing", label: "Тарифы" },
   { href: "#faq", label: "Вопросы" },
 ];
 
