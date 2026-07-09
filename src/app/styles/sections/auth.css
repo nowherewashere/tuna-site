@@ -204,6 +204,14 @@
 .auth-tg .tg-auth {
   justify-content: center;
 }
+/* Telegram's widget iframe carries an opaque background; with a rounded button
+   its square corners peek past the button as a colour that doesn't match the
+   dive card. Clip the iframe to the button's own radius (data-radius=12, set on
+   the widget) so the two silhouettes coincide and no corner shows. !important
+   overrides the inline style the widget script writes on the iframe. */
+.tg-auth iframe {
+  border-radius: var(--radius-md) !important;
+}
 .auth-tg-err {
   color: var(--danger-text);
   font-size: var(--text-sm);

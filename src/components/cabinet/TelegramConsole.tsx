@@ -54,7 +54,7 @@ export default function TelegramConsole({
             Привяжи бота — и заходи в один аккаунт откуда удобно: с сайта и из Telegram. Туда же
             придут напоминания о подписке.
           </p>
-          <TelegramLoginButton botUsername={TELEGRAM_BOT} onAuth={onLink} />
+          <TelegramLoginButton botUsername={TELEGRAM_BOT} onAuth={onLink} cornerRadius={12} />
           {error && <p className="tg-console-err">{error}</p>}
         </>
       )}

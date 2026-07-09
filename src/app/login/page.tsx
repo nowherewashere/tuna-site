@@ -61,11 +61,15 @@ export default function LoginPage() {
       invalidateAuth();
       router.push("/cabinet");
     } catch (e) {
-      // 403 = the account is blocked; anything else (bad hash, network) is transient.
+      console.error("Telegram login failed:", e);
+      // 403 = the account is blocked; 401 = the widget hash didn't verify on the
+      // backend; anything else is a transient/network error.
       setTgError(
         e instanceof ApiError && e.status === 403
           ? "Аккаунт заблокирован — напиши в поддержку."
-          : "Не получилось войти через Telegram. Попробуй ещё раз.",
+          : e instanceof ApiError && e.status === 401
+            ? "Не удалось подтвердить вход через Telegram. Попробуй ещё раз."
+            : "Не получилось войти через Telegram. Попробуй ещё раз.",
       );
       setLoading(false);
     }
@@ -182,7 +186,11 @@ export default function LoginPage() {
                 <div className="auth-tg">
                   <div className="auth-sep">или</div>
                   <p className="auth-tg-note">Уже заходили через Telegram? Войди одним нажатием.</p>
-                  <TelegramLoginButton botUsername={TELEGRAM_BOT} onAuth={loginWithTelegram} />
+                  <TelegramLoginButton
+                    botUsername={TELEGRAM_BOT}
+                    onAuth={loginWithTelegram}
+                    cornerRadius={12}
+                  />
                   {tgError && <p className="auth-tg-err">{tgError}</p>}
                 </div>
               )}
