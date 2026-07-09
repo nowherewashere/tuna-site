@@ -11,13 +11,14 @@ export const metadata: Metadata = {
 export default function OfertaPage() {
   return (
     <>
-      <nav className="site">
+      <nav className="site-nav">
         <div className="wrap">
           <Link className="logo" href="/">
+            <span className="logo-mark" aria-hidden="true" />
             Tuna VPN
           </Link>
           <div className="nav-links">
-            <Link className="btn btn-ghost" style={{ padding: "9px 18px" }} href="/">
+            <Link className="btn btn-ghost nav-cta" href="/">
               На главную
             </Link>
           </div>
@@ -229,7 +230,7 @@ export default function OfertaPage() {
         </div>
       </main>
 
-      <footer className="site">
+      <footer className="site-footer">
         <div className="wrap">
           <div className="foot-grid">
             <div className="logo">Tuna VPN</div>

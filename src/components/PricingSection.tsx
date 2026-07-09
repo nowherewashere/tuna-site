@@ -16,6 +16,12 @@ function deviceLabel(n: number): string {
   return `${n} ${plural(n, "устройство", "устройства", "устройств")}`;
 }
 
+/** Round the API's decimal price string to a whole ruble ("139.33" → "139"). */
+function priceLabel(rub: string): string {
+  const n = Math.round(parseFloat(rub));
+  return Number.isFinite(n) ? String(n) : rub;
+}
+
 /**
  * Landing tariffs section. Fetches plans from the bot's public API
  * (`/api/v1/public/plans/public`) — the single source of truth, no hardcoded
@@ -40,7 +46,7 @@ export default function PricingSection() {
         <div className="sec-eyebrow">Тарифы</div>
         <h2 className="sec-title">Выбери свою глубину</h2>
         <p className="sec-intro">
-          Прозрачные тарифы без скрытых платежей. Чем длиннее подписка — тем ниже цена за месяц.
+          Прозрачные тарифы без скрытых платежей. Чем дольше подписка — тем ниже цена за месяц.
         </p>
         <div className="price-grid">
           {plans.map((p, i) => (
@@ -51,7 +57,7 @@ export default function PricingSection() {
               </div>
               <div className="price-amount">
                 <span className="price-from">от</span>
-                <span className="price-value">{p.monthly_from_rub}</span>
+                <span className="price-value">{priceLabel(p.monthly_from_rub)}</span>
                 <span className="price-per">₽/мес</span>
               </div>
               <ul className="price-meta">

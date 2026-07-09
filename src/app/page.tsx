@@ -180,7 +180,7 @@ export default function LandingPage() {
                     <Icon name="mail" size={24} />
                   </div>
                   <h3>Получи доступ</h3>
-                  <p>Регистрируешься — мы сразу выдаём подписку. Можно без почты.</p>
+                  <p>Регистрируешься — мы сразу выдаём подписку. Можно войти через Telegram.</p>
                 </div>
               </Reveal>
               <Reveal className="dive-step" delay={0.08}>
@@ -220,16 +220,15 @@ export default function LandingPage() {
               подстраивается, а ты остаёшься в сети.
             </p>
             <div className="feat-grid">
-              <Reveal className="feat feat-primary" delay={0}>
+              <Reveal className="feat" delay={0}>
                 <span className="ic">
-                  <Icon name="shield" size={30} />
+                  <Icon name="globe" size={26} />
                 </span>
                 <div>
-                  <span className="feat-kick">bypass</span>
                   <h3>Умный обход блокировок</h3>
                   <p>
                     Несколько протоколов и маскировка трафика под обычный — работает там, где
-                    обычные VPN отваливаются. Усиливают блокировки — Tuna подстраивается.
+                    обычные VPN отваливаются. Tuna поможет преодолеть любой цифровой шторм.
                   </p>
                 </div>
               </Reveal>
@@ -238,17 +237,27 @@ export default function LandingPage() {
                   <Icon name="bolt" size={26} />
                 </span>
                 <div>
-                  <span className="feat-kick">speed</span>
                   <h3>Быстро и удобно</h3>
                   <p>Подключение за минуту, автоподбор лучшего сервера. Никаких ручных настроек.</p>
                 </div>
               </Reveal>
               <Reveal className="feat" delay={0.12}>
                 <span className="ic">
+                  <Icon name="tv" size={26} />
+                </span>
+                <div>
+                  <h3>Стриминг, звонки, игры</h3>
+                  <p>
+                    Видео в 4K, созвоны без лагов и низкий пинг в играх. Никаких искусственных
+                    ограничений скорости.
+                  </p>
+                </div>
+              </Reveal>
+              <Reveal className="feat" delay={0.18}>
+                <span className="ic">
                   <Icon name="phone" size={26} />
                 </span>
                 <div>
-                  <span className="feat-kick">devices</span>
                   <h3>Единый доступ на всё</h3>
                   <p>
                     Телефон, ноутбук, планшет, ТВ — несколько устройств на одной подписке, зависит
@@ -256,12 +265,23 @@ export default function LandingPage() {
                   </p>
                 </div>
               </Reveal>
-              <Reveal className="feat" delay={0.18}>
+              <Reveal className="feat" delay={0.24}>
+                <span className="ic">
+                  <Icon name="shield" size={26} />
+                </span>
+                <div>
+                  <h3>Не храним твои данные</h3>
+                  <p>
+                    Не ведём логи подключений и не собираем историю трафика. Что ты открываешь и
+                    куда заходишь — знаешь только ты.
+                  </p>
+                </div>
+              </Reveal>
+              <Reveal className="feat" delay={0.3}>
                 <span className="ic">
                   <Icon name="refresh" size={26} />
                 </span>
                 <div>
-                  <span className="feat-kick">auto</span>
                   <h3>Автообновление</h3>
                   <p>Никаких запутанных интерфейсов — все обновления подключаются сами.</p>
                 </div>
@@ -447,7 +467,7 @@ export default function LandingPage() {
         <section className="final" id="final">
           <span className="final-glow" aria-hidden="true" />
           <div className="wrap">
-            <div className="final-depth mono">−4000 м · открытая вода</div>
+            <div className="final-depth mono">∞ · глубины интернета</div>
             <h2>Открытый океан ждёт</h2>
             <p>Бесплатный пробный период. Без карты. Мы уверены в своём качестве.</p>
             <AuthCta

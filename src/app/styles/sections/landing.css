@@ -416,7 +416,7 @@ section {
   border-top: 1px solid var(--line-soft);
   border-bottom: 1px solid var(--line-soft);
 }
-/* Bento: one primary card carrying the value prop + three supporting. */
+/* Six equal feature cards on a clean 3-up grid (two full rows). */
 .feat-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -424,6 +424,7 @@ section {
 }
 .feat {
   position: relative;
+  min-width: 0;
   background: linear-gradient(180deg, rgba(16, 63, 102, 0.66), rgba(10, 37, 64, 0.66));
   border: 1px solid var(--line);
   border-left: 2px solid var(--amber);
@@ -443,15 +444,6 @@ section {
   border-left-color: var(--amber-2);
   box-shadow: 0 14px 34px rgba(4, 16, 31, 0.32);
 }
-.feat-primary {
-  grid-column: 1 / -1;
-  align-items: center;
-  padding: clamp(24px, 3vw, 34px);
-  background:
-    radial-gradient(120% 160% at 0% 0%, rgba(245, 166, 35, 0.08), transparent 55%),
-    linear-gradient(120deg, rgba(22, 88, 140, 0.6), rgba(16, 63, 102, 0.5));
-  border-left-width: 3px;
-}
 .feat .ic {
   color: var(--amber);
   flex-shrink: 0;
@@ -463,35 +455,16 @@ section {
   border-radius: var(--radius-md);
   background: rgba(245, 166, 35, 0.12);
 }
-.feat-primary .ic {
-  width: 58px;
-  height: 58px;
-}
-.feat-kick {
-  display: block;
-  font-family: var(--font-mono), monospace;
-  font-size: 11px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--current);
-  margin-bottom: 8px;
-}
 .feat h3 {
   font-size: 19px;
   margin-bottom: 7px;
-}
-.feat-primary h3 {
-  font-size: clamp(21px, 2.4vw, 27px);
 }
 .feat p {
   font-size: 15px;
   color: var(--ink-card-dim);
 }
-.feat-primary p {
-  max-width: 60ch;
-}
 
-/* Bento reflow: 3-up → 2-up (tablet) → stacked (phone). Primary spans full. */
+/* Reflow: 3-up → 2-up (tablet) → stacked (phone). */
 @media (max-width: 1180px) {
   .feat-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
