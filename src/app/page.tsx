@@ -4,6 +4,7 @@ import Icon from "@/components/Icon";
 import DepthGauge from "@/components/DepthGauge";
 import Nav from "@/components/Nav";
 import HeroScene from "@/components/HeroScene";
+import PricingSection from "@/components/PricingSection";
 import { Reveal } from "@/components/ui";
 
 // FAQPage structured data (SEO/AEO). The answer text is the plain-text sibling
@@ -268,6 +269,8 @@ export default function LandingPage() {
             </div>
           </div>
         </section>
+
+        <PricingSection />
 
         <section id="faq">
           <div className="wrap">

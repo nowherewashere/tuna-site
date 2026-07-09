@@ -169,6 +169,19 @@ export interface SubscriptionOffers {
   current_subscription_status: string | null;
 }
 
+// Marketing-facing plan summary for the public landing page (no auth). Mirrors
+// PublicPlanLandingResponse in the backend; prices are RUB, precomputed server-side.
+export interface PublicPlanLanding {
+  public_code: string;
+  name: string;
+  description: string | null;
+  traffic_limit: number;
+  device_limit: number;
+  monthly_from_rub: string;
+  max_duration_days: number;
+  max_duration_price_rub: string;
+}
+
 export interface PaymentInit {
   payment_id: string;
   payment_url: string | null;
@@ -220,6 +233,9 @@ export const api = {
 
   // Canonical Happ install links (single source: the bot's OnboardingConfig).
   onboardingConfig: () => req<OnboardingConfig>("GET", "/onboarding/config"),
+
+  // Public landing tariffs (no auth) — single source of truth, cached server-side.
+  landingPlans: () => req<{ plans: PublicPlanLanding[] }>("GET", "/plans/public"),
 
   // Plans/prices and referral program — both live in the backend, never hardcoded.
   subscriptionOffers: () => req<SubscriptionOffers>("GET", "/subscription/offers"),
