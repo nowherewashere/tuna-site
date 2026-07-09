@@ -20,11 +20,9 @@ import Icon, { type IconName } from "@/components/Icon";
 import { useHashTab } from "@/lib/useHashTab";
 import { redirectTo, reloadPage } from "@/lib/nav";
 import { invalidateAuth } from "@/lib/useAuth";
+import { TELEGRAM_BOT } from "@/lib/config";
 
 type Tab = "overview" | "devices" | "sub" | "ref" | "support";
-
-// Bot username for the Telegram Login Widget (public); empty ⇒ linking hidden.
-const TELEGRAM_BOT = process.env.NEXT_PUBLIC_TELEGRAM_BOT ?? "";
 type ChatMsg = { who: "them" | "me" | "sys"; text: string };
 
 const TABS: { id: Tab; label: string }[] = [

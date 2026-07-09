@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { api, ApiError, type TelegramAuthUser } from "@/lib/api";
+import { TELEGRAM_BOT } from "@/lib/config";
 import Turnstile from "@/components/Turnstile";
 import TelegramLoginButton from "@/components/TelegramLoginButton";
 import { useTurnstile } from "@/lib/useTurnstile";
@@ -11,10 +12,6 @@ import { invalidateAuth } from "@/lib/useAuth";
 import Icon from "@/components/Icon";
 
 type Step = "email" | "code";
-
-// Bot username for the Telegram Login Widget (public). Empty ⇒ the button is
-// hidden, so the email flow keeps working if the env var is not set.
-const TELEGRAM_BOT = process.env.NEXT_PUBLIC_TELEGRAM_BOT ?? "";
 
 export default function LoginPage() {
   const router = useRouter();
