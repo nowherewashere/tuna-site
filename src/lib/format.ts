@@ -59,11 +59,36 @@ export function fmtDate(iso: string): string {
   }).format(new Date(iso));
 }
 
+/** Whole days remaining until `iso` (rounded up), measured from `nowMs`. */
+export function daysLeftUntil(iso: string, nowMs: number): number {
+  return Math.ceil((new Date(iso).getTime() - nowMs) / 86_400_000);
+}
+
+/** The resulting expiry date after adding `days`: the time stacks on whatever is
+ *  left (or starts from now if already expired) — it never resets or reprices. */
+export function expiryAfterAdding(fromIso: string | null, days: number, nowMs: number): string {
+  const base = fromIso ? Math.max(new Date(fromIso).getTime(), nowMs) : nowMs;
+  return fmtDate(new Date(base + days * 86_400_000).toISOString());
+}
+
 export function fmtBytes(n: number): string {
   if (!n) return "0 Б";
   const u = ["Б", "КБ", "МБ", "ГБ", "ТБ"];
   const i = Math.min(Math.floor(Math.log(n) / Math.log(1024)), u.length - 1);
   return `${(n / 1024 ** i).toFixed(i ? 1 : 0)} ${u[i]}`;
+}
+
+/** Friendly display name: real name → username → email local-part → «друг».
+ *  Avoids showing a raw full email address (e.g. an email-only user). */
+export function userDisplayName(
+  me: { name?: string | null; username?: string | null; email?: string | null } | null,
+): string {
+  const name = me?.name?.trim();
+  if (name) return name;
+  if (me?.username) return me.username;
+  const local = me?.email?.split("@")[0]?.trim();
+  if (local) return local;
+  return "друг";
 }
 
 export function platformIcon(p?: string | null): IconName {

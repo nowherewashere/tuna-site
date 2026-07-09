@@ -14,6 +14,7 @@ import {
 } from "@/lib/api";
 import { useHashTab } from "@/lib/useHashTab";
 import { redirectTo, reloadPage } from "@/lib/nav";
+import { userDisplayName } from "@/lib/format";
 import { invalidateAuth } from "@/lib/useAuth";
 import { TAB_IDS, type Tab } from "@/components/cabinet/tabs";
 import CabinetTabs from "@/components/cabinet/CabinetTabs";
@@ -120,12 +121,18 @@ export default function CabinetPage() {
     router.push("/");
   }
 
-  function openSupport() {
-    setTab("support");
-    topRef.current?.scrollIntoView({ behavior: "smooth" });
+  // Switching tabs returns the view to the top — on mobile the tab content can be
+  // scrolled far down, so a plain tab change otherwise leaves you mid-page.
+  function changeTab(t: Tab) {
+    setTab(t);
+    topRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
-  const displayName = me?.username || me?.email || me?.name || "user";
+  function openSupport() {
+    changeTab("support");
+  }
+
+  const displayName = userDisplayName(me);
 
   return (
     <div className="cab-wrap" ref={topRef}>
@@ -134,7 +141,7 @@ export default function CabinetPage() {
           <Link href="/" className="logo">
             Tuna VPN
           </Link>
-          <CabinetTabs tab={tab} onChange={setTab} />
+          <CabinetTabs tab={tab} onChange={changeTab} />
           <button className="btn btn-ghost" style={{ padding: "8px 16px" }} onClick={logout}>
             Выйти
           </button>
@@ -159,6 +166,7 @@ export default function CabinetPage() {
           {tab === "sub" && (
             <SubscriptionPanel
               offers={offers}
+              sub={sub}
               selected={selected}
               setSelected={setSelected}
               paying={paying}

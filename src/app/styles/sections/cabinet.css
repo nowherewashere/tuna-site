@@ -377,21 +377,55 @@
 
 /* ══ Subscription — one "dive-plan" console per tariff (no cards). Longer commit
    = deeper descent = lower price per month; the duration ladder is the hero. ══ */
+/* Current-subscription status console, above the plans. */
+.sub-current {
+  margin-bottom: var(--space-5);
+}
+/* "Your plan" badge + a subtle amber ring marking the tariff you're already on. */
+.plan-badge {
+  display: inline-flex;
+  align-items: center;
+  margin-left: var(--space-2);
+  vertical-align: middle;
+  font-family: var(--font-mono), monospace;
+  font-size: var(--text-2xs);
+  font-weight: 600;
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--amber);
+  background: var(--fill-accent-soft);
+  padding: 3px 8px;
+  border-radius: var(--radius-pill);
+}
+.plan-console.is-current {
+  border-color: rgba(245, 166, 35, 0.4);
+  box-shadow:
+    inset 0 1px 0 var(--border-soft),
+    0 0 0 1px rgba(245, 166, 35, 0.16);
+}
 /* Plans stack on phone; on desktop they sit side by side, capped and centered so
    the ladder rows stay a comfortable width no matter how many plans there are. */
 .plan-consoles {
-  display: grid;
-  grid-template-columns: 1fr;
+  display: flex;
+  flex-direction: column;
   gap: var(--space-4);
 }
 .plan-consoles .console {
   margin-bottom: 0;
 }
 @media (min-width: 900px) {
+  /* Flex (not grid auto-fit): the wrap decision uses flex-basis, so three plans
+     share one desktop row; the 480px cap keeps one or two from stretching wide. */
   .plan-consoles {
-    grid-template-columns: repeat(auto-fit, minmax(360px, 480px));
+    flex-direction: row;
+    flex-wrap: wrap;
     justify-content: center;
-    align-items: start;
+    align-items: flex-start;
+  }
+  .plan-consoles .console {
+    flex: 1 1 300px;
+    max-width: 480px;
+    min-width: 0;
   }
 }
 .plan-from {
@@ -875,8 +909,27 @@
 }
 .checkout-sub {
   font-size: var(--text-sm);
+  line-height: 1.45;
   color: var(--ink-card-dim);
-  margin: 4px 0 var(--space-4);
+  margin: var(--space-2) 0 6px;
+}
+/* Resulting expiry — the proof that days stack and nothing burns. */
+.checkout-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 var(--space-4);
+  font-family: var(--font-mono), monospace;
+  font-size: var(--text-sm);
+  color: var(--ink-card-dim);
+}
+.checkout-meta svg {
+  color: var(--amber);
+  flex-shrink: 0;
+}
+.checkout-meta b {
+  color: var(--text-primary);
+  font-weight: 500;
 }
 .checkout-pay + .checkout-pay {
   margin-top: var(--space-2);
