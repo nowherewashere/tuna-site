@@ -102,6 +102,13 @@ export default function ReferralPanel({
   const remainingToMin = referral.payout_min_kop - referral.balance_kop;
   const belowMin = remainingToMin > 0;
   const canWithdraw = !belowMin && !referral.has_open_payout;
+  // Telegram Stars payout is gifted via the bot (needs Telegram/MTProto), so the
+  // site only points there — shown when Stars is enabled, the balance clears the
+  // (low) Stars floor, and no payout is already in flight.
+  const canGetStars =
+    referral.stars_payout_enabled &&
+    referral.balance_kop >= referral.stars_min_kop &&
+    !referral.has_open_payout;
 
   function resetTransient() {
     setError(null);
@@ -289,6 +296,20 @@ export default function ReferralPanel({
         )}
         {belowMin && !referral.has_open_payout && (
           <p className="ref-hint">Ещё {fmtRub(remainingToMin)} ₽ до вывода</p>
+        )}
+        {canGetStars && (
+          <p className="ref-hint">
+            ⭐ Telegram Stars —{" "}
+            <a
+              className="ref-stars-link"
+              href={referral.bot_referral_url}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              получить в боте
+            </a>
+            . Тратятся внутри Telegram, это не вывод в деньги.
+          </p>
         )}
       </section>
 

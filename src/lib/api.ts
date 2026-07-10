@@ -211,6 +211,10 @@ export interface ReferralProgram {
   crypto_asset: string;
   crypto_network: string;
   last_wallet: string | null; // masked, prefill for repeat payouts
+  // Telegram Stars payout. Gifting needs Telegram/MTProto, so the site surfaces
+  // Stars as "получить в боте" (links to the bot) rather than settling here.
+  stars_payout_enabled: boolean;
+  stars_min_kop: number;
   // Legacy reward config (vestigial — active accrual is the money commission).
   reward_type: string;
   reward_strategy: string;

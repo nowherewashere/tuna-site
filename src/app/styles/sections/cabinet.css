@@ -999,6 +999,18 @@
   color: var(--ink-card-dim);
 }
 
+/* Stars "получить в боте" link sits inside a dim .ref-hint — accent it so it
+   reads as the one tappable thing in the line. */
+.ref-stars-link {
+  color: var(--accent);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.ref-stars-link:hover {
+  text-decoration: none;
+}
+
 /* Inline action sub-consoles (payout / pay-with-balance) — the anti-modal. An
    amber ring ties each back to the CTA that opened it. */
 .ref-inline {
