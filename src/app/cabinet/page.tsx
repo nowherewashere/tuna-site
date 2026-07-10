@@ -39,6 +39,9 @@ export default function CabinetPage() {
   const [maxDevices, setMaxDevices] = useState<number | null>(null);
   const [offers, setOffers] = useState<SubscriptionOffers | null>(null);
   const [referral, setReferral] = useState<ReferralProgram | null>(null);
+  // Why the referral tab is empty. Without this the panel blamed the subscription for
+  // every failure (403 identity, 403 disabled, network) — which was usually a lie.
+  const [referralError, setReferralError] = useState<unknown>(null);
   const [selected, setSelected] = useState<Selected>(null);
   const [paying, setPaying] = useState(false);
   const [payError, setPayError] = useState<string | null>(null);
@@ -79,7 +82,13 @@ export default function CabinetPage() {
     }
     if (tab === "ref" && !fetchedTabs.current.has("ref")) {
       fetchedTabs.current.add("ref");
-      api.referralProgram().then(setReferral).catch(() => {});
+      api
+        .referralProgram()
+        .then((r) => {
+          setReferral(r);
+          setReferralError(null);
+        })
+        .catch(setReferralError);
     }
   }, [tab]);
 
@@ -87,7 +96,13 @@ export default function CabinetPage() {
   // the balance changes on both, and pay-with-balance also extends the subscription,
   // so the Subscription/Overview tabs stay in sync (single source of truth).
   function refreshReferral() {
-    api.referralProgram().then(setReferral).catch(() => {});
+    api
+      .referralProgram()
+      .then((r) => {
+        setReferral(r);
+        setReferralError(null);
+      })
+      .catch(setReferralError);
     api.currentSubscription().then(setSub).catch(() => {});
   }
 
@@ -239,7 +254,13 @@ export default function CabinetPage() {
               clearPayError={() => setPayError(null)}
             />
           )}
-          {tab === "ref" && <ReferralPanel referral={referral} onRefresh={refreshReferral} />}
+          {tab === "ref" && (
+            <ReferralPanel
+              referral={referral}
+              loadError={referralError}
+              onRefresh={refreshReferral}
+            />
+          )}
           {tab === "support" && <SupportPanel displayName={displayName} sub={sub} />}
         </div>
       </div>
