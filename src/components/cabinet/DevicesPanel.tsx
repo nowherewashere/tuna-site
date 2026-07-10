@@ -7,11 +7,13 @@ export default function DevicesPanel({
   maxDevices,
   sub,
   onUnbind,
+  onAddDevice,
 }: {
   devices: Device[] | null;
   maxDevices: number | null;
   sub: SubscriptionInfo | null;
   onUnbind: (hwid: string) => void;
+  onAddDevice: () => void;
 }) {
   const count = devices?.length ?? 0;
   const max = maxDevices ?? sub?.device_limit ?? 0;
@@ -22,6 +24,10 @@ export default function DevicesPanel({
       <div className="panel-sub">
         Один доступ работает на нескольких устройствах. Нажми «Отвязать», чтобы освободить слот.
       </div>
+
+      <button className="btn btn-amber dev-add" onClick={onAddDevice}>
+        <Icon name="plus" size={17} /> Добавить устройство
+      </button>
 
       <section className="console" aria-label="Подключённые устройства">
         <div className="console-corner console-corner-tl" aria-hidden="true" />

@@ -7,8 +7,12 @@
 html {
   scroll-behavior: smooth;
   background: var(--ocean);
-  /* No sideways rubber-band: on mobile a horizontal drag must not bounce the page
-     and expose the html backdrop beside the content. */
+  /* No sideways rubber-band or horizontal scroll: on mobile a two-finger drag must
+     not bounce the page or scroll it sideways and expose the backdrop beside the
+     content. `overflow-x: clip` removes the horizontal scrollport entirely (unlike
+     `hidden`, it creates no scroll container, so the sticky topbar keeps working);
+     `overscroll-behavior-x` still guards the rubber-band on browsers that ignore it. */
+  overflow-x: clip;
   overscroll-behavior-x: none;
 }
 body {

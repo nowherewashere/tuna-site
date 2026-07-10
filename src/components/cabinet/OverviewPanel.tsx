@@ -5,7 +5,7 @@ import InstallBlock from "@/components/InstallBlock";
 import EmailConsole from "@/components/cabinet/EmailConsole";
 import TelegramConsole from "@/components/cabinet/TelegramConsole";
 import type { Device, Me, SubscriptionInfo, TelegramAuthUser } from "@/lib/api";
-import { STATUS_LABEL, fmtBytes, fmtDate } from "@/lib/format";
+import { STATUS_LABEL, daysLeftUntil, fmtDate, plural } from "@/lib/format";
 
 export default function OverviewPanel({
   loading,
@@ -30,11 +30,7 @@ export default function OverviewPanel({
   onEmailVerified: (merged: boolean) => void;
   linkError: string | null;
 }) {
-  const isUnlimited = !!sub && sub.traffic_limit === 0;
-  const usedBytes = sub?.used_traffic_bytes ?? 0;
-  const limitBytes = sub && sub.traffic_limit > 0 ? sub.traffic_limit * 1024 ** 3 : 0;
-  const trafficPct = limitBytes > 0 ? Math.min(100, Math.round((usedBytes / limitBytes) * 100)) : 0;
-  const nearLimit = trafficPct >= 85;
+  const active = sub?.status === "ACTIVE";
   const statusClass =
     sub?.status === "ACTIVE"
       ? ""
@@ -44,10 +40,8 @@ export default function OverviewPanel({
 
   // Captured once on mount (pure render); this hint doesn't need to tick live.
   const [now] = useState(() => Date.now());
-  const daysLeft = sub
-    ? Math.ceil((new Date(sub.expire_at).getTime() - now) / 86_400_000)
-    : null;
-  const expirySoon = daysLeft !== null && daysLeft >= 0 && daysLeft <= 5;
+  const daysLeft = sub ? daysLeftUntil(sub.expire_at, now) : null;
+  const expirySoon = daysLeft !== null && daysLeft <= 5;
   const deviceCount = devices?.length ?? 0;
   const deviceMax = maxDevices ?? sub?.device_limit ?? 0;
 
@@ -107,26 +101,29 @@ export default function OverviewPanel({
           </span>
         </header>
 
-        <div className="meter-block">
-          <div className="meter-head">
-            <span className="readout-label">Трафик</span>
-            <span className="meter-value">
-              <span className="meter-used">{fmtBytes(usedBytes)}</span>
-              <span className="meter-denom">
-                {isUnlimited ? " · без лимита" : ` / ${sub.traffic_limit} ГБ`}
+        <div className="ov-hero">
+          <div className="ov-time">
+            <span className="readout-label">{active ? "Активна ещё" : "Доступ"}</span>
+            {active && daysLeft !== null ? (
+              <span className={`ov-time-v${expirySoon ? " is-urgent" : ""}`}>
+                <b>{daysLeft}</b> {plural(daysLeft, "день", "дня", "дней")}
               </span>
+            ) : (
+              <span className="ov-time-v ov-time-off">{STATUS_LABEL[sub.status] ?? "Истекла"}</span>
+            )}
+            <span className="ov-time-sub">
+              {active ? `до ${fmtDate(sub.expire_at)}` : "продли, чтобы вернуться в сеть"}
             </span>
           </div>
-          <div
-            className={`tmeter${isUnlimited ? " tmeter-flow" : ""}${nearLimit ? " tmeter-warn" : ""}`}
-            role="img"
-            aria-label={
-              isUnlimited
-                ? `Использовано ${fmtBytes(usedBytes)}, без лимита`
-                : `Использовано ${trafficPct}% трафика`
-            }
-          >
-            <span className="tmeter-fill" style={{ width: isUnlimited ? "100%" : `${trafficPct}%` }} />
+
+          <div className="ov-uncap" role="img" aria-label="Трафик без ограничений">
+            <span className="ov-uncap-inf" aria-hidden="true">
+              ∞
+            </span>
+            <span className="ov-uncap-txt">
+              <span className="readout-label">Трафик</span>
+              <span className="ov-uncap-v">Без лимита</span>
+            </span>
           </div>
         </div>
 
@@ -134,13 +131,6 @@ export default function OverviewPanel({
           <div className="readout">
             <span className="readout-label">Тариф</span>
             <span className="readout-val">{sub.plan_name}</span>
-          </div>
-          <div className="readout">
-            <span className="readout-label">Истекает</span>
-            <span className={`readout-val${expirySoon ? " is-urgent" : ""}`}>
-              {fmtDate(sub.expire_at)}
-              {expirySoon && <span className="readout-note"> · осталось {daysLeft} дн.</span>}
-            </span>
           </div>
           <div className="readout">
             <span className="readout-label">Устройства</span>
@@ -151,7 +141,7 @@ export default function OverviewPanel({
         </div>
       </section>
 
-      <section className="console install-console" aria-label="Установка">
+      <section className="console install-console" id="install" aria-label="Установка">
         <div className="console-corner console-corner-tl" aria-hidden="true" />
         <div className="console-corner console-corner-tr" aria-hidden="true" />
         <h3 className="console-name">Установи Tuna в 3 шага</h3>

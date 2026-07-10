@@ -56,6 +56,9 @@ export default function CabinetPage() {
   const [authed, setAuthed] = useState(true);
   const [linkError, setLinkError] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  // Set when the user taps "Добавить устройство" on the Devices tab: once the Overview
+  // tab has mounted its install guide, jump straight to it (see the effect below).
+  const [pendingInstallScroll, setPendingInstallScroll] = useState(false);
 
   // Auto-dismiss the toast; the merge notice is longer, so give it time to read.
   useEffect(() => {
@@ -231,6 +234,20 @@ export default function CabinetPage() {
     changeTab("support");
   }
 
+  // "Добавить устройство" (Devices tab) → open Overview and land on the install guide.
+  function addDevice() {
+    setPendingInstallScroll(true);
+    setTab("overview");
+  }
+  // Run once Overview has actually mounted the #install section (a tab switch is a
+  // hash change, so the panel renders a tick later — scrolling here, not in the
+  // handler, guarantees the target exists).
+  useEffect(() => {
+    if (tab !== "overview" || !pendingInstallScroll) return;
+    document.getElementById("install")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    setPendingInstallScroll(false);
+  }, [tab, pendingInstallScroll]);
+
   const displayName = userDisplayName(me);
 
   return (
@@ -264,7 +281,13 @@ export default function CabinetPage() {
             />
           )}
           {tab === "devices" && (
-            <DevicesPanel devices={devices} maxDevices={maxDevices} sub={sub} onUnbind={unbind} />
+            <DevicesPanel
+              devices={devices}
+              maxDevices={maxDevices}
+              sub={sub}
+              onUnbind={unbind}
+              onAddDevice={addDevice}
+            />
           )}
           {tab === "sub" && (
             <SubscriptionPanel

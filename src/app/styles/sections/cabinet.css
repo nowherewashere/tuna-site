@@ -207,63 +207,82 @@
   font-size: var(--text-sm);
 }
 
-/* Zone B — the headline traffic instrument */
-.meter-block {
+/* Zone B — the headline instrument. Traffic is unlimited on every plan, so instead
+   of a fill meter the console reads the pass like a dive computer: how long you stay
+   under (time remaining), with traffic reframed as a confident "uncapped" chip. */
+.ov-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  flex-wrap: wrap;
   padding-bottom: var(--space-4);
   margin-bottom: var(--space-4);
   border-bottom: 1px solid var(--border-soft);
 }
-.meter-head {
+.ov-time {
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--space-3);
-  margin-bottom: var(--space-3);
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
 }
-.meter-value {
-  font-variant-numeric: tabular-nums;
-}
-.meter-used {
+.ov-time-v {
   font-family: var(--font-mono), monospace;
-  font-size: var(--text-2xl);
+  font-size: var(--text-xl);
   color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.05;
 }
-.meter-denom {
+.ov-time-v b {
+  font-weight: 600;
+  /* A deliberate hero size, a step above the type scale's 30px ceiling. */
+  font-size: clamp(34px, 9vw, 46px);
+  margin-right: 3px;
+}
+.ov-time-v.is-urgent b {
+  color: var(--amber);
+}
+.ov-time-off {
+  font-size: var(--text-2xl);
+  color: var(--danger-text);
+}
+.ov-time-sub {
   font-family: var(--font-mono), monospace;
-  font-size: var(--text-md);
+  font-size: var(--text-sm);
   color: var(--ink-card-dim);
 }
-.tmeter {
-  position: relative;
-  height: 10px;
-  border-radius: var(--radius-pill);
+/* Uncapped-traffic chip — the confident replacement for the fill bar. */
+.ov-uncap {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-lg);
   background: var(--fill-subtle);
-  overflow: hidden;
+  border: 1px solid var(--border-soft);
 }
-.tmeter-fill {
-  display: block;
-  height: 100%;
-  border-radius: var(--radius-pill);
-  background: linear-gradient(90deg, var(--amber-2), var(--amber));
-  transition: width var(--dur-reveal) var(--ease-out);
+.ov-uncap-inf {
+  font-family: var(--font-mono), monospace;
+  font-size: 34px;
+  line-height: 1;
+  color: var(--amber);
 }
-/* Scale ticks at 25 / 50 / 75 / 100 %. */
-.tmeter::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: repeating-linear-gradient(
-    90deg,
-    transparent 0 calc(25% - 1px),
-    var(--border-soft) calc(25% - 1px) 25%
-  );
+.ov-uncap-txt {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
 }
-.tmeter-warn .tmeter-fill {
-  background: linear-gradient(90deg, #ff9d74, var(--danger));
+.ov-uncap-v {
+  font-family: var(--font-body), sans-serif;
+  font-weight: 600;
+  font-size: var(--text-md);
+  color: var(--text-primary);
 }
-.tmeter-flow .tmeter-fill {
-  background: var(--fill-accent-soft);
+@media (max-width: 560px) {
+  .ov-uncap {
+    width: 100%;
+    justify-content: flex-start;
+  }
 }
 
 /* Zone C — secondary readouts as one hairline-divided row (not tiles) */
@@ -750,6 +769,15 @@
   color: var(--ink-card-dim);
   font-size: 15px;
   line-height: 1.5;
+}
+
+/* Devices — "add device" CTA jumps to the install guide on the Overview tab. */
+.dev-add {
+  margin-bottom: var(--space-5);
+}
+/* Landing target for that jump: clear the sticky topbar so the heading isn't hidden. */
+.install-console {
+  scroll-margin-top: 80px;
 }
 
 /* Devices — slot gauge + hairline rows */
