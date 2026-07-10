@@ -1,37 +1,7 @@
-/* ── Onboarding / login cards ────────────────────────────────────────────── */
-/* Auth screens fill the viewport as a self-contained dive surface (like the
-   cabinet) and clip horizontally, so nothing can widen the page or reveal the
+/* ── Login card ──────────────────────────────────────────────────────────── */
+/* The login screen fills the viewport as a self-contained dive surface (like the
+   cabinet) and clips horizontally, so nothing can widen the page or reveal the
    backdrop on a sideways drag. */
-.onb {
-  min-height: 100dvh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 60px 0;
-  overflow-x: clip;
-}
-.onb-card {
-  position: relative;
-  background: var(--fill-console);
-  border: 1px solid var(--border-soft);
-  border-radius: var(--radius-2xl);
-  box-shadow: inset 0 1px 0 var(--border-soft);
-  padding: clamp(var(--space-6), 5vw, 40px);
-  max-width: 560px;
-  margin: 0 auto;
-  width: 100%;
-  color: var(--ink-card);
-}
-.onb-card :is(h1, h2) {
-  font-size: 30px;
-  font-weight: 800;
-  margin-bottom: 8px;
-}
-.onb-card .lead {
-  color: var(--ink-card-dim);
-  margin-bottom: 26px;
-  font-size: 16px;
-}
 .field {
   flex: 1;
   min-width: 0;
@@ -63,11 +33,6 @@
   color: var(--amber);
   text-decoration: underline;
   cursor: pointer;
-}
-.onb-divider {
-  height: 1px;
-  background: var(--line);
-  margin: 24px 0;
 }
 .turnstile-note {
   font-size: 12px;
@@ -133,11 +98,30 @@
   color: var(--ink-card);
 }
 
+/* Shown while the already-authed guard resolves /auth/me (and on the /connect →
+   /login redirect), so a signed-in user never sees a flash of the login form. */
+.auth-checking {
+  min-height: 40vh;
+  display: grid;
+  place-items: center;
+}
+.auth-spinner {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 2px solid var(--border-soft);
+  border-top-color: var(--amber);
+  animation: auth-spin 0.7s linear infinite;
+}
+@keyframes auth-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 /* Instrument corner ticks — the same bezel as the subscription consoles. */
 .login-card::before,
-.login-card::after,
-.onb-card::before,
-.onb-card::after {
+.login-card::after {
   content: "";
   position: absolute;
   top: 12px;
@@ -148,13 +132,11 @@
   border-color: var(--hairline);
   border-top: 1px solid;
 }
-.login-card::before,
-.onb-card::before {
+.login-card::before {
   left: 12px;
   border-left: 1px solid;
 }
-.login-card::after,
-.onb-card::after {
+.login-card::after {
   right: 12px;
   border-right: 1px solid;
 }
@@ -220,17 +202,6 @@
   margin-top: var(--space-3);
 }
 
-/* Helper modifiers (replace former inline styles on connect/login). */
-.onb-install {
-  min-height: auto;
-  padding: 56px 0;
-}
-.onb-card-wide {
-  max-width: 660px;
-}
-.status-pill-mb {
-  margin-bottom: 16px;
-}
 .onb-alt-lg {
   margin-top: 20px;
 }

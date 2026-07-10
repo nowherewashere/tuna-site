@@ -57,8 +57,9 @@ export default function CabinetPage() {
   const [linkError, setLinkError] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   // Set when the user taps "Добавить устройство" on the Devices tab: once the Overview
-  // tab has mounted its install guide, jump straight to it (see the effect below).
-  const [pendingInstallScroll, setPendingInstallScroll] = useState(false);
+  // tab has mounted its install guide, jump straight to it (see the effect below). A
+  // ref, not state — it's a one-shot side-effect flag that shouldn't cause a render.
+  const pendingInstallScroll = useRef(false);
 
   // Auto-dismiss the toast; the merge notice is longer, so give it time to read.
   useEffect(() => {
@@ -236,17 +237,17 @@ export default function CabinetPage() {
 
   // "Добавить устройство" (Devices tab) → open Overview and land on the install guide.
   function addDevice() {
-    setPendingInstallScroll(true);
+    pendingInstallScroll.current = true;
     setTab("overview");
   }
   // Run once Overview has actually mounted the #install section (a tab switch is a
   // hash change, so the panel renders a tick later — scrolling here, not in the
   // handler, guarantees the target exists).
   useEffect(() => {
-    if (tab !== "overview" || !pendingInstallScroll) return;
+    if (tab !== "overview" || !pendingInstallScroll.current) return;
+    pendingInstallScroll.current = false;
     document.getElementById("install")?.scrollIntoView({ behavior: "smooth", block: "start" });
-    setPendingInstallScroll(false);
-  }, [tab, pendingInstallScroll]);
+  }, [tab]);
 
   const displayName = userDisplayName(me);
 
@@ -277,6 +278,7 @@ export default function CabinetPage() {
               me={me}
               onLinkTelegram={linkTelegram}
               onEmailVerified={emailVerified}
+              onGetAccess={() => changeTab("sub")}
               linkError={linkError}
             />
           )}

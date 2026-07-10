@@ -72,7 +72,7 @@ export default function PricingSection() {
               </ul>
               <AuthCta
                 className="btn btn-amber price-cta"
-                guest={{ href: "/connect", label: "Подключить" }}
+                guest={{ href: "/login", label: "Подключить" }}
                 authed={{ href: "/cabinet", label: "Открыть кабинет" }}
               />
             </Reveal>

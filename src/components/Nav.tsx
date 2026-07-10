@@ -75,7 +75,7 @@ export default function Nav() {
         <div className="nav-mobile-only">
           <AuthCta
             className="btn btn-amber nav-cta-sm"
-            guest={{ href: "/connect", label: "Подключить" }}
+            guest={{ href: "/login", label: "Подключить" }}
             authed={{ href: "/cabinet", label: "Кабинет" }}
           />
           <button
@@ -111,6 +111,19 @@ export default function Nav() {
             aria-modal="true"
             aria-label="Меню навигации"
           >
+            {/* Explicit close, sitting where the burger was. The overlay paints above
+                the (non-positioned) burger, so the burger's animated X is hidden and
+                its tap-zone is dead — this button lives in the drawer's own layer and
+                joins the focus-trap. */}
+            <button
+              type="button"
+              className="nav-drawer-close"
+              aria-label="Закрыть меню"
+              onClick={() => setOpen(false)}
+            >
+              <span />
+              <span />
+            </button>
             {LINKS.map((l) => (
               <a key={l.href} href={l.href} className="nav-drawer-link" onClick={() => setOpen(false)}>
                 {l.label}
@@ -118,8 +131,9 @@ export default function Nav() {
             ))}
             <AuthCta
               className="btn btn-amber btn-full btn-lg nav-drawer-cta"
-              guest={{ href: "/connect", label: "Подключить" }}
+              guest={{ href: "/login", label: "Подключить" }}
               authed={{ href: "/cabinet", label: "Личный кабинет" }}
+              onClick={() => setOpen(false)}
             />
           </div>
         </div>

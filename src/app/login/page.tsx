@@ -1,9 +1,10 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { api, ApiError, type TelegramAuthUser } from "@/lib/api";
+import { useEffect, useState, useSyncExternalStore } from "react";
+import { api, ApiError, trackFunnel, type TelegramAuthUser } from "@/lib/api";
+import { detectPlatform } from "@/components/InstallBlock";
+import { readRefCode } from "@/lib/referral";
 import Turnstile from "@/components/Turnstile";
 import { useTurnstile } from "@/lib/useTurnstile";
 import { invalidateAuth } from "@/lib/useAuth";
@@ -14,9 +15,15 @@ import { TELEGRAM_BOT } from "@/lib/config";
 
 type Step = "email" | "code";
 
+// One passwordless screen for both sign-in and sign-up: the backend is
+// find-or-create, so there is no separate registration. New accounts are granted
+// a trial after the code is confirmed; everyone lands in the cabinet.
 export default function LoginPage() {
   const router = useRouter();
   const ts = useTurnstile();
+  // Gate the form on a session check so a signed-in user who reloads or navigates
+  // here goes straight to the cabinet instead of being asked to log in again.
+  const [checking, setChecking] = useState(true);
   const [step, setStep] = useState<Step>("email");
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
@@ -24,16 +31,69 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [tgError, setTgError] = useState<string | null>(null);
 
+  // Referral attribution captured from a /r/<code> visit (RefCapture). Client-only;
+  // useSyncExternalStore returns null on the server so SSG markup matches (no flash).
+  const refCode = useSyncExternalStore(
+    () => () => {},
+    () => readRefCode(),
+    () => null,
+  );
+
+  // Already-authenticated guard. A valid session cookie (or a silent refresh of an
+  // expired access token) resolves /auth/me → straight to the cabinet. Only when it
+  // truly fails do we show the form and mark the funnel start.
+  useEffect(() => {
+    let alive = true;
+    api
+      .me()
+      .then(() => {
+        if (alive) router.replace("/cabinet");
+      })
+      .catch(() => {
+        if (!alive) return;
+        setChecking(false);
+        trackFunnel("start", { platform: detectPlatform() });
+      });
+    return () => {
+      alive = false;
+    };
+  }, [router]);
+
+  // Post-authentication routing, shared by the email and Telegram paths. A brand-new
+  // account has no subscription → grant the trial (idempotent; 409 = already has one)
+  // and fire the onboarding funnel steps. Everyone ends up in the cabinet, which shows
+  // the install guide at the top.
+  async function finishAuth() {
+    invalidateAuth();
+    const existing = await api.currentSubscription().catch(() => null);
+    if (!existing) {
+      try {
+        await api.activateTrial();
+      } catch (e) {
+        if (!(e instanceof ApiError && e.status === 409)) {
+          console.error("Trial activation failed:", e);
+        }
+      }
+      const sub = await api.currentSubscription().catch(() => null);
+      if (sub) {
+        const platform = detectPlatform();
+        trackFunnel("config_issued", { platform, userRef: sub.user_remna_id });
+        trackFunnel("app_install_shown", { platform, userRef: sub.user_remna_id });
+      }
+    }
+    router.push("/cabinet");
+  }
+
   async function requestCode() {
     if (!email.trim()) return;
     if (ts.required && !ts.token) {
-      setError("Секунду — проверяем, что вы не робот…");
+      setError("Секунду — проверяем, что ты не робот…");
       return;
     }
     setLoading(true);
     setError(null);
     try {
-      await api.requestLoginCode(email.trim(), ts.token || undefined);
+      await api.requestLoginCode(email.trim(), ts.token || undefined, refCode || undefined);
       setStep("code");
     } catch (e) {
       if (e instanceof ApiError && e.status === 403) {
@@ -58,8 +118,7 @@ export default function LoginPage() {
     setTgError(null);
     try {
       await api.telegramLogin(user);
-      invalidateAuth();
-      router.push("/cabinet");
+      await finishAuth();
     } catch (e) {
       console.error("Telegram login failed:", e);
       // 403 = the account is blocked; 401 = the widget hash didn't verify on the
@@ -81,17 +140,28 @@ export default function LoginPage() {
     setError(null);
     try {
       await api.verifyLoginCode(email.trim(), code.trim());
-      invalidateAuth();
-      router.push("/cabinet");
+      await finishAuth();
     } catch (e) {
       setError(
         e instanceof ApiError && e.status === 410
           ? "Код истёк — запроси новый."
           : "Неверный код. Проверь и попробуй снова.",
       );
-    } finally {
       setLoading(false);
     }
+  }
+
+  if (checking) {
+    return (
+      <main className="login">
+        <div className="wrap">
+          <div className="auth-checking" aria-busy="true">
+            <span className="auth-spinner" aria-hidden="true" />
+            <span className="sr-only">Проверяем сессию…</span>
+          </div>
+        </div>
+      </main>
+    );
   }
 
   return (
@@ -136,7 +206,7 @@ export default function LoginPage() {
                 loadingLabel="Проверяем…"
                 disabled={code.length !== 6}
               >
-                Войти
+                Продолжить
               </Button>
               <p className="onb-alt onb-alt-lg">
                 не пришло?{" "}
@@ -155,7 +225,10 @@ export default function LoginPage() {
           ) : (
             <>
               <h1>Вход в Tuna</h1>
-              <p className="lead">Введи почту — пришлём код для входа. Без пароля.</p>
+              <p className="lead">
+                Введи почту — пришлём код. Войдём или создадим аккаунт и сразу выдадим доступ. Без
+                пароля.
+              </p>
               <TextField
                 label="Электронная почта"
                 labelHidden
@@ -194,9 +267,6 @@ export default function LoginPage() {
                   {tgError && <p className="auth-tg-err">{tgError}</p>}
                 </div>
               )}
-              <p className="onb-alt onb-alt-lg">
-                нет аккаунта? <Link href="/connect">получить доступ</Link>
-              </p>
             </>
           )}
         </div>

@@ -17,6 +17,7 @@ export default function OverviewPanel({
   me,
   onLinkTelegram,
   onEmailVerified,
+  onGetAccess,
   linkError,
 }: {
   loading: boolean;
@@ -28,6 +29,7 @@ export default function OverviewPanel({
   me: Me | null;
   onLinkTelegram: (user: TelegramAuthUser) => void;
   onEmailVerified: (merged: boolean) => void;
+  onGetAccess: () => void;
   linkError: string | null;
 }) {
   const active = sub?.status === "ACTIVE";
@@ -79,9 +81,9 @@ export default function OverviewPanel({
       <div className="panel">
         <div className="console console-empty">
           <p>Пока нет активной подписки.</p>
-          <a className="btn btn-amber" href="/connect">
+          <button className="btn btn-amber" onClick={onGetAccess}>
             Получить доступ
-          </a>
+          </button>
         </div>
         {linkSurface}
       </div>

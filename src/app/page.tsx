@@ -147,7 +147,7 @@ export default function LandingPage() {
                 <div className="hero-cta reveal d4">
                   <AuthCta
                     className="btn btn-amber btn-lg"
-                    guest={{ href: "/connect", label: "Подключить" }}
+                    guest={{ href: "/login", label: "Подключить" }}
                     authed={{ href: "/cabinet", label: "Открыть кабинет" }}
                   />
                   <AuthCta
@@ -468,7 +468,7 @@ export default function LandingPage() {
             <p>Бесплатный пробный период. Без карты. Мы уверены в своём качестве.</p>
             <AuthCta
               className="btn btn-amber btn-lg"
-              guest={{ href: "/connect", label: "Подключить" }}
+              guest={{ href: "/login", label: "Подключить" }}
               authed={{ href: "/cabinet", label: "Открыть кабинет" }}
             />
           </div>

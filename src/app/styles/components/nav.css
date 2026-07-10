@@ -136,6 +136,34 @@
   box-shadow: var(--shadow-card);
   animation: nav-slide var(--dur-slow) var(--ease-out);
 }
+/* Close (X) — sits in the drawer's top padding, aligned with the (now-hidden)
+   burger box, so a tap where the burger was still closes the menu. */
+.nav-drawer-close {
+  position: absolute;
+  top: 11px;
+  right: var(--space-6);
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.06);
+  cursor: pointer;
+}
+.nav-drawer-close span {
+  position: absolute;
+  width: 18px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--ink);
+}
+.nav-drawer-close span:first-child {
+  transform: rotate(45deg);
+}
+.nav-drawer-close span:last-child {
+  transform: rotate(-45deg);
+}
 .nav-drawer-link {
   font-family: var(--font-display), sans-serif;
   font-weight: 600;

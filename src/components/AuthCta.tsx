@@ -17,17 +17,19 @@ export default function AuthCta({
   authed,
   className,
   style,
+  onClick,
 }: {
   guest: Variant;
   authed: Variant;
   className?: string;
   style?: CSSProperties;
+  onClick?: () => void;
 }) {
   const isAuthed = useAuth();
   const variant = isAuthed ? authed : guest;
   if (!variant) return null;
   return (
-    <Link className={className} style={style} href={variant.href}>
+    <Link className={className} style={style} href={variant.href} onClick={onClick}>
       {variant.label}
     </Link>
   );
