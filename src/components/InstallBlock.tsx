@@ -20,7 +20,7 @@ const PLATFORMS = [
 
 type PlatformId = (typeof PLATFORMS)[number]["id"];
 
-function detectPlatform(): PlatformId {
+export function detectPlatform(): PlatformId {
   if (typeof navigator === "undefined") return "ios";
   const ua = navigator.userAgent.toLowerCase();
   if (/iphone|ipad|ipod/.test(ua)) return "ios";

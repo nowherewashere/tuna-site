@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
-import { api, ApiError } from "@/lib/api";
-import InstallBlock from "@/components/InstallBlock";
+import { useEffect, useState } from "react";
+import { api, ApiError, trackFunnel } from "@/lib/api";
+import InstallBlock, { detectPlatform } from "@/components/InstallBlock";
 import Icon from "@/components/Icon";
 import Turnstile from "@/components/Turnstile";
 import { useTurnstile } from "@/lib/useTurnstile";
@@ -20,6 +20,11 @@ export default function ConnectPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [subUrl, setSubUrl] = useState<string>("");
+
+  // Funnel top (metrics spec §5): the connect flow opened.
+  useEffect(() => {
+    trackFunnel("start", { platform: detectPlatform() });
+  }, []);
 
   async function requestCode() {
     if (!email.trim()) return;
@@ -67,6 +72,12 @@ export default function ConnectPage() {
       const sub = await api.currentSubscription();
       setSubUrl(sub?.url ?? "");
       setStep("install");
+      // Config delivered + install screen shown (metrics spec §5). On the site these
+      // coincide with reaching the install step; keyed by remnawave_uuid so the row
+      // consolidates with the bot's funnel for this user.
+      const platform = detectPlatform();
+      trackFunnel("config_issued", { platform, userRef: sub?.user_remna_id });
+      trackFunnel("app_install_shown", { platform, userRef: sub?.user_remna_id });
     } catch (e) {
       setError(
         e instanceof ApiError && e.status === 410
