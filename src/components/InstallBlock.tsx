@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
+import { useMemo, useRef, useState, useSyncExternalStore, type KeyboardEvent, type ReactNode } from "react";
 import { useOnboarding } from "@/lib/useOnboarding";
 import Icon, { type IconName } from "@/components/Icon";
 
@@ -118,14 +118,13 @@ function SubCopyRow({ subUrl, label }: { subUrl: string; label?: string }) {
 
 export default function InstallBlock({ subUrl }: { subUrl: string }) {
   const cfg = useOnboarding();
-  // Start from a stable "ios" on both server and first client render, then switch to the
-  // auto-detected platform after mount — avoids an SSR/client hydration mismatch.
-  const [platform, setPlatform] = useState<PlatformId>("ios");
+  // Auto-detected platform, read on the client only: the server and first client
+  // render both yield "ios" so the SSG markup matches (no hydration flash), then it
+  // resolves to the real platform. A manual pick (below) overrides it.
+  const detected = useSyncExternalStore(() => () => {}, detectPlatform, () => "ios" as PlatformId);
+  const [override, setOverride] = useState<PlatformId | null>(null);
+  const platform = override ?? detected;
   const btnRefs = useRef<(HTMLButtonElement | null)[]>([]);
-
-  useEffect(() => {
-    setPlatform(detectPlatform());
-  }, []);
 
   const deepLink = useMemo(
     () => (cfg && subUrl ? cfg.happ_import_template.replace("{sub_url}", subUrl) : ""),
@@ -146,7 +145,7 @@ export default function InstallBlock({ subUrl }: { subUrl: string }) {
     else if (e.key === "End") next = n - 1;
     else return;
     e.preventDefault();
-    setPlatform(PLATFORMS[next].id as PlatformId);
+    setOverride(PLATFORMS[next].id as PlatformId);
     btnRefs.current[next]?.focus();
   }
 
@@ -169,7 +168,7 @@ export default function InstallBlock({ subUrl }: { subUrl: string }) {
               aria-checked={platform === p.id}
               tabIndex={platform === p.id ? 0 : -1}
               className={`plat${platform === p.id ? " on" : ""}`}
-              onClick={() => setPlatform(p.id as PlatformId)}
+              onClick={() => setOverride(p.id as PlatformId)}
               onKeyDown={(e) => onPickerKey(e, i)}
             >
               <Icon name={p.icon} size={16} />
