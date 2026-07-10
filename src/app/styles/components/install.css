@@ -2,12 +2,6 @@
 .plat-select {
   margin: 20px 0 24px;
 }
-.plat-select-label {
-  display: block;
-  font-size: 13px;
-  color: var(--ink-card-dim);
-  margin-bottom: 10px;
-}
 .plat-picker {
   display: flex;
   gap: 8px;

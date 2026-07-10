@@ -154,7 +154,7 @@ export default function OverviewPanel({
       <section className="console install-console" aria-label="Установка">
         <div className="console-corner console-corner-tl" aria-hidden="true" />
         <div className="console-corner console-corner-tr" aria-hidden="true" />
-        <div className="console-title">Установка</div>
+        <h3 className="console-name">Установи Tuna в 3 шага</h3>
         <InstallBlock subUrl={sub.url} />
       </section>
 

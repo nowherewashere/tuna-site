@@ -155,7 +155,6 @@ export default function InstallBlock({ subUrl }: { subUrl: string }) {
   return (
     <div className="install-block">
       <div className="plat-select">
-        <span className="plat-select-label">Устройство — определили автоматически:</span>
         <div className="plat-picker" role="radiogroup" aria-label="Устройство">
           {PLATFORMS.map((p, i) => (
             <button
@@ -215,7 +214,8 @@ export default function InstallBlock({ subUrl }: { subUrl: string }) {
               <p>Приложение, через которое работает VPN.</p>
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 10 }}>
                 <a className="btn btn-ghost" href={storeUrl || undefined} target="_blank" rel="noreferrer">
-                  <Icon name="download" size={17} /> Скачать Happ
+                  <Icon name="download" size={17} />{" "}
+                  {isApple ? "Скачать Happ (AppStore вне РФ)" : "Скачать Happ"}
                 </a>
                 {isApple && cfg?.store_link_ios_ru && (
                   <a
@@ -224,7 +224,7 @@ export default function InstallBlock({ subUrl }: { subUrl: string }) {
                     target="_blank"
                     rel="noreferrer"
                   >
-                    App Store (РФ)
+                    <Icon name="download" size={17} /> Скачать Happ (AppStore в РФ)
                   </a>
                 )}
               </div>
@@ -248,7 +248,7 @@ export default function InstallBlock({ subUrl }: { subUrl: string }) {
             <div className="istep-n">3</div>
             <div className="istep-body">
               <h4>Включи и проверь</h4>
-              <p>Открывай заблокированные сайты и пользуйся интернетом без ограничений.</p>
+              <p>Открывай недоступные сайты и свободно пользуйся интернетом.</p>
             </div>
           </div>
         </>

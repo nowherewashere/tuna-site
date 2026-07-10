@@ -34,7 +34,7 @@ const mono = IBM_Plex_Mono({
 export const metadata: Metadata = {
   title: "Tuna VPN — открытый интернет за минуту",
   description:
-    "Рассекаем волны блокировок. Свободный доступ к мировому океану интернета. Бесплатный пробный период, без карты.",
+    "Свободный доступ к мировому океану интернета. Бесплатный пробный период, без карты.",
   // All icons live in public/ and are linked here. favicon.ico is kept in public/
   // (NOT src/app/) on purpose: the App Router favicon.ico convention runs the file
   // through Turbopack's image pipeline, which fails to decode a non-RGBA ICO
