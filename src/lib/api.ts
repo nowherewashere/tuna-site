@@ -84,6 +84,37 @@ async function req<T>(method: string, path: string, body?: unknown, retried = fa
   return (text ? JSON.parse(text) : undefined) as T;
 }
 
+// ── Metrics funnel (fire-and-forget) ─────────────────────────────────────────
+// Onboarding funnel steps (metrics spec §5). Same names the bot emits, so the two
+// surfaces are comparable. Only the client-emitted UI steps live here; first_connect
+// and trial_converted are server-detected business events.
+export type FunnelStep = "start" | "device_selected" | "app_install_shown" | "config_issued";
+
+/**
+ * Record one onboarding funnel step. Deliberately fire-and-forget: it never awaits
+ * into the UI, never throws, and uses `keepalive` so the beacon survives a page
+ * navigation. Telemetry must never affect the user's flow (metrics spec §2, §7).
+ */
+export function trackFunnel(
+  step: FunnelStep,
+  opts: { platform?: string; userRef?: string } = {},
+): void {
+  try {
+    void fetch(`${BASE}/events/funnel`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ step, platform: opts.platform, user_ref: opts.userRef }),
+      credentials: "include",
+      keepalive: true,
+      cache: "no-store",
+    }).catch(() => {
+      /* swallow — funnel telemetry is best-effort */
+    });
+  } catch {
+    /* never let telemetry throw into the UI */
+  }
+}
+
 // ── Response shapes (mirror the Python pydantic schemas) ──────────────────────
 
 export interface Me {
