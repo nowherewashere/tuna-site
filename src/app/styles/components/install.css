@@ -1,10 +1,4 @@
 /* ── Install block (shared) ──────────────────────────────────────────────── */
-.plat-picker {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin: 22px 0 26px;
-}
 .plat-select {
   margin: 20px 0 24px;
 }
@@ -12,25 +6,19 @@
   display: block;
   font-size: 13px;
   color: var(--ink-card-dim);
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
-.plat-dropdown {
-  width: 100%;
-  cursor: pointer;
-  appearance: none;
-  -webkit-appearance: none;
-  padding-right: 40px;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none' stroke='%23a9c6e0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M1 1.5l5 5 5-5'/></svg>");
-  background-repeat: no-repeat;
-  background-position: right 16px center;
-}
-.plat-dropdown option {
-  color: #fff;
-  background: var(--card-2);
+.plat-picker {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 .plat {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   font-size: 14px;
-  padding: 9px 15px;
+  padding: 9px 14px;
   border-radius: 10px;
   border: 1px solid var(--line);
   background: var(--card-2);
@@ -82,5 +70,58 @@
 .istep-body p {
   font-size: 14.5px;
   color: var(--ink-card-dim);
+}
+.istep-body p b,
+.install-note b {
+  color: var(--ink-card);
+  font-weight: 600;
+}
+
+/* TV instructions: intro line, sub-bullet list, footer with the web-import link. */
+.install-lead {
+  font-size: 14.5px;
+  color: var(--ink-card-dim);
+  margin: 6px 0 4px;
+}
+.istep-body ul {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--ink-card-dim);
+}
+.istep-body ul li {
+  position: relative;
+  padding-left: 16px;
+}
+.istep-body ul li::before {
+  content: "";
+  position: absolute;
+  left: 2px;
+  top: 8px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--amber);
+}
+.istep-body ul li b {
+  color: var(--ink-card);
+  font-weight: 600;
+}
+.install-footer {
+  border-top: 1px solid var(--line);
+  padding-top: 20px;
+}
+.install-note {
+  font-size: 14px;
+  color: var(--ink-card-dim);
+  margin: 0 0 12px;
+}
+.copy-hint {
+  font-size: 13px;
+  color: var(--ink-card-dim);
+  margin: 12px 0 0;
 }
 

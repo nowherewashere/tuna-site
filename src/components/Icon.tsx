@@ -91,7 +91,25 @@ const PATHS: Record<string, ReactNode> = {
       <path d="M14.6 9.4c-.7-.6-1.7-.9-2.6-.9-1.4 0-2.4.8-2.4 1.8 0 2.4 5 1.2 5 3.6 0 1.1-1 1.9-2.5 1.9-1 0-2-.4-2.7-1.1" />
     </>
   ),
+  // Platform marks. Brand logos (apple/android/windows) are filled silhouettes;
+  // linux uses a console/terminal glyph that fits the "dive computer" language.
+  apple: (
+    <path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701z" />
+  ),
+  android: (
+    <path d="M17.523 15.341c-.551 0-.999-.448-.999-.999s.448-.999.999-.999.999.448.999.999-.448.999-.999.999m-11.046 0c-.551 0-.999-.448-.999-.999s.448-.999.999-.999.999.448.999.999-.448.999-.999.999m11.405-6.02l1.997-3.459a.416.416 0 00-.152-.568.416.416 0 00-.568.152l-2.022 3.503C15.59 8.244 13.853 7.851 12 7.851s-3.59.393-5.137 1.099L4.841 5.447a.416.416 0 00-.568-.152.416.416 0 00-.152.568l1.997 3.459C2.689 11.187.343 14.659 0 18.761h24c-.343-4.102-2.689-7.574-6.118-9.44" />
+  ),
+  windows: <path d="M3 5h8v7H3zM13 5h8v7h-8zM3 13h8v7H3zM13 13h8v7h-8z" />,
+  linux: (
+    <>
+      <rect x="3" y="4" width="18" height="16" rx="2" />
+      <path d="M7 9l3 3-3 3M13 15h4" />
+    </>
+  ),
 };
+
+// These names are solid brand marks and render filled (no stroke).
+const FILLED = new Set<IconName>(["apple", "android", "windows"]);
 
 export type IconName = keyof typeof PATHS;
 
@@ -108,13 +126,16 @@ export default function Icon({
   className?: string;
   style?: CSSProperties;
 }) {
+  const filled = FILLED.has(name);
   return (
     <svg
       width={size}
       height={size}
       viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
+      fill={filled ? "currentColor" : "none"}
+      fillRule={filled ? "evenodd" : undefined}
+      clipRule={filled ? "evenodd" : undefined}
+      stroke={filled ? "none" : "currentColor"}
       strokeWidth={strokeWidth}
       strokeLinecap="round"
       strokeLinejoin="round"
