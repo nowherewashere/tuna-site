@@ -1303,6 +1303,9 @@
   font-size: var(--text-sm);
   line-height: var(--leading-normal);
   max-width: 48ch;
+  /* The email-code step interpolates the address here. An address is one unbreakable
+     token, so `max-width` alone caps the box while the text runs straight out of it. */
+  overflow-wrap: anywhere;
 }
 .tg-linked {
   display: inline-flex;
@@ -1319,6 +1322,41 @@
 .tg-console-err {
   color: var(--danger-text);
   font-size: var(--text-sm);
+}
+
+/* Why the missing identity matters. Shown in the unlinked state of both halves of the
+   link surface (Telegram + email). The sentence stays in the console's normal dim ink
+   and only the glyph carries the amber signal: nothing is broken yet, so this must read
+   as guidance, not as the error state below it. */
+.link-warn {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  max-width: 48ch;
+  color: var(--ink-card-dim);
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+}
+.link-warn-ic {
+  flex: none; /* the glyph keeps its size while the sentence wraps beside it */
+  margin-top: 2px; /* optical: align the stroke with the first line's x-height */
+  color: var(--accent);
+}
+.link-actions {
+  display: flex;
+  flex-wrap: wrap; /* "Другая почта" drops below the primary action on narrow screens */
+  gap: var(--space-3);
+}
+/* `.tg-console` is a flex column with `align-items: flex-start`, so a field would
+   otherwise collapse to its content width. Cap it at a comfortable measure instead
+   of letting it span the whole card.
+   The base `.field-block` margin exists for the login card's block flow; here the
+   column's `gap` already spaces the field, and margins don't collapse into gap —
+   leaving it doubles the space below the input. */
+.tg-console .field-block {
+  align-self: stretch;
+  max-width: 36ch;
+  margin-bottom: 0;
 }
 
 /* ══ Toast — transient confirmation (e.g. the post-merge device notice) ═══════ */

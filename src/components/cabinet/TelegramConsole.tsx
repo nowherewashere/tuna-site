@@ -6,7 +6,8 @@ import Icon from "@/components/Icon";
 import TelegramLoginButton from "@/components/TelegramLoginButton";
 
 /**
- * Account link surface in the cabinet overview. One card, two states:
+ * The Telegram half of the account-link surface; `EmailConsole` is its mirror.
+ * One card, two states:
  * - not linked → invite a site (email) user to attach the Telegram bot. Linking
  *   a Telegram that already has its own bot account merges the two server-side.
  * - linked → confirm the connection and offer to open the bot.
@@ -54,8 +55,17 @@ export default function TelegramConsole({
             Привяжи бота — и заходи в один аккаунт откуда удобно: с сайта и из Telegram. Туда же
             придут напоминания о подписке.
           </p>
+          <p className="link-warn">
+            <Icon name="link" size={16} className="link-warn-ic" />
+            Без привязки вход через Telegram заведёт второй аккаунт — подписка и реферальный
+            баланс останутся в этом.
+          </p>
           <TelegramLoginButton botUsername={TELEGRAM_BOT} onAuth={onLink} cornerRadius={12} />
-          {error && <p className="tg-console-err">{error}</p>}
+          {error && (
+            <p className="tg-console-err" role="alert">
+              {error}
+            </p>
+          )}
         </>
       )}
     </section>
