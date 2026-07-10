@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import InstallBlock from "@/components/InstallBlock";
+import EmailConsole from "@/components/cabinet/EmailConsole";
 import TelegramConsole from "@/components/cabinet/TelegramConsole";
 import type { Device, Me, SubscriptionInfo, TelegramAuthUser } from "@/lib/api";
 import { STATUS_LABEL, fmtBytes, fmtDate } from "@/lib/format";
@@ -15,6 +16,7 @@ export default function OverviewPanel({
   displayName,
   me,
   onLinkTelegram,
+  onEmailVerified,
   linkError,
 }: {
   loading: boolean;
@@ -25,6 +27,7 @@ export default function OverviewPanel({
   displayName: string;
   me: Me | null;
   onLinkTelegram: (user: TelegramAuthUser) => void;
+  onEmailVerified: (merged: boolean) => void;
   linkError: string | null;
 }) {
   const isUnlimited = !!sub && sub.traffic_limit === 0;
@@ -47,6 +50,16 @@ export default function OverviewPanel({
   const expirySoon = daysLeft !== null && daysLeft >= 0 && daysLeft <= 5;
   const deviceCount = devices?.length ?? 0;
   const deviceMax = maxDevices ?? sub?.device_limit ?? 0;
+
+  // Both halves of the account-link surface. The email half appears only while this
+  // account has no verified email — the state in which signing in with email would
+  // silently create a second account instead of finding this one.
+  const linkSurface = (
+    <>
+      <TelegramConsole me={me} onLink={onLinkTelegram} error={linkError} />
+      {me && !me.is_email_verified && <EmailConsole me={me} onVerified={onEmailVerified} />}
+    </>
+  );
 
   if (loading) {
     return (
@@ -76,7 +89,7 @@ export default function OverviewPanel({
             Получить доступ
           </a>
         </div>
-        <TelegramConsole me={me} onLink={onLinkTelegram} error={linkError} />
+        {linkSurface}
       </div>
     );
   }
@@ -145,7 +158,7 @@ export default function OverviewPanel({
         <InstallBlock subUrl={sub.url} />
       </section>
 
-      <TelegramConsole me={me} onLink={onLinkTelegram} error={linkError} />
+      {linkSurface}
     </div>
   );
 }

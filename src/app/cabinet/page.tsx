@@ -28,6 +28,13 @@ import Icon from "@/components/Icon";
 
 type Selected = { planCode: string; days: number } | null;
 
+// Shown after either direction of the account merge. A merge keeps only the winning
+// subscription's devices; the rest re-register themselves the next time Happ runs,
+// so no manual action is needed.
+const MERGE_TOAST =
+  "Аккаунты объединены. Если каких-то устройств не видно — они появятся сами, " +
+  "когда откроешь на них Happ. Вручную ничего делать не нужно.";
+
 export default function CabinetPage() {
   const router = useRouter();
   const [tab, setTab] = useHashTab(TAB_IDS, "overview");
@@ -164,12 +171,8 @@ export default function CabinetPage() {
       const updated = await api.telegramLink(user);
       setMe(updated);
       if (updated.merged) {
-        // A merge keeps only the winning subscription's devices; the rest re-register
-        // themselves the next time Happ runs, so no manual action is needed.
-        setToast(
-          "Аккаунты объединены. Если каких-то устройств не видно — они появятся сами, " +
-            "когда откроешь на них Happ. Вручную ничего делать не нужно.",
-        );
+        await refreshAfterMerge();
+        setToast(MERGE_TOAST);
       }
     } catch (e) {
       // Keep the raw error in the console so the exact status/detail is visible
@@ -195,6 +198,26 @@ export default function CabinetPage() {
         );
       }
     }
+  }
+
+  // A merge can hand the subscription over from the absorbed account and retires the
+  // losing one, so the cached subscription and device list are both stale afterwards.
+  async function refreshAfterMerge() {
+    const fresh = await api.currentSubscription().catch(() => null);
+    setSub(fresh);
+    loadDevices();
+  }
+
+  // The email mirror of `linkTelegram`: confirming a code for an address that already
+  // owns a site account merges it into this one. EmailConsole renders its own errors,
+  // so this only runs on success. The profile is re-read rather than patched, because
+  // /auth/email/confirm returns only the confirmed address, and a merge can additionally
+  // pull in the absorbed account's Telegram.
+  async function emailVerified(merged: boolean) {
+    const fresh = await api.me().catch(() => null);
+    if (fresh) setMe(fresh);
+    if (merged) await refreshAfterMerge();
+    setToast(merged ? MERGE_TOAST : "Почта подключена.");
   }
 
   // Switching tabs returns the view to the top — on mobile the tab content can be
@@ -236,6 +259,7 @@ export default function CabinetPage() {
               displayName={displayName}
               me={me}
               onLinkTelegram={linkTelegram}
+              onEmailVerified={emailVerified}
               linkError={linkError}
             />
           )}

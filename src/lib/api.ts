@@ -27,7 +27,10 @@ export class ApiError extends Error {
 // itself). Matches /auth/telegram and /auth/telegram/webapp exactly, but NOT the
 // authenticated /auth/telegram/link, where a 401 usually means an expired access
 // token that the silent refresh below should recover.
-const AUTH_ENTRY = /^\/auth\/(refresh|login|email\/|telegram(\/webapp)?$)/;
+// The email entries are listed one by one for the same reason: /auth/email/request-code
+// and /auth/email/verify-code establish a session, while /auth/email/request-verification
+// and /auth/email/confirm run *inside* one and must be allowed to refresh and replay.
+const AUTH_ENTRY = /^\/auth\/(refresh|login|email\/(request-code|verify-code)|telegram(\/webapp)?$)/;
 
 // Single-flight token refresh. On a hard reload with an expired access token,
 // several calls (me, subscription, devices, useAuth…) 401 in parallel and would
@@ -194,6 +197,22 @@ export interface TelegramLinkResult extends Me {
   merged: boolean;
 }
 
+export interface EmailVerificationRequested {
+  success: boolean;
+  target_email: string;
+  expires_at: string;
+}
+
+// Result of confirming an email code. `merged` is the mirror of
+// `TelegramLinkResult.merged`: true only when that email already had its own site
+// account and it was absorbed into this one. A merge can also pull in the absorbed
+// account's Telegram, so the caller re-reads /auth/me rather than patching state.
+export interface EmailConfirmResult {
+  success: boolean;
+  email: string;
+  merged: boolean;
+}
+
 export interface ReferralProgram {
   enabled: boolean;
   referral_code: string;
@@ -338,6 +357,16 @@ export const api = {
   telegramLogin: (user: TelegramAuthUser) => req<AuthResult>("POST", "/auth/telegram", user),
   telegramLink: (user: TelegramAuthUser) =>
     req<TelegramLinkResult>("POST", "/auth/telegram/link", user),
+
+  // Attach an email to the already-authenticated account: mail a code to `email`,
+  // then confirm it. Confirming an email that already has its own site account merges
+  // the two — the code delivered to that address is the proof of ownership. A 409
+  // `two_telegram_accounts` means it can't merge automatically (both sides carry a
+  // different Telegram); 429 means the resend cooldown is still running.
+  requestEmailVerification: (email: string) =>
+    req<EmailVerificationRequested>("POST", "/auth/email/request-verification", { email }),
+  confirmEmailVerification: (code: string) =>
+    req<EmailConfirmResult>("POST", "/auth/email/confirm", { code }),
 
   // Subscription. `/current` returns null when the user has no subscription yet.
   currentSubscription: () => req<SubscriptionInfo | null>("GET", "/subscription/current"),
