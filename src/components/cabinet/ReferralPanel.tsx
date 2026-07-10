@@ -62,9 +62,12 @@ type Section = "none" | "payout" | "pay";
 
 export default function ReferralPanel({
   referral,
+  loadError,
   onRefresh,
 }: {
   referral: ReferralProgram | null;
+  /** Why the program failed to load — drives the empty state. Null while loading. */
+  loadError?: unknown;
   onRefresh?: () => void;
 }) {
   const [section, setSection] = useState<Section>("none");
@@ -84,16 +87,21 @@ export default function ReferralPanel({
   const [payDone, setPayDone] = useState<string | null>(null);
 
   if (!referral) {
+    // Say what actually happened. A 403 means the program is closed to this session
+    // (disabled, or no verified identity) — never assume "no subscription".
+    const message = !loadError
+      ? "Загружаем реферальную программу…"
+      : loadError instanceof ApiError && loadError.status === 403
+        ? "Реферальная программа сейчас недоступна."
+        : "Не удалось загрузить реферальную программу. Попробуй позже.";
+
     return (
       <div className="panel">
         <h2 className="panel-title">Приглашай друзей</h2>
         <section className="console console-empty" aria-label="Реферальная программа">
           <div className="console-corner console-corner-tl" aria-hidden="true" />
           <div className="console-corner console-corner-tr" aria-hidden="true" />
-          <p>
-            Реферальная программа доступна при активной подписке. Оформи доступ — и приглашай друзей
-            за процент на баланс.
-          </p>
+          <p role={loadError ? "alert" : "status"}>{message}</p>
         </section>
       </div>
     );
