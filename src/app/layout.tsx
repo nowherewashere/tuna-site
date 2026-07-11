@@ -1,7 +1,9 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Unbounded, Golos_Text, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import RefCapture from "@/components/RefCapture";
+import JsonLd from "@/components/JsonLd";
+import { siteGraph } from "@/lib/structuredData";
 
 // Display / headlines: Unbounded — a wide, geometric, Cyrillic-first face. Used
 // big and tight; it carries the whole personality of the brand, so nothing else
@@ -48,6 +50,29 @@ export const metadata: Metadata = {
   description:
     "Свободный доступ к мировому океану интернета. Бесплатный пробный период, без карты.",
   alternates: { canonical: "/" },
+  // Social link-preview card. og:title / og:description / twitter:title fall back to
+  // each page's own resolved title (via title.template) + description, so /oferta,
+  // /privacy, /login … all get correct per-page previews without repeating metadata.
+  // `og:url` is intentionally omitted so child pages don't inherit the homepage URL —
+  // the canonical link already carries per-page identity. og:image resolves absolute
+  // against metadataBase (https://tuna-vpn.com/og-image.png).
+  openGraph: {
+    type: "website",
+    siteName: "Tuna VPN",
+    locale: "ru_RU",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Tuna VPN — открытый интернет за минуту",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    images: ["/og-image.png"],
+  },
   // All icons live in public/ and are linked here. favicon.ico is kept in public/
   // (NOT src/app/) on purpose: the App Router favicon.ico convention runs the file
   // through Turbopack's image pipeline, which fails to decode a non-RGBA ICO
@@ -64,12 +89,20 @@ export const metadata: Metadata = {
   },
 };
 
+// Brand color for mobile browser chrome on first paint (SEO-13). Next 16 takes
+// theme-color from the `viewport` export, not `metadata`. Matches site.webmanifest.
+export const viewport: Viewport = {
+  themeColor: "#05101f",
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="ru" className={`${display.variable} ${body.variable} ${mono.variable}`}>
       <body>
+        {/* Sitewide entity graph (Organization + WebSite) for search + AI engines. */}
+        <JsonLd data={siteGraph()} />
         <RefCapture />
         {children}
       </body>
