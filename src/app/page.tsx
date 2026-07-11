@@ -153,9 +153,14 @@ const faqJsonLd = {
 export default function LandingPage() {
   return (
     <>
-      <a href="#main" className="skip-link">
-        К содержимому
-      </a>
+      {/* Banner landmark so the skip link is contained in a region (axe). Kept separate
+          from <Nav> because the nav is position:sticky — wrapping it in a short header
+          would constrain its sticky containing block and break the pinned-on-scroll. */}
+      <header className="skip-banner">
+        <a href="#main" className="skip-link">
+          К содержимому
+        </a>
+      </header>
 
       {/* Ambient ocean for the lower sections: slow caustic shimmer + light shafts.
           Fixed, behind everything, purely atmospheric (hidden for reduced-motion). */}
@@ -204,6 +209,9 @@ export default function LandingPage() {
 
         <section className="dive" id="how">
           <div className="wrap">
+            {/* Gives the three step <h3>s a parent heading level (h1 -> h2 -> h3);
+                the visible kicker below stays decorative. */}
+            <h2 className="sr-only">Как подключиться</h2>
             <div className="sec-kicker">
               <span className="kick-mono">{"// погружение"}</span>
               Три шага до открытой воды

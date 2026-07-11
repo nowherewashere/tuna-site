@@ -30,7 +30,10 @@ export class ApiError extends Error {
 // The email entries are listed one by one for the same reason: /auth/email/request-code
 // and /auth/email/verify-code establish a session, while /auth/email/request-verification
 // and /auth/email/confirm run *inside* one and must be allowed to refresh and replay.
-const AUTH_ENTRY = /^\/auth\/(refresh|login|email\/(request-code|verify-code)|telegram(\/webapp)?$)/;
+// The trailing `$` anchors every alternative to a full-path match (previously only the
+// telegram branch was anchored), so a future sibling like /auth/login-history can't be
+// misread as an entry point and have its refresh wrongly suppressed.
+const AUTH_ENTRY = /^\/auth\/(refresh|login|email\/(request-code|verify-code)|telegram(\/webapp)?)$/;
 
 // Single-flight token refresh. On a hard reload with an expired access token,
 // several calls (me, subscription, devices, useAuth…) 401 in parallel and would
@@ -84,7 +87,14 @@ function refreshSession(): Promise<boolean> {
 async function req<T>(method: string, path: string, body?: unknown, retried = false): Promise<T> {
   const res = await timedFetch(`${BASE}${path}`, {
     method,
-    headers: body === undefined ? undefined : { "Content-Type": "application/json" },
+    // X-Requested-With makes every request non-simple — notably the bodyless logout /
+    // trial POSTs, which were CORS-simple and thus forgeable cross-site with no preflight.
+    // Now a cross-origin forge needs a preflight the API can reject; same-origin (prod
+    // nginx / dev proxy) triggers no preflight, so honest requests pay nothing.
+    headers: {
+      "X-Requested-With": "XMLHttpRequest",
+      ...(body === undefined ? {} : { "Content-Type": "application/json" }),
+    },
     body: body === undefined ? undefined : JSON.stringify(body),
     credentials: "include",
     cache: "no-store",

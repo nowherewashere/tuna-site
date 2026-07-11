@@ -113,5 +113,8 @@ export default function TelegramLoginButton({
   }, [botUsername, size, cornerRadius, requestAccess, lang]);
 
   if (!botUsername) return null;
-  return <div className="tg-auth" ref={ref} aria-label="Вход через Telegram" />;
+  // The accessible name lives on the injected iframe (its title, set above) — the frame
+  // is what AT exposes. aria-label on this generic <div> is both redundant and prohibited
+  // (axe aria-prohibited-attr), so the wrapper stays unlabelled.
+  return <div className="tg-auth" ref={ref} />;
 }

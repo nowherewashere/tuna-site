@@ -9,6 +9,7 @@ import { readSelectedPlan } from "@/lib/selectedPlan";
 import Turnstile from "@/components/Turnstile";
 import { useTurnstile } from "@/lib/useTurnstile";
 import { invalidateAuth } from "@/lib/useAuth";
+import { isValidEmail } from "@/lib/email";
 import Icon from "@/components/Icon";
 import { Button, TextField } from "@/components/ui";
 import TelegramLoginButton from "@/components/TelegramLoginButton";
@@ -47,6 +48,13 @@ export default function LoginPage() {
   // The Telegram widget's script/iframe failed to load (blocked, or bot domain not
   // registered) — swap in a Russian fallback instead of a dead button / raw error.
   const [tgWidgetFailed, setTgWidgetFailed] = useState(false);
+  // Code re-send throttle (client-side; the backend returns no retry_after) plus a
+  // separate busy flag so a resend never disables the code field / verify button.
+  const [resending, setResending] = useState(false);
+  const [cooldown, setCooldown] = useState(0);
+  // Persistent polite live region text — a freshly-mounted aria-live node isn't
+  // reliably announced, so the region stays mounted and only its text changes.
+  const [liveMsg, setLiveMsg] = useState("");
 
   // Referral attribution captured from a /r/<code> visit (RefCapture). Client-only;
   // useSyncExternalStore returns null on the server so SSG markup matches (no flash).
@@ -95,10 +103,19 @@ export default function LoginPage() {
       setStep("email");
       setCode("");
       setError(null);
+      setLiveMsg("");
     }
     window.addEventListener("popstate", onPop);
     return () => window.removeEventListener("popstate", onPop);
   }, []);
+
+  // Tick the resend cooldown down to zero. Self-clearing: each decrement re-runs this
+  // effect and the previous timeout is cleared here (also on unmount mid-countdown).
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const id = setTimeout(() => setCooldown((c) => c - 1), 1000);
+    return () => clearTimeout(id);
+  }, [cooldown]);
 
   // Post-authentication routing, shared by the email and Telegram paths. A brand-new
   // account has no subscription → grant the trial (idempotent; 409 = already has one)
@@ -127,20 +144,16 @@ export default function LoginPage() {
     router.push(readSelectedPlan() ? "/cabinet#sub" : "/cabinet");
   }
 
-  async function requestCode() {
-    if (!email.trim()) return;
-    if (ts.required && !ts.token) {
-      setError("Секунду — проверяем, что ты не робот…");
-      return;
-    }
-    setLoading(true);
+  // The bare send + error handling, with no history/step side-effects, so the initial
+  // request and an in-place resend share one path (and one error vocabulary). `setBusy`
+  // is the caller's busy flag: setLoading for the initial send (locks the form), or
+  // setResending for a resend (leaves the code field / verify button usable).
+  async function sendCode(setBusy: (b: boolean) => void): Promise<boolean> {
+    setBusy(true);
     setError(null);
     try {
       await api.requestLoginCode(email.trim(), ts.token || undefined, refCode || undefined);
-      // Push a history entry so a native Back returns to the email step (see popstate
-      // handler) instead of leaving /login and losing the in-progress login.
-      window.history.pushState({ loginStep: "code" }, "");
-      setStep("code");
+      return true;
     } catch (e) {
       if (e instanceof ApiError && e.status === 403) {
         ts.reset();
@@ -154,9 +167,60 @@ export default function LoginPage() {
               : "Проверь адрес почты и попробуй снова.",
         );
       }
+      return false;
     } finally {
-      setLoading(false);
+      setBusy(false);
     }
+  }
+
+  async function requestCode() {
+    if (!isValidEmail(email)) {
+      setError("Проверь адрес почты — похоже, есть опечатка.");
+      return;
+    }
+    if (ts.required && !ts.token) {
+      setError("Секунду — проверяем, что ты не робот…");
+      return;
+    }
+    if (await sendCode(setLoading)) {
+      // Push a history entry so a native Back returns to the email step (see popstate
+      // handler) instead of leaving /login and losing the in-progress login.
+      window.history.pushState({ loginStep: "code" }, "");
+      setStep("code");
+      setLiveMsg(`Код отправлен на ${email.trim()}`);
+      setCooldown(30);
+    }
+  }
+
+  // Explicit "send it again" for the code step. Turnstile's token is single-use and its
+  // widget only lives on the email step, so when a fresh check is required we return to
+  // the email step (address preserved) to re-solve; otherwise we resend in place.
+  // Throttled by the cooldown, and never while a verify is in flight.
+  async function resendCode() {
+    if (cooldown > 0 || resending || loading) return;
+    if (ts.required) {
+      window.history.back();
+      return;
+    }
+    if (await sendCode(setResending)) {
+      setLiveMsg(`Код отправлен повторно на ${email.trim()}`);
+      setCooldown(30);
+    }
+  }
+
+  // "Enter a different address" — actually clears the email (the old control kept it,
+  // making it a mislabelled resend), then returns to the email step via history.
+  function enterDifferentEmail() {
+    setEmail("");
+    try {
+      sessionStorage.removeItem(EMAIL_KEY);
+    } catch {
+      /* storage blocked — non-fatal */
+    }
+    setCode("");
+    setError(null);
+    setLiveMsg("");
+    window.history.back();
   }
 
   async function loginWithTelegram(user: TelegramAuthUser) {
@@ -180,12 +244,15 @@ export default function LoginPage() {
     }
   }
 
-  async function verifyCode() {
-    if (code.trim().length !== 6) return;
+  // Accepts the code explicitly so auto-submit can pass the just-typed value without
+  // waiting for the state update; falls back to state for the button / Enter key.
+  async function verifyCode(value?: string) {
+    const entered = (value ?? code).trim();
+    if (entered.length !== 6) return;
     setLoading(true);
     setError(null);
     try {
-      await api.verifyLoginCode(email.trim(), code.trim());
+      await api.verifyLoginCode(email.trim(), entered);
       await finishAuth();
     } catch (e) {
       setError(
@@ -218,6 +285,9 @@ export default function LoginPage() {
     <main className="login">
       <div className="wrap">
         <div className="login-card">
+          <div className="sr-only" aria-live="polite" aria-atomic="true">
+            {liveMsg}
+          </div>
           {step === "code" ? (
             <>
               <h1>Введи код</h1>
@@ -234,6 +304,7 @@ export default function LoginPage() {
                 </span>
               </div>
               <TextField
+                key="login-code"
                 label="Код из письма"
                 labelHidden
                 inputMode="numeric"
@@ -241,7 +312,14 @@ export default function LoginPage() {
                 maxLength={6}
                 placeholder="______"
                 value={code}
-                onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                onChange={(e) => {
+                  const next = e.target.value.replace(/\D/g, "").slice(0, 6);
+                  setCode(next);
+                  // Auto-submit the moment the 6th digit lands (modern OTP UX); button
+                  // and Enter stay as fallback. Guarded on !loading so a wrong code
+                  // (which leaves 6 digits in place) doesn't resubmit until an edit.
+                  if (next.length === 6 && !loading) verifyCode(next);
+                }}
                 onKeyDown={(e) => e.key === "Enter" && verifyCode()}
                 disabled={loading}
                 autoFocus
@@ -251,7 +329,7 @@ export default function LoginPage() {
                 variant="amber"
                 size="lg"
                 full
-                onClick={verifyCode}
+                onClick={() => verifyCode()}
                 loading={loading}
                 loadingLabel="Проверяем…"
                 disabled={code.length !== 6}
@@ -262,8 +340,13 @@ export default function LoginPage() {
                 не пришло?{" "}
                 <Button
                   variant="link"
-                  onClick={() => window.history.back()}
+                  onClick={resendCode}
+                  disabled={cooldown > 0 || resending}
                 >
+                  {cooldown > 0 ? `прислать код ещё раз (${cooldown})` : "прислать код ещё раз"}
+                </Button>
+                <span aria-hidden="true"> · </span>
+                <Button variant="link" onClick={enterDifferentEmail}>
                   ввести другую почту
                 </Button>
               </p>
@@ -276,6 +359,7 @@ export default function LoginPage() {
                 пароля.
               </p>
               <TextField
+                key="login-email"
                 label="Электронная почта"
                 labelHidden
                 type="email"
@@ -285,6 +369,7 @@ export default function LoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && requestCode()}
                 disabled={loading}
+                autoFocus
                 error={error}
               />
               {ts.siteKey && (
@@ -311,7 +396,7 @@ export default function LoginPage() {
                 onClick={requestCode}
                 loading={loading}
                 loadingLabel="Отправляем…"
-                disabled={ts.required && !ts.token}
+                disabled={!isValidEmail(email) || (ts.required && !ts.token)}
               >
                 Получить код
               </Button>

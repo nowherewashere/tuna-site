@@ -30,9 +30,18 @@ function UriField({ label, value }: { label: string; value: string }) {
   );
 }
 
-/** RUB string ("149" / "149.00") → integer kopecks, for comparing against balance. */
+/**
+ * RUB string ("149" / "149.00" / "149.5") → integer kopecks, for comparing against the
+ * integer *_kop balance. Parses the whole and fractional parts as integers directly, so
+ * there's no parseFloat(x)*100 float round-trip (which can land a kopeck off on some
+ * values). The backend field is a decimal string; an integer *_kop price field would let
+ * us drop this entirely (see SEC-06).
+ */
 function rubToKop(amount: string): number {
-  return Math.round(parseFloat(amount) * 100);
+  const [whole = "0", frac = ""] = amount.trim().split(".");
+  const rub = parseInt(whole, 10) || 0;
+  const kop = parseInt((frac + "00").slice(0, 2), 10) || 0;
+  return rub * 100 + (rub < 0 ? -kop : kop);
 }
 
 type Section = "none" | "payout" | "pay";

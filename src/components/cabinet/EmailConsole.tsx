@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { api, type Me } from "@/lib/api";
 import { apiErrorMessage } from "@/lib/apiError";
+import { isValidEmail } from "@/lib/email";
 import Icon from "@/components/Icon";
 import { Button, ConsoleFrame, TextField } from "@/components/ui";
 
@@ -35,7 +36,10 @@ export default function EmailConsole({
 
   async function sendCode() {
     const target = email.trim();
-    if (!target) return;
+    if (!isValidEmail(target)) {
+      setError("Проверь адрес — похоже, в нём опечатка.");
+      return;
+    }
     setBusy(true);
     setError(null);
     try {
@@ -142,7 +146,7 @@ export default function EmailConsole({
             variant="amber"
             loading={busy}
             loadingLabel="Отправляем…"
-            disabled={!email.trim()}
+            disabled={!isValidEmail(email)}
             onClick={sendCode}
           >
             Прислать код
