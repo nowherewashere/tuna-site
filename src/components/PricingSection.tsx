@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { api, type PublicPlanLanding } from "@/lib/api";
 import { plural, fmtBytes } from "@/lib/format";
 import { storeSelectedPlan } from "@/lib/selectedPlan";
@@ -40,23 +40,40 @@ function cleanPlanName(name: string): string {
   return name.replace(/^[\p{Extended_Pictographic}\u{FE0F}\u{200D}\s]+/u, "");
 }
 
+type LoadStatus = "loading" | "error" | "ready";
+
 /**
  * Landing tariffs section. Fetches plans from the bot's public API
  * (`/api/v1/public/plans/public`) — the single source of truth, no hardcoded
- * prices. Progressive enhancement: renders nothing until plans arrive (and on
- * error/empty), so a backend hiccup never breaks the page.
+ * prices. The `<section id="pricing">` wrapper is ALWAYS rendered so the nav
+ * "Тарифы" anchor never scrolls into nothing; a load failure degrades to an
+ * error line + retry, and an empty result to a neutral placeholder.
  */
 export default function PricingSection() {
-  const [plans, setPlans] = useState<PublicPlanLanding[] | null>(null);
+  const [plans, setPlans] = useState<PublicPlanLanding[]>([]);
+  const [status, setStatus] = useState<LoadStatus>("loading");
 
-  useEffect(() => {
+  // Kept free of a synchronous setState so the mount effect can call it without
+  // triggering a cascading render (status already defaults to "loading").
+  const load = useCallback(() => {
     api
       .landingPlans()
-      .then((res) => setPlans(res.plans))
-      .catch(() => setPlans([]));
+      .then((res) => {
+        setPlans(res.plans);
+        setStatus("ready");
+      })
+      .catch(() => setStatus("error"));
   }, []);
 
-  if (!plans || plans.length === 0) return null;
+  // Retry is a user event, so it may reset to the loading state before refetching.
+  const retry = useCallback(() => {
+    setStatus("loading");
+    load();
+  }, [load]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
 
   return (
     <section className="pricing" id="pricing">
@@ -66,8 +83,25 @@ export default function PricingSection() {
         <p className="sec-intro">
           Прозрачные тарифы без скрытых платежей. Чем дольше подписка — тем ниже цена за месяц.
         </p>
-        <div className="price-grid">
-          {plans.map((p, i) => {
+
+        {status === "error" && (
+          <div className="price-status" role="alert">
+            <p>Не удалось загрузить тарифы. Проверьте соединение и попробуйте ещё раз.</p>
+            <button type="button" className="btn btn-ghost" onClick={retry}>
+              Повторить
+            </button>
+          </div>
+        )}
+
+        {status === "ready" && plans.length === 0 && (
+          <div className="price-status">
+            <p>Тарифы скоро появятся.</p>
+          </div>
+        )}
+
+        {status === "ready" && plans.length > 0 && (
+          <div className="price-grid">
+            {plans.map((p, i) => {
             const isRecommended = p.public_code === RECOMMENDED_PLAN;
             return (
               <Reveal
@@ -107,7 +141,8 @@ export default function PricingSection() {
               </Reveal>
             );
           })}
-        </div>
+          </div>
+        )}
       </div>
     </section>
   );
