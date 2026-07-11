@@ -200,6 +200,10 @@ export default function LoginPage() {
   if (checking) {
     return (
       <main className="login">
+        {/* The settled form renders its own <h1>, but the transient checking state
+            has none — give it a visually-hidden heading so /login never snapshots
+            without a level-one heading (axe page-has-heading-one). */}
+        <h1 className="sr-only">Вход в Tuna</h1>
         <div className="wrap">
           <div className="auth-checking" aria-busy="true">
             <span className="auth-spinner" aria-hidden="true" />
