@@ -5,7 +5,7 @@ import { api, type PublicPlanLanding } from "@/lib/api";
 import { plural, fmtBytes } from "@/lib/format";
 import { storeSelectedPlan } from "@/lib/selectedPlan";
 import AuthCta from "@/components/AuthCta";
-import Icon from "@/components/Icon";
+import Icon, { type IconName } from "@/components/Icon";
 import { Reveal } from "@/components/ui";
 
 function trafficLabel(bytes: number): string {
@@ -25,6 +25,20 @@ function priceLabel(rub: string): string {
 
 /** The tier we steer people toward — highlighted as the recommended card. */
 const RECOMMENDED_PLAN = "pro";
+
+/**
+ * Plan identity mark, driven by the stable public_code — never by the
+ * free-text name, which operators can seed with OS emoji (🐟) that render as
+ * a color glyph and break the monochrome line-icon system. Unknown codes fall
+ * back to the shield.
+ */
+const PLAN_ICON: Record<string, IconName> = { standard: "shield", pro: "bolt" };
+
+/** Drop any leading emoji / variation-selector / ZWJ run an operator may have
+ *  prefixed to the plan name, keeping the clean text for the heading. */
+function cleanPlanName(name: string): string {
+  return name.replace(/^[\p{Extended_Pictographic}\u{FE0F}\u{200D}\s]+/u, "");
+}
 
 /**
  * Landing tariffs section. Fetches plans from the bot's public API
@@ -63,7 +77,10 @@ export default function PricingSection() {
               >
                 {isRecommended && <div className="price-rec-badge">Рекомендуем</div>}
                 <div className="price-head">
-                  <h3 className="price-name">{p.name}</h3>
+                  <span className="price-icon">
+                    <Icon name={PLAN_ICON[p.public_code] ?? "shield"} size={22} />
+                  </span>
+                  <h3 className="price-name">{cleanPlanName(p.name)}</h3>
                   {p.description && <p className="price-desc">{p.description}</p>}
                 </div>
                 <div className="price-amount">
