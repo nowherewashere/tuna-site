@@ -1,7 +1,8 @@
 /* ══════════════════════════════════════════════════════════════════════════
    Layer 2 — SEMANTIC
    What the UI *means*. Components point here, never at primitives. This is the
-   single theming seam (a future [data-theme] would override only this block).
+   single theming seam. The site is dark-only by design: this block is the one,
+   permanent theme — there is intentionally no [data-theme] light override.
    Also aliases the LEGACY variable names the current stylesheet still uses, so
    Phase 0 is pixel-for-pixel — Phase 1 migrates consumers to the new names.
    ════════════════════════════════════════════════════════════════════════ */
