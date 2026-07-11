@@ -320,7 +320,16 @@ export default function CabinetPage() {
             </div>
           </div>
         ) : (
-          <div className="wrap">
+          // The active tab's content is the tabpanel; only one panel is mounted at a
+          // time, so its id matches the selected tab's aria-controls (the inactive tabs'
+          // controls point at not-yet-mounted ids, which AT tolerates).
+          <div
+            className="wrap"
+            role="tabpanel"
+            id={`cab-panel-${tab}`}
+            aria-labelledby={`cab-tab-${tab}`}
+            tabIndex={-1}
+          >
             {tab === "overview" && (
               <OverviewPanel
                 loading={loading}
@@ -370,7 +379,7 @@ export default function CabinetPage() {
 
       {authed && tab !== "support" && (
         <button className="chat-fab" onClick={openSupport}>
-          <Icon name="message" size={18} /> Поддержка
+          <Icon name="message" size={18} /> Нужна помощь?
         </button>
       )}
 

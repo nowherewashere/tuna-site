@@ -24,7 +24,9 @@ export default function CabinetTabs({
           }}
           type="button"
           role="tab"
+          id={`cab-tab-${t.id}`}
           aria-selected={tab === t.id}
+          aria-controls={`cab-panel-${t.id}`}
           tabIndex={tab === t.id ? 0 : -1}
           className={`cab-tab${tab === t.id ? " active" : ""}`}
           onClick={() => onChange(t.id)}
