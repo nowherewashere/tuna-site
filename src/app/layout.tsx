@@ -36,9 +36,18 @@ const mono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Tuna VPN — открытый интернет за минуту",
+  // Absolute base so canonical / OG / sitemap URLs resolve to production, not
+  // localhost, under static export (SEO-04). Foundation for the Wave-3 OG work.
+  metadataBase: new URL("https://tuna-vpn.com"),
+  // `default` is the homepage title; `template` suffixes every child page that sets
+  // its own title (e.g. "Вход" -> "Вход — Tuna VPN"), so no two routes share one.
+  title: {
+    default: "Tuna VPN — открытый интернет за минуту",
+    template: "%s — Tuna VPN",
+  },
   description:
     "Свободный доступ к мировому океану интернета. Бесплатный пробный период, без карты.",
+  alternates: { canonical: "/" },
   // All icons live in public/ and are linked here. favicon.ico is kept in public/
   // (NOT src/app/) on purpose: the App Router favicon.ico convention runs the file
   // through Turbopack's image pipeline, which fails to decode a non-RGBA ICO

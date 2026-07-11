@@ -52,9 +52,16 @@ type LoadStatus = "loading" | "error" | "ready";
  * "Тарифы" anchor never scrolls into nothing; a load failure degrades to an
  * error line + retry, and an empty result to a neutral placeholder.
  */
-export default function PricingSection() {
-  const [plans, setPlans] = useState<PublicPlanLanding[]>([]);
-  const [status, setStatus] = useState<LoadStatus>("loading");
+export default function PricingSection({
+  initialPlans,
+}: {
+  // Plans fetched at build (SEO-08) so prices are in the served HTML. Empty when the
+  // build-time fetch failed — the component then loads them client-side as before.
+  initialPlans: PublicPlanLanding[];
+}) {
+  const seeded = initialPlans.length > 0;
+  const [plans, setPlans] = useState<PublicPlanLanding[]>(initialPlans);
+  const [status, setStatus] = useState<LoadStatus>(seeded ? "ready" : "loading");
 
   // Kept free of a synchronous setState so the mount effect can call it without
   // triggering a cascading render (status already defaults to "loading").
@@ -74,9 +81,19 @@ export default function PricingSection() {
     load();
   }, [load]);
 
+  // On mount: if the build seeded prices, refresh them silently — a price change since
+  // the last deploy shows, but a failed refresh never downgrades the visible cards to a
+  // skeleton/error. If the build didn't seed (fetch failed), load them client-side.
   useEffect(() => {
-    load();
-  }, [load]);
+    if (seeded) {
+      api
+        .landingPlans()
+        .then((res) => setPlans(res.plans))
+        .catch(() => {});
+    } else {
+      load();
+    }
+  }, [seeded, load]);
 
   const recCode = recommendedCode(plans);
 
