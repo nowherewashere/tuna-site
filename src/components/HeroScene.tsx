@@ -1,8 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import { motion, useReducedMotion, useScroll, useSpring, useTransform } from "motion/react";
-import OceanParticles from "./OceanParticles";
+
+// The rAF particle canvas is decorative and sits behind the LCP hero, so it's split out
+// of the initial bundle and mounted only after an idle window (post-LCP), instead of its
+// setup competing with the hero decode for main-thread time (PERF-03).
+const OceanParticles = dynamic(() => import("./OceanParticles"), { ssr: false });
 
 /** The hero's underwater scene: light shafts, caustic shimmer, marine snow, and
  *  the tuna on its own parallax plane with light rippling across its silhouette.
@@ -11,6 +16,28 @@ import OceanParticles from "./OceanParticles";
  *  overflow-clipped container so nothing ever widens the layout. */
 export default function HeroScene() {
   const reduce = useReducedMotion();
+
+  // Hold the particle canvas until the browser is idle (after LCP), so its setup never
+  // runs in the same frame as the hero image decode.
+  const [particlesReady, setParticlesReady] = useState(false);
+  useEffect(() => {
+    if (reduce) return;
+    const w = window as typeof window & {
+      requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
+      cancelIdleCallback?: (id: number) => void;
+    };
+    let idleId: number | undefined;
+    let timerId: ReturnType<typeof setTimeout> | undefined;
+    if (w.requestIdleCallback) {
+      idleId = w.requestIdleCallback(() => setParticlesReady(true), { timeout: 2500 });
+    } else {
+      timerId = setTimeout(() => setParticlesReady(true), 1200);
+    }
+    return () => {
+      if (idleId !== undefined) w.cancelIdleCallback?.(idleId);
+      if (timerId) clearTimeout(timerId);
+    };
+  }, [reduce]);
 
   // Scroll parallax: the fish drifts up (we sink past it), shafts settle down.
   const { scrollY } = useScroll();
@@ -38,7 +65,7 @@ export default function HeroScene() {
     <div className="hero-scene" aria-hidden="true">
       <motion.span className="hero-shafts" style={reduce ? undefined : { y: shaftScroll }} />
       <span className="hero-caustic" />
-      {!reduce && <OceanParticles />}
+      {!reduce && particlesReady && <OceanParticles />}
       <motion.div className="hero-tuna-layer" style={reduce ? undefined : { y: tunaScroll }}>
         <motion.div className="hero-tuna-wrap" style={reduce ? undefined : { x: px, y: py }}>
           {/* Idle glide: the fish and its light drift as one plane — a slow bob +
