@@ -5,6 +5,7 @@ import { useEffect, useState, useSyncExternalStore } from "react";
 import { api, ApiError, trackFunnel, type TelegramAuthUser } from "@/lib/api";
 import { detectPlatform } from "@/components/InstallBlock";
 import { readRefCode } from "@/lib/referral";
+import { readSelectedPlan } from "@/lib/selectedPlan";
 import Turnstile from "@/components/Turnstile";
 import { useTurnstile } from "@/lib/useTurnstile";
 import { invalidateAuth } from "@/lib/useAuth";
@@ -63,7 +64,8 @@ export default function LoginPage() {
     api
       .me()
       .then(() => {
-        if (alive) router.replace("/cabinet");
+        // Honor a plan picked on the landing before this session was recognized.
+        if (alive) router.replace(readSelectedPlan() ? "/cabinet#sub" : "/cabinet");
       })
       .catch(() => {
         if (!alive) return;
@@ -120,7 +122,9 @@ export default function LoginPage() {
         trackFunnel("app_install_shown", { platform, userRef: sub.user_remna_id });
       }
     }
-    router.push("/cabinet");
+    // A plan chosen on the landing (sessionStorage) deep-links into the Subscription
+    // tab, where the cabinet preselects it once offers load — instead of a blank Overview.
+    router.push(readSelectedPlan() ? "/cabinet#sub" : "/cabinet");
   }
 
   async function requestCode() {

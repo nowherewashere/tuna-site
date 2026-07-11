@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { api, type PublicPlanLanding } from "@/lib/api";
 import { plural, fmtBytes } from "@/lib/format";
+import { storeSelectedPlan } from "@/lib/selectedPlan";
 import AuthCta from "@/components/AuthCta";
 import Icon from "@/components/Icon";
 import { Reveal } from "@/components/ui";
@@ -73,7 +74,8 @@ export default function PricingSection() {
               <AuthCta
                 className="btn btn-amber price-cta"
                 guest={{ href: "/login", label: "Подключить" }}
-                authed={{ href: "/cabinet", label: "Открыть кабинет" }}
+                authed={{ href: "/cabinet#sub", label: "Открыть кабинет" }}
+                onClick={() => storeSelectedPlan(p.public_code)}
               />
             </Reveal>
           ))}
