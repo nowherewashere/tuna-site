@@ -23,6 +23,9 @@ function priceLabel(rub: string): string {
   return Number.isFinite(n) ? String(n) : rub;
 }
 
+/** The tier we steer people toward — highlighted as the recommended card. */
+const RECOMMENDED_PLAN = "pro";
+
 /**
  * Landing tariffs section. Fetches plans from the bot's public API
  * (`/api/v1/public/plans/public`) — the single source of truth, no hardcoded
@@ -50,35 +53,43 @@ export default function PricingSection() {
           Прозрачные тарифы без скрытых платежей. Чем дольше подписка — тем ниже цена за месяц.
         </p>
         <div className="price-grid">
-          {plans.map((p, i) => (
-            <Reveal key={p.public_code} className="price-card" delay={i * 0.06}>
-              <div className="price-head">
-                <h3 className="price-name">{p.name}</h3>
-                {p.description && <p className="price-desc">{p.description}</p>}
-              </div>
-              <div className="price-amount">
-                <span className="price-from">от</span>
-                <span className="price-value">{priceLabel(p.monthly_from_rub)}</span>
-                <span className="price-per">₽/мес</span>
-              </div>
-              <ul className="price-meta">
-                <li>
-                  <Icon name="phone" size={17} />
-                  {deviceLabel(p.device_limit)}
-                </li>
-                <li>
-                  <Icon name="bolt" size={17} />
-                  {trafficLabel(p.traffic_limit)}
-                </li>
-              </ul>
-              <AuthCta
-                className="btn btn-amber price-cta"
-                guest={{ href: "/login", label: "Подключить" }}
-                authed={{ href: "/cabinet#sub", label: "Открыть кабинет" }}
-                onClick={() => storeSelectedPlan(p.public_code)}
-              />
-            </Reveal>
-          ))}
+          {plans.map((p, i) => {
+            const isRecommended = p.public_code === RECOMMENDED_PLAN;
+            return (
+              <Reveal
+                key={p.public_code}
+                className={`price-card${isRecommended ? " price-card--rec" : ""}`}
+                delay={i * 0.06}
+              >
+                {isRecommended && <div className="price-rec-badge">Рекомендуем</div>}
+                <div className="price-head">
+                  <h3 className="price-name">{p.name}</h3>
+                  {p.description && <p className="price-desc">{p.description}</p>}
+                </div>
+                <div className="price-amount">
+                  <span className="price-from">от</span>
+                  <span className="price-value">{priceLabel(p.monthly_from_rub)}</span>
+                  <span className="price-per">₽/мес</span>
+                </div>
+                <ul className="price-meta">
+                  <li>
+                    <Icon name="phone" size={17} />
+                    {deviceLabel(p.device_limit)}
+                  </li>
+                  <li>
+                    <Icon name="bolt" size={17} />
+                    {trafficLabel(p.traffic_limit)}
+                  </li>
+                </ul>
+                <AuthCta
+                  className="btn btn-amber price-cta"
+                  guest={{ href: "/login", label: "Подключить" }}
+                  authed={{ href: "/cabinet#sub", label: "Открыть кабинет" }}
+                  onClick={() => storeSelectedPlan(p.public_code)}
+                />
+              </Reveal>
+            );
+          })}
         </div>
       </div>
     </section>
