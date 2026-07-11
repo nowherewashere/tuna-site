@@ -9,7 +9,6 @@ import { STATUS_LABEL, daysLeftUntil, fmtDate, plural } from "@/lib/format";
 
 export default function OverviewPanel({
   loading,
-  authed,
   sub,
   devices,
   maxDevices,
@@ -21,7 +20,6 @@ export default function OverviewPanel({
   linkError,
 }: {
   loading: boolean;
-  authed: boolean;
   sub: SubscriptionInfo | null;
   devices: Device[] | null;
   maxDevices: number | null;
@@ -61,18 +59,6 @@ export default function OverviewPanel({
     return (
       <div className="panel">
         <div className="panel-sub">Загрузка…</div>
-      </div>
-    );
-  }
-  if (!authed) {
-    return (
-      <div className="panel">
-        <div className="console console-empty">
-          <p>Нужно войти, чтобы увидеть подписку.</p>
-          <a className="btn btn-amber" href="/login">
-            Войти
-          </a>
-        </div>
       </div>
     );
   }

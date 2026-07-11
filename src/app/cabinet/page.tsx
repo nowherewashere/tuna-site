@@ -282,68 +282,89 @@ export default function CabinetPage() {
 
   return (
     <div className="cab-wrap" ref={topRef}>
-      <div className="cab-topbar">
+      <header className="cab-topbar">
         <div className="wrap">
           <Link href="/" className="logo">
             Tuna VPN
           </Link>
-          <CabinetTabs tab={tab} onChange={changeTab} />
-          <button className="btn btn-ghost" style={{ padding: "8px 16px" }} onClick={logout}>
-            Выйти
-          </button>
+          {authed && (
+            <>
+              <CabinetTabs tab={tab} onChange={changeTab} />
+              <button className="btn btn-ghost" style={{ padding: "8px 16px" }} onClick={logout}>
+                Выйти
+              </button>
+            </>
+          )}
         </div>
-      </div>
+      </header>
 
-      <div className="cab-body">
-        <div className="wrap">
-          {tab === "overview" && (
-            <OverviewPanel
-              loading={loading}
-              authed={authed}
-              sub={sub}
-              devices={devices}
-              maxDevices={maxDevices}
-              displayName={displayName}
-              me={me}
-              onLinkTelegram={linkTelegram}
-              onEmailVerified={emailVerified}
-              onGetAccess={() => changeTab("sub")}
-              linkError={linkError}
-            />
-          )}
-          {tab === "devices" && (
-            <DevicesPanel
-              devices={devices}
-              maxDevices={maxDevices}
-              sub={sub}
-              onUnbind={unbind}
-              onAddDevice={addDevice}
-            />
-          )}
-          {tab === "sub" && (
-            <SubscriptionPanel
-              offers={offers}
-              sub={sub}
-              selected={selected}
-              setSelected={setSelected}
-              paying={paying}
-              payError={payError}
-              onPay={pay}
-              clearPayError={() => setPayError(null)}
-            />
-          )}
-          {tab === "ref" && (
-            <ReferralPanel
-              referral={referral}
-              loadError={referralError}
-              onRefresh={refreshReferral}
-            />
-          )}
-          {tab === "support" && <SupportPanel displayName={displayName} sub={sub} />}
-        </div>
-      </div>
+      <main className="cab-body" id="main">
+        <h1 className="sr-only">Личный кабинет</h1>
+        {!authed && !loading ? (
+          <div className="wrap">
+            <div className="cab-gate">
+              <span className="cab-gate-ic" aria-hidden="true">
+                <Icon name="shield" size={30} />
+              </span>
+              <p className="cab-gate-title">Нужно войти</p>
+              <p className="cab-gate-sub">
+                Войди, чтобы увидеть подписку, устройства и рефералов.
+              </p>
+              <a className="btn btn-amber" href="/login">
+                Войти
+              </a>
+            </div>
+          </div>
+        ) : (
+          <div className="wrap">
+            {tab === "overview" && (
+              <OverviewPanel
+                loading={loading}
+                sub={sub}
+                devices={devices}
+                maxDevices={maxDevices}
+                displayName={displayName}
+                me={me}
+                onLinkTelegram={linkTelegram}
+                onEmailVerified={emailVerified}
+                onGetAccess={() => changeTab("sub")}
+                linkError={linkError}
+              />
+            )}
+            {tab === "devices" && (
+              <DevicesPanel
+                devices={devices}
+                maxDevices={maxDevices}
+                sub={sub}
+                onUnbind={unbind}
+                onAddDevice={addDevice}
+              />
+            )}
+            {tab === "sub" && (
+              <SubscriptionPanel
+                offers={offers}
+                sub={sub}
+                selected={selected}
+                setSelected={setSelected}
+                paying={paying}
+                payError={payError}
+                onPay={pay}
+                clearPayError={() => setPayError(null)}
+              />
+            )}
+            {tab === "ref" && (
+              <ReferralPanel
+                referral={referral}
+                loadError={referralError}
+                onRefresh={refreshReferral}
+              />
+            )}
+            {tab === "support" && <SupportPanel displayName={displayName} sub={sub} />}
+          </div>
+        )}
+      </main>
 
-      {tab !== "support" && (
+      {authed && tab !== "support" && (
         <button className="chat-fab" onClick={openSupport}>
           <Icon name="message" size={18} /> Поддержка
         </button>
