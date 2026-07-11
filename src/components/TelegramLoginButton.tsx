@@ -50,6 +50,18 @@ export default function TelegramLoginButton({
     const globals = window as unknown as Record<string, unknown>;
     globals[cbName] = (user: TelegramAuthUser) => cb.current(user);
 
+    // Telegram's script injects an <iframe> with no title, leaving screen-reader
+    // users an unlabeled frame on the auth pages (WCAG 2.2 4.1.2). Give it an
+    // accessible name once it appears: try synchronously, else watch the
+    // container and self-disconnect the moment we've labeled it.
+    let mo: MutationObserver | null = null;
+    const labelIframe = () => {
+      const iframe = container.querySelector("iframe");
+      if (!iframe) return false;
+      if (!iframe.title) iframe.title = "Вход через Telegram";
+      return true;
+    };
+
     const s = document.createElement("script");
     s.src = WIDGET_SRC;
     s.async = true;
@@ -62,12 +74,20 @@ export default function TelegramLoginButton({
     s.setAttribute("data-onauth", `${cbName}(user)`);
     container.appendChild(s);
 
+    if (!labelIframe()) {
+      mo = new MutationObserver(() => {
+        if (labelIframe()) mo?.disconnect();
+      });
+      mo.observe(container, { childList: true, subtree: true });
+    }
+
     return () => {
+      mo?.disconnect();
       container.innerHTML = "";
       delete globals[cbName];
     };
   }, [botUsername, size, cornerRadius, requestAccess, lang]);
 
   if (!botUsername) return null;
-  return <div className="tg-auth" ref={ref} />;
+  return <div className="tg-auth" ref={ref} aria-label="Вход через Telegram" />;
 }
