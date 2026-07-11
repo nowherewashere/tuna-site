@@ -39,11 +39,35 @@ const AUTH_ENTRY = /^\/auth\/(refresh|login|email\/(request-code|verify-code)|te
 // войти" / empty plans on refresh). Collapse concurrent refreshes into one
 // shared request; every 401'd caller awaits it, then replays. Rotation — and its
 // security benefit — is preserved: exactly one token is consumed per storm.
+// Every network call is bounded by a timeout so a stalled connection surfaces as a
+// rejection instead of hanging forever — e.g. the /login session-check spinner that
+// otherwise never clears on flaky mobile. 12s sits well above the p99 for these small
+// JSON endpoints, so it only ever fires on a genuinely dead connection. Both a timeout
+// and an offline failure are normalized to a typed ApiError(0) so callers' existing
+// `instanceof ApiError` branches fall through to their generic-error copy.
+const REQUEST_TIMEOUT_MS = 12_000;
+
+async function timedFetch(
+  input: string,
+  init: RequestInit,
+  timeoutMs = REQUEST_TIMEOUT_MS,
+): Promise<Response> {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    return await fetch(input, { ...init, signal: ctrl.signal });
+  } catch {
+    throw new ApiError(0, ctrl.signal.aborted ? "timeout" : "network");
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 let refreshInflight: Promise<boolean> | null = null;
 
 function refreshSession(): Promise<boolean> {
   if (!refreshInflight) {
-    refreshInflight = fetch(`${BASE}/auth/refresh`, {
+    refreshInflight = timedFetch(`${BASE}/auth/refresh`, {
       method: "POST",
       credentials: "include",
       cache: "no-store",
@@ -58,7 +82,7 @@ function refreshSession(): Promise<boolean> {
 }
 
 async function req<T>(method: string, path: string, body?: unknown, retried = false): Promise<T> {
-  const res = await fetch(`${BASE}${path}`, {
+  const res = await timedFetch(`${BASE}${path}`, {
     method,
     headers: body === undefined ? undefined : { "Content-Type": "application/json" },
     body: body === undefined ? undefined : JSON.stringify(body),
