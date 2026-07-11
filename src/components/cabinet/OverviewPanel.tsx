@@ -74,6 +74,11 @@ export default function OverviewPanel({
 
   return (
     <div className="panel">
+      {/* Panel-level heading so the tab has an h2 like every other cabinet panel —
+          the status/install/link consoles below are h3s, and without this the page
+          jumped h1 → h3 (axe heading-order). Visually hidden: the Overview leads with
+          the status console by design, so it has no visible panel title. */}
+      <h2 className="sr-only">Обзор</h2>
       <ConsoleFrame aria-label="Состояние подписки">
         <header className="console-header">
           <span className="console-name">{displayName}</span>
