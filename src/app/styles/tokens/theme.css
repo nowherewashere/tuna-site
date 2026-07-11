@@ -2,8 +2,8 @@
    Tailwind v4 bridge — export the SEMANTIC layer (not raw hexes) so utilities
    (bg-accent, text-secondary, rounded-card …) and hand-written component CSS
    read the same source of truth and can never drift.
-   `inline` keeps the var() reference in generated utilities, so a future theme
-   override of the semantic layer flows through automatically.
+   `inline` keeps the var() reference in generated utilities, so every consumer
+   resolves through the semantic layer — the site's single, permanent dark theme.
    ════════════════════════════════════════════════════════════════════════ */
 
 @theme inline {

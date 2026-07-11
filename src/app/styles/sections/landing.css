@@ -492,25 +492,84 @@ section {
   gap: 16px;
   align-items: stretch;
 }
+/* A deeper, more solid surface than the translucent .feat tiles above — the
+   pricing block should read as higher-intent, a crafted card rather than a
+   panel floating on the ocean. Same dark-ocean palette, just more opaque with
+   a glossy inset top edge. */
 .price-card {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 18px;
-  background: linear-gradient(180deg, rgba(16, 63, 102, 0.66), rgba(10, 37, 64, 0.66));
+  background: linear-gradient(180deg, rgba(22, 76, 122, 0.88), rgba(8, 30, 54, 0.92));
   border: 1px solid var(--line);
   border-top: 2px solid var(--amber);
   border-radius: var(--radius-lg);
   padding: 26px 24px;
   color: var(--ink-card);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 8px 24px rgba(4, 16, 31, 0.28);
   transition:
-    transform var(--dur-fast) var(--ease-std),
     border-color var(--dur-fast) var(--ease-std),
     box-shadow var(--dur-fast) var(--ease-std);
 }
 .price-card:hover {
-  transform: translateY(-3px);
   border-top-color: var(--amber-2);
-  box-shadow: 0 14px 34px rgba(4, 16, 31, 0.32);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 20px 46px rgba(4, 16, 31, 0.5);
+}
+
+/* Recommended tier: brighter amber edge, an amber glow ring and a heavier
+   drop shadow so it reads as lifted above the other cards (elevation is carried
+   by shadow, not transform, so it survives the Reveal motion wrapper). */
+.price-card--rec {
+  border-color: rgba(245, 166, 35, 0.55);
+  background: linear-gradient(180deg, rgba(28, 88, 138, 0.9), rgba(10, 34, 60, 0.94));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 0 0 1px rgba(245, 166, 35, 0.35),
+    0 22px 52px rgba(4, 16, 31, 0.55),
+    0 0 40px rgba(245, 166, 35, 0.14);
+}
+.price-card--rec:hover {
+  border-color: rgba(245, 166, 35, 0.7);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 0 0 1px rgba(245, 166, 35, 0.5),
+    0 26px 58px rgba(4, 16, 31, 0.6),
+    0 0 48px rgba(245, 166, 35, 0.2);
+}
+
+/* "Рекомендуем" pill — pinned to the card's top-right corner (out of flow) so it
+   never pushes the price row down (keeps cards row-aligned across the grid);
+   width-capped so it can't overflow the box at 375px. */
+.price-rec-badge {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  max-width: calc(100% - 28px);
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 12px;
+  border-radius: var(--radius-pill);
+  background: linear-gradient(180deg, var(--amber-2), var(--amber));
+  color: var(--amber-ink);
+  font-family: var(--font-mono), monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  box-shadow: var(--shadow-amber);
+}
+/* Plan identity mark — amber line-icon chip chosen by price rank (top tier vs the
+   rest), replacing the operator-supplied emoji that used to sit in the plan name. */
+.price-icon {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  background: rgba(245, 166, 35, 0.12);
+  color: var(--amber);
+  margin-bottom: 12px;
 }
 .price-name {
   font-size: 20px;
@@ -565,6 +624,43 @@ section {
 .price-cta {
   width: 100%;
   justify-content: center;
+}
+/* Load-failure / empty states for the tariffs section. The section wrapper
+   always renders (so the #pricing anchor survives an API hiccup); this is the
+   neutral, centered fallback shown in its place. */
+.price-status {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 28px 0 8px;
+  text-align: center;
+  color: var(--ink-dim);
+  font-size: 15px;
+}
+
+/* Loading placeholders — same grid footprint as real cards so plans arriving
+   don't shift the layout. Decorative (aria-hidden). */
+.price-card--skeleton {
+  min-height: 320px;
+  border-top-color: var(--line);
+  background: linear-gradient(180deg, rgba(16, 63, 102, 0.4), rgba(10, 34, 60, 0.5));
+  box-shadow: none;
+  animation: price-skeleton-pulse 1.4s ease-in-out infinite;
+}
+@keyframes price-skeleton-pulse {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .price-card--skeleton {
+    animation: none;
+  }
 }
 
 /* ── FAQ ─────────────────────────────────────────────────────────────────── */

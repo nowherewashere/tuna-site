@@ -1,7 +1,8 @@
 /* ══════════════════════════════════════════════════════════════════════════
    Layer 1 — PRIMITIVES
-   Raw, theme-agnostic ramps and scales. Never referenced directly by
-   components — the semantic layer (semantic.css) maps meaning onto these.
+   Raw palette ramps and scales — the fixed ingredients of the site's single
+   dark theme. Never referenced directly by components — the semantic layer
+   (semantic.css) maps meaning onto these.
    Values are the exact literals already used across the design so adoption is
    pixel-for-pixel. See plan: reactive-growing-crystal.md (Phase 0).
    ════════════════════════════════════════════════════════════════════════ */
