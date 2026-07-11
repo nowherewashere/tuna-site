@@ -201,6 +201,20 @@
   font-size: var(--text-sm);
   margin-top: var(--space-3);
 }
+/* Turnstile couldn't verify (challenge error or a blocked script) — a visible,
+   retryable failure instead of a permanently-disabled submit that reads as loading. */
+.auth-ts-err {
+  color: var(--danger-text);
+  font-size: var(--text-sm);
+  margin: 4px 0 14px;
+}
+/* Telegram widget failed to load (blocked / bot domain unregistered) — graceful and
+   not alarming; the email path above still works. */
+.auth-tg-fallback {
+  color: var(--ink-card-dim);
+  font-size: var(--text-sm);
+  margin-top: var(--space-3);
+}
 
 .onb-alt-lg {
   margin-top: 20px;

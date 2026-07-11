@@ -23,6 +23,7 @@ let seq = 0;
 export default function TelegramLoginButton({
   botUsername,
   onAuth,
+  onError,
   size = "large",
   cornerRadius,
   requestAccess = true,
@@ -30,6 +31,7 @@ export default function TelegramLoginButton({
 }: {
   botUsername: string;
   onAuth: (user: TelegramAuthUser) => void;
+  onError?: () => void;
   size?: "large" | "medium" | "small";
   cornerRadius?: number;
   requestAccess?: boolean;
@@ -37,10 +39,14 @@ export default function TelegramLoginButton({
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const cb = useRef(onAuth);
+  const errCb = useRef(onError);
 
   useEffect(() => {
     cb.current = onAuth;
   }, [onAuth]);
+  useEffect(() => {
+    errCb.current = onError;
+  }, [onError]);
 
   useEffect(() => {
     const container = ref.current;
@@ -49,6 +55,21 @@ export default function TelegramLoginButton({
     const cbName = `__tgAuth_${(seq += 1)}`;
     const globals = window as unknown as Record<string, unknown>;
     globals[cbName] = (user: TelegramAuthUser) => cb.current(user);
+
+    // Fallback if the widget iframe never appears (script blocked by an extension,
+    // or the bot domain isn't registered): let the page swap in a Russian sign-in
+    // fallback instead of a dead button or Telegram's raw English error. Cleared the
+    // moment the iframe shows (labelIframe) or the effect tears down.
+    let failTimer: ReturnType<typeof setTimeout> | undefined = setTimeout(() => {
+      failTimer = undefined;
+      if (!container.querySelector("iframe")) errCb.current?.();
+    }, 7000);
+    const clearFailTimer = () => {
+      if (failTimer !== undefined) {
+        clearTimeout(failTimer);
+        failTimer = undefined;
+      }
+    };
 
     // Telegram's script injects an <iframe> with no title, leaving screen-reader
     // users an unlabeled frame on the auth pages (WCAG 2.2 4.1.2). Give it an
@@ -59,6 +80,7 @@ export default function TelegramLoginButton({
       const iframe = container.querySelector("iframe");
       if (!iframe) return false;
       if (!iframe.title) iframe.title = "Вход через Telegram";
+      clearFailTimer();
       return true;
     };
 
@@ -72,6 +94,7 @@ export default function TelegramLoginButton({
     s.setAttribute("data-userpic", "false");
     s.setAttribute("data-lang", lang);
     s.setAttribute("data-onauth", `${cbName}(user)`);
+    s.onerror = () => errCb.current?.();
     container.appendChild(s);
 
     if (!labelIframe()) {
@@ -82,6 +105,7 @@ export default function TelegramLoginButton({
     }
 
     return () => {
+      clearFailTimer();
       mo?.disconnect();
       container.innerHTML = "";
       delete globals[cbName];

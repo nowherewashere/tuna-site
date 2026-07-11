@@ -43,6 +43,9 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [tgError, setTgError] = useState<string | null>(null);
+  // The Telegram widget's script/iframe failed to load (blocked, or bot domain not
+  // registered) — swap in a Russian fallback instead of a dead button / raw error.
+  const [tgWidgetFailed, setTgWidgetFailed] = useState(false);
 
   // Referral attribution captured from a /r/<code> visit (RefCapture). Client-only;
   // useSyncExternalStore returns null on the server so SSG markup matches (no flash).
@@ -277,7 +280,21 @@ export default function LoginPage() {
                 error={error}
               />
               {ts.siteKey && (
-                <Turnstile key={ts.resetKey} siteKey={ts.siteKey} onVerify={ts.setToken} />
+                <Turnstile
+                  key={ts.resetKey}
+                  siteKey={ts.siteKey}
+                  onVerify={ts.setToken}
+                  onError={ts.onError}
+                />
+              )}
+              {ts.failed && (
+                <p className="auth-ts-err" role="alert">
+                  Не удалось пройти проверку безопасности — возможно, её блокирует
+                  расширение в браузере.{" "}
+                  <Button variant="link" onClick={ts.reset}>
+                    Повторить проверку
+                  </Button>
+                </p>
               )}
               <Button
                 variant="amber"
@@ -294,12 +311,24 @@ export default function LoginPage() {
                 <div className="auth-tg">
                   <div className="auth-sep">или</div>
                   <p className="auth-tg-note">Уже заходили через Telegram? Войди одним нажатием.</p>
-                  <TelegramLoginButton
-                    botUsername={TELEGRAM_BOT}
-                    onAuth={loginWithTelegram}
-                    cornerRadius={12}
-                  />
-                  {tgError && <p className="auth-tg-err">{tgError}</p>}
+                  {tgWidgetFailed ? (
+                    <p className="auth-tg-fallback" role="alert">
+                      Не удалось загрузить вход через Telegram — обнови страницу или
+                      войди по почте выше.
+                    </p>
+                  ) : (
+                    <TelegramLoginButton
+                      botUsername={TELEGRAM_BOT}
+                      onAuth={loginWithTelegram}
+                      onError={() => setTgWidgetFailed(true)}
+                      cornerRadius={12}
+                    />
+                  )}
+                  {tgError && (
+                    <p className="auth-tg-err" role="alert">
+                      {tgError}
+                    </p>
+                  )}
                 </div>
               )}
             </>
