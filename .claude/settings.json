@@ -1,0 +1,27 @@
+{
+  "$comment": "Quality gates for the audit-fix waves (v2 executor). Bash hooks assume a bash-capable hook shell. Portable Node lives at ~/node-win (not on PATH), so commands set PATH explicitly. Note: hooks are loaded at session start — edits mid-session take effect next session.",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "input=$(cat); printf '%s' \"$input\" | grep -Eq 'push[[:space:]].*--force|--force-with-lease|rm[[:space:]]+-rf|reset[[:space:]]+--hard' && { echo 'audit-wave guard: destructive command blocked (force-push / rm -rf / reset --hard)' >&2; exit 2; }; exit 0"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd /c/Users/amdma/claude/tuna/tuna-site && export PATH=\"/c/Users/amdma/node-win/node-v22.22.2-win-x64:$PATH\" && node ./node_modules/eslint/bin/eslint.js --no-warn-ignored $CLAUDE_FILE_PATHS 2>&1 | tail -15"
+          }
+        ]
+      }
+    ]
+  }
+}
