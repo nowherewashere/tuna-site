@@ -46,10 +46,32 @@ export default function HeroScene() {
               CSS-driven, so the global prefers-reduced-motion rule stills it. */}
           <div className="hero-tuna-idle">
             <span className="hero-fish-glow" />
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img className="hero-tuna" src="/assets/images/hero-tuna.png" alt="" />
-            {/* Caustic clipped to the fish silhouette (same PNG as mask) so light
-                ripples across its body instead of floating in front of it. */}
+            {/* Responsive hero: pre-generated AVIF/WebP variants (build-time export
+                can't use next/image) rendered into a ~1040px box; width/height ties
+                CLS safety to the 3:2 asset. Decorative — alt="" inside aria-hidden. */}
+            <picture>
+              <source
+                type="image/avif"
+                srcSet="/assets/images/hero-tuna-520.avif 520w, /assets/images/hero-tuna-1040.avif 1040w, /assets/images/hero-tuna-1560.avif 1560w, /assets/images/hero-tuna-2080.avif 2080w"
+                sizes="(max-width: 900px) 92vw, 56vw"
+              />
+              <source
+                type="image/webp"
+                srcSet="/assets/images/hero-tuna-520.webp 520w, /assets/images/hero-tuna-1040.webp 1040w, /assets/images/hero-tuna-1560.webp 1560w, /assets/images/hero-tuna-2080.webp 2080w"
+                sizes="(max-width: 900px) 92vw, 56vw"
+              />
+              {/* <img> inside <picture> is allowed by @next/next/no-img-element. */}
+              <img
+                className="hero-tuna"
+                src="/assets/images/hero-tuna-1040.png"
+                alt=""
+                width={1200}
+                height={800}
+                decoding="async"
+              />
+            </picture>
+            {/* Caustic clipped to the fish silhouette (small variant as mask) so
+                light ripples across its body instead of floating in front of it. */}
             <span className="hero-caustic-fish" />
           </div>
         </motion.div>

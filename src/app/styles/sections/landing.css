@@ -165,6 +165,11 @@ h1.hero-title .amber {
   transform: translateY(-50%);
   filter: drop-shadow(0 40px 70px rgba(4, 16, 31, 0.55));
 }
+/* The <picture> wrapper carries no box of its own so the absolutely-positioned
+   .hero-tuna keeps its original containing block. */
+.hero-tuna-idle picture {
+  display: contents;
+}
 /* Dark-water halo + amber backlight so the fish emerges from the deep. */
 .hero-fish-glow {
   right: clamp(-40px, 2vw, 60px);
@@ -177,8 +182,9 @@ h1.hero-title .amber {
     radial-gradient(closest-side at 42% 50%, rgba(245, 166, 35, 0.16), transparent 58%),
     radial-gradient(closest-side, rgba(4, 16, 31, 0.5), rgba(4, 16, 31, 0.22) 55%, transparent 74%);
 }
-/* Caustic light clipped to the fish silhouette (same 3:2 PNG as a mask) so light
-   ripples across its body instead of floating in front of it. */
+/* Caustic light clipped to the fish silhouette. Uses the small 520w WebP variant
+   (already downloaded for the hero srcset) as the mask so the shimmer costs no
+   extra request instead of re-fetching the full-size hero. */
 .hero-caustic-fish {
   right: clamp(-140px, -4vw, -24px);
   top: 46%;
@@ -190,8 +196,8 @@ h1.hero-title .amber {
     radial-gradient(30% 40% at 62% 62%, rgba(150, 210, 250, 0.4), transparent 65%);
   mix-blend-mode: screen;
   opacity: 0.5;
-  -webkit-mask: url("/assets/images/hero-tuna.png") center / contain no-repeat;
-  mask: url("/assets/images/hero-tuna.png") center / contain no-repeat;
+  -webkit-mask: url("/assets/images/hero-tuna-520.webp") center / contain no-repeat;
+  mask: url("/assets/images/hero-tuna-520.webp") center / contain no-repeat;
   animation: hero-shimmer 9s ease-in-out infinite alternate;
 }
 /* Depth-pressure vignette handing the eye off into the next section. */
