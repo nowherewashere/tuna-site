@@ -5,7 +5,7 @@ import { api, type PublicPlanLanding } from "@/lib/api";
 import { plural, fmtBytes } from "@/lib/format";
 import { storeSelectedPlan } from "@/lib/selectedPlan";
 import AuthCta from "@/components/AuthCta";
-import Icon, { type IconName } from "@/components/Icon";
+import Icon from "@/components/Icon";
 import { Reveal } from "@/components/ui";
 
 function trafficLabel(bytes: number): string {
@@ -23,16 +23,19 @@ function priceLabel(rub: string): string {
   return Number.isFinite(n) ? String(n) : rub;
 }
 
-/** The tier we steer people toward — highlighted as the recommended card. */
-const RECOMMENDED_PLAN = "pro";
-
 /**
- * Plan identity mark, driven by the stable public_code — never by the
- * free-text name, which operators can seed with OS emoji (🐟) that render as
- * a color glyph and break the monochrome line-icon system. Unknown codes fall
- * back to the shield.
+ * The recommended tier is the TOP of the price ladder, computed from the live
+ * plans — not a hardcoded id. The backend has no tier/recommended field, and
+ * `public_code` is an opaque per-deployment token, so price is the reliable
+ * tier signal (and it never couples to the free-text name). Returns null when
+ * there's nothing to steer between (fewer than two plans).
  */
-const PLAN_ICON: Record<string, IconName> = { standard: "shield", pro: "bolt" };
+function recommendedCode(plans: PublicPlanLanding[]): string | null {
+  if (plans.length < 2) return null;
+  return plans.reduce((top, p) =>
+    parseFloat(p.monthly_from_rub) > parseFloat(top.monthly_from_rub) ? p : top,
+  ).public_code;
+}
 
 /** Drop any leading emoji / variation-selector / ZWJ run an operator may have
  *  prefixed to the plan name, keeping the clean text for the heading. */
@@ -75,6 +78,8 @@ export default function PricingSection() {
     load();
   }, [load]);
 
+  const recCode = recommendedCode(plans);
+
   return (
     <section className="pricing" id="pricing">
       <div className="wrap">
@@ -102,7 +107,7 @@ export default function PricingSection() {
         {status === "ready" && plans.length > 0 && (
           <div className="price-grid">
             {plans.map((p, i) => {
-            const isRecommended = p.public_code === RECOMMENDED_PLAN;
+            const isRecommended = p.public_code === recCode;
             return (
               <Reveal
                 key={p.public_code}
@@ -112,7 +117,7 @@ export default function PricingSection() {
                 {isRecommended && <div className="price-rec-badge">Рекомендуем</div>}
                 <div className="price-head">
                   <span className="price-icon">
-                    <Icon name={PLAN_ICON[p.public_code] ?? "shield"} size={22} />
+                    <Icon name={isRecommended ? "bolt" : "shield"} size={22} />
                   </span>
                   <h3 className="price-name">{cleanPlanName(p.name)}</h3>
                   {p.description && <p className="price-desc">{p.description}</p>}
