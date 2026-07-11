@@ -3,9 +3,12 @@ import type { Metadata } from "next";
 import Icon from "@/components/Icon";
 
 export const metadata: Metadata = {
-  title: "Публичная оферта — Tuna VPN",
+  // Root layout's title.template appends " — Tuna VPN", so the rendered title stays
+  // "Публичная оферта — Tuna VPN" without the double suffix.
+  title: "Публичная оферта",
   description:
     "Публичная оферта на предоставление услуг VPN сервисом Tuna VPN: предмет договора, оплата, реферальная программа, ответственность.",
+  alternates: { canonical: "/oferta" },
 };
 
 export default function OfertaPage() {

@@ -3,9 +3,11 @@ import type { Metadata } from "next";
 import Icon from "@/components/Icon";
 
 export const metadata: Metadata = {
-  title: "Политика конфиденциальности — Tuna VPN",
+  // Root layout's title.template appends " — Tuna VPN" (no double suffix).
+  title: "Политика конфиденциальности",
   description:
     "Как Tuna VPN собирает, использует и защищает данные. Принцип минимизации данных, без журналов интернет-активности.",
+  alternates: { canonical: "/privacy" },
 };
 
 export default function PrivacyPage() {
