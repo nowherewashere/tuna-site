@@ -8,6 +8,7 @@ import {
   type SubscriptionOffers,
 } from "@/lib/api";
 import { durationLabel, fmtDate, fmtRub, pickPrice } from "@/lib/format";
+import { apiErrorMessage } from "@/lib/apiError";
 import { onRovingKeyDown } from "@/lib/roving";
 import { useCopyToClipboard } from "@/lib/useCopyToClipboard";
 import Icon from "@/components/Icon";
@@ -155,11 +156,13 @@ export default function ReferralPanel({
       onRefresh?.();
     } catch (e) {
       setError(
-        e instanceof ApiError && e.status === 400
-          ? "Проверь адрес кошелька и попробуй снова."
-          : e instanceof ApiError && e.status === 409
-            ? "Вывод недоступен: не хватает баланса или заявка уже в обработке."
-            : "Не удалось создать заявку. Попробуй позже.",
+        apiErrorMessage(e, {
+          byStatus: {
+            400: "Проверь адрес кошелька и попробуй снова.",
+            409: "Вывод недоступен: не хватает баланса или заявка уже в обработке.",
+          },
+          fallback: "Не удалось создать заявку. Попробуй позже.",
+        }),
       );
     } finally {
       setBusy(false);
@@ -185,11 +188,13 @@ export default function ReferralPanel({
       onRefresh?.();
     } catch (e) {
       setError(
-        e instanceof ApiError && e.status === 400
-          ? "Этот тариф недоступен для оплаты балансом."
-          : e instanceof ApiError && e.status === 409
-            ? "Не удалось оплатить: не хватает баланса или нет активной подписки."
-            : "Не удалось оплатить. Попробуй позже.",
+        apiErrorMessage(e, {
+          byStatus: {
+            400: "Этот тариф недоступен для оплаты балансом.",
+            409: "Не удалось оплатить: не хватает баланса или нет активной подписки.",
+          },
+          fallback: "Не удалось оплатить. Попробуй позже.",
+        }),
       );
     } finally {
       setBusy(false);
