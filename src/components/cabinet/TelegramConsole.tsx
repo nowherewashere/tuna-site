@@ -4,6 +4,7 @@ import type { Me, TelegramAuthUser } from "@/lib/api";
 import { TELEGRAM_BOT, telegramBotUrl } from "@/lib/config";
 import Icon from "@/components/Icon";
 import TelegramLoginButton from "@/components/TelegramLoginButton";
+import { ConsoleFrame } from "@/components/ui";
 
 /**
  * The Telegram half of the account-link surface; `EmailConsole` is its mirror.
@@ -27,9 +28,7 @@ export default function TelegramConsole({
   const linked = !!me?.telegram_id;
 
   return (
-    <section className="console tg-console" aria-label="Telegram">
-      <div className="console-corner console-corner-tl" aria-hidden="true" />
-      <div className="console-corner console-corner-tr" aria-hidden="true" />
+    <ConsoleFrame className="tg-console" aria-label="Telegram">
       <span className="tg-kicker mono">{"// telegram"}</span>
 
       {linked ? (
@@ -68,6 +67,6 @@ export default function TelegramConsole({
           )}
         </>
       )}
-    </section>
+    </ConsoleFrame>
   );
 }

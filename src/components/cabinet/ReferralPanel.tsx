@@ -1,6 +1,6 @@
 "use client";
 
-import { type KeyboardEvent, useState } from "react";
+import { useState } from "react";
 import {
   api,
   ApiError,
@@ -8,49 +8,25 @@ import {
   type SubscriptionOffers,
 } from "@/lib/api";
 import { durationLabel, fmtDate, fmtRub, pickPrice } from "@/lib/format";
+import { onRovingKeyDown } from "@/lib/roving";
+import { useCopyToClipboard } from "@/lib/useCopyToClipboard";
 import Icon from "@/components/Icon";
-import { Button, TextField } from "@/components/ui";
+import { Button, ConsoleFrame, TextField } from "@/components/ui";
 
 /** Copyable long link — one pattern for any URL (mono, ellipsis, no overflow). */
 function UriField({ label, value }: { label: string; value: string }) {
-  const [copied, setCopied] = useState(false);
+  const { copied, copy } = useCopyToClipboard();
   return (
     <div className="uri-field">
       <span className="uri-label">{label}</span>
       <div className="uri-row">
         <span className="uri-value">{value}</span>
-        <button
-          type="button"
-          className="uri-copy"
-          onClick={() => {
-            navigator.clipboard?.writeText(value);
-            setCopied(true);
-            setTimeout(() => setCopied(false), 1500);
-          }}
-        >
+        <button type="button" className="uri-copy" onClick={() => copy(value)}>
           {copied ? "скопировано" : "копировать"}
         </button>
       </div>
     </div>
   );
-}
-
-// APG radio-group keyboard model (shared by the plan + duration pickers below):
-// arrows move focus and select; roving tabindex keeps each group one Tab stop.
-function onRadioKeyDown(e: KeyboardEvent<HTMLElement>) {
-  const keys = ["ArrowDown", "ArrowRight", "ArrowUp", "ArrowLeft", "Home", "End"];
-  if (!keys.includes(e.key)) return;
-  const radios = Array.from(e.currentTarget.querySelectorAll<HTMLButtonElement>('[role="radio"]'));
-  const cur = radios.indexOf(document.activeElement as HTMLButtonElement);
-  if (cur < 0) return;
-  e.preventDefault();
-  let next = cur;
-  if (e.key === "ArrowDown" || e.key === "ArrowRight") next = (cur + 1) % radios.length;
-  else if (e.key === "ArrowUp" || e.key === "ArrowLeft") next = (cur - 1 + radios.length) % radios.length;
-  else if (e.key === "Home") next = 0;
-  else if (e.key === "End") next = radios.length - 1;
-  radios[next].focus();
-  radios[next].click();
 }
 
 /** RUB string ("149" / "149.00") → integer kopecks, for comparing against balance. */
@@ -98,11 +74,9 @@ export default function ReferralPanel({
     return (
       <div className="panel">
         <h2 className="panel-title">Приглашай друзей</h2>
-        <section className="console console-empty" aria-label="Реферальная программа">
-          <div className="console-corner console-corner-tl" aria-hidden="true" />
-          <div className="console-corner console-corner-tr" aria-hidden="true" />
+        <ConsoleFrame className="console-empty" aria-label="Реферальная программа">
           <p role={loadError ? "alert" : "status"}>{message}</p>
-        </section>
+        </ConsoleFrame>
       </div>
     );
   }
@@ -230,10 +204,7 @@ export default function ReferralPanel({
         подписку.
       </div>
 
-      <section className="console" aria-label="Реферальная программа">
-        <div className="console-corner console-corner-tl" aria-hidden="true" />
-        <div className="console-corner console-corner-tr" aria-hidden="true" />
-
+      <ConsoleFrame aria-label="Реферальная программа">
         <div className="ref-callsign">
           <span className="readout-label">Твой код</span>
           <span className="ref-code">{referral.referral_code}</span>
@@ -319,13 +290,11 @@ export default function ReferralPanel({
             . Тратятся внутри Telegram, это не вывод в деньги.
           </p>
         )}
-      </section>
+      </ConsoleFrame>
 
       {/* ── Inline crypto payout (no modal — mirrors the site's inline checkout) ── */}
       {section === "payout" && (
-        <section className="console ref-inline" id="ref-payout" aria-label="Вывод средств">
-          <div className="console-corner console-corner-tl" aria-hidden="true" />
-          <div className="console-corner console-corner-tr" aria-hidden="true" />
+        <ConsoleFrame className="ref-inline" id="ref-payout" aria-label="Вывод средств">
           <div className="console-title">Вывод в крипте</div>
 
           {payoutDone ? (
@@ -381,14 +350,12 @@ export default function ReferralPanel({
               )}
             </>
           )}
-        </section>
+        </ConsoleFrame>
       )}
 
       {/* ── Inline pay-with-balance picker ─────────────────────────────────────── */}
       {section === "pay" && (
-        <section className="console ref-inline" id="ref-pay" aria-label="Оплата подписки балансом">
-          <div className="console-corner console-corner-tl" aria-hidden="true" />
-          <div className="console-corner console-corner-tr" aria-hidden="true" />
+        <ConsoleFrame className="ref-inline" id="ref-pay" aria-label="Оплата подписки балансом">
           <div className="console-title">Оплата балансом</div>
 
           {payDone ? (
@@ -428,7 +395,12 @@ export default function ReferralPanel({
                     className="ref-plan-tabs"
                     role="radiogroup"
                     aria-label="Тариф"
-                    onKeyDown={onRadioKeyDown}
+                    onKeyDown={(e) =>
+                      onRovingKeyDown(
+                        e,
+                        Array.from(e.currentTarget.querySelectorAll<HTMLButtonElement>('[role="radio"]')),
+                      )
+                    }
                   >
                     {offers.plans.map((p, i) => {
                       const on = p.id === planId;
@@ -458,7 +430,12 @@ export default function ReferralPanel({
                 className="dur-ladder"
                 role="radiogroup"
                 aria-label="Срок подписки"
-                onKeyDown={onRadioKeyDown}
+                onKeyDown={(e) =>
+                  onRovingKeyDown(
+                    e,
+                    Array.from(e.currentTarget.querySelectorAll<HTMLButtonElement>('[role="radio"]')),
+                  )
+                }
               >
                 {durations.map((d, idx) => {
                   const pr = pickPrice(d);
@@ -530,7 +507,7 @@ export default function ReferralPanel({
               </div>
             </>
           )}
-        </section>
+        </ConsoleFrame>
       )}
     </div>
   );

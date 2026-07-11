@@ -1,6 +1,7 @@
 import Icon from "@/components/Icon";
 import type { Device, SubscriptionInfo } from "@/lib/api";
 import { platformIcon } from "@/lib/format";
+import { ConsoleFrame } from "@/components/ui";
 
 export default function DevicesPanel({
   devices,
@@ -29,10 +30,7 @@ export default function DevicesPanel({
         <Icon name="plus" size={17} /> Добавить устройство
       </button>
 
-      <section className="console" aria-label="Подключённые устройства">
-        <div className="console-corner console-corner-tl" aria-hidden="true" />
-        <div className="console-corner console-corner-tr" aria-hidden="true" />
-
+      <ConsoleFrame aria-label="Подключённые устройства">
         <div className="slot-head">
           <span className="readout-label">Слоты устройств</span>
           <div className="slot-track" aria-hidden="true">
@@ -73,7 +71,7 @@ export default function DevicesPanel({
             ))}
           </ul>
         )}
-      </section>
+      </ConsoleFrame>
     </div>
   );
 }

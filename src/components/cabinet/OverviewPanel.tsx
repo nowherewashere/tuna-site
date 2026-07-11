@@ -5,7 +5,8 @@ import InstallBlock from "@/components/InstallBlock";
 import EmailConsole from "@/components/cabinet/EmailConsole";
 import TelegramConsole from "@/components/cabinet/TelegramConsole";
 import type { Device, Me, SubscriptionInfo, TelegramAuthUser } from "@/lib/api";
-import { STATUS_LABEL, daysLeftUntil, fmtDate, plural } from "@/lib/format";
+import { STATUS_LABEL, daysLeftUntil, fmtDate, plural, statusPillClass } from "@/lib/format";
+import { ConsoleFrame } from "@/components/ui";
 
 export default function OverviewPanel({
   loading,
@@ -31,12 +32,7 @@ export default function OverviewPanel({
   linkError: string | null;
 }) {
   const active = sub?.status === "ACTIVE";
-  const statusClass =
-    sub?.status === "ACTIVE"
-      ? ""
-      : sub?.status === "LIMITED"
-        ? "status-pill--warn"
-        : "status-pill--bad";
+  const statusClass = statusPillClass(sub?.status);
 
   // Captured once on mount (pure render); this hint doesn't need to tick live.
   const [now] = useState(() => Date.now());
@@ -65,12 +61,12 @@ export default function OverviewPanel({
   if (!sub) {
     return (
       <div className="panel">
-        <div className="console console-empty">
+        <ConsoleFrame className="console-empty">
           <p>Пока нет активной подписки.</p>
           <button className="btn btn-amber" onClick={onGetAccess}>
             Получить доступ
           </button>
-        </div>
+        </ConsoleFrame>
         {linkSurface}
       </div>
     );
@@ -78,10 +74,7 @@ export default function OverviewPanel({
 
   return (
     <div className="panel">
-      <section className="console" aria-label="Состояние подписки">
-        <div className="console-corner console-corner-tl" aria-hidden="true" />
-        <div className="console-corner console-corner-tr" aria-hidden="true" />
-
+      <ConsoleFrame aria-label="Состояние подписки">
         <header className="console-header">
           <span className="console-name">{displayName}</span>
           <span className={`status-pill ${statusClass}`}>
@@ -127,14 +120,12 @@ export default function OverviewPanel({
             </span>
           </div>
         </div>
-      </section>
+      </ConsoleFrame>
 
-      <section className="console install-console" id="install" aria-label="Установка">
-        <div className="console-corner console-corner-tl" aria-hidden="true" />
-        <div className="console-corner console-corner-tr" aria-hidden="true" />
+      <ConsoleFrame className="install-console" id="install" aria-label="Установка">
         <h3 className="console-name">Установи Tuna в 3 шага</h3>
         <InstallBlock subUrl={sub.url} />
-      </section>
+      </ConsoleFrame>
 
       {linkSurface}
     </div>

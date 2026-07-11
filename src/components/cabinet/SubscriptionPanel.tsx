@@ -1,6 +1,6 @@
 "use client";
 
-import { type KeyboardEvent, useState } from "react";
+import { useState } from "react";
 import Icon from "@/components/Icon";
 import type { SubscriptionInfo, SubscriptionOffers } from "@/lib/api";
 import {
@@ -13,29 +13,14 @@ import {
   pickPrice,
   plural,
   STATUS_LABEL,
+  statusPillClass,
 } from "@/lib/format";
+import { onRovingKeyDown } from "@/lib/roving";
+import { ConsoleFrame } from "@/components/ui";
 
 type Selected = { planCode: string; days: number } | null;
 
 const daysWord = (n: number) => plural(n, "день", "дня", "дней");
-
-// APG radio-group keyboard model for the duration ladder: arrows move focus and
-// select (roving tabindex keeps the group a single Tab stop).
-function onLadderKeyDown(e: KeyboardEvent<HTMLDivElement>) {
-  const keys = ["ArrowDown", "ArrowRight", "ArrowUp", "ArrowLeft", "Home", "End"];
-  if (!keys.includes(e.key)) return;
-  const rows = Array.from(e.currentTarget.querySelectorAll<HTMLButtonElement>(".dur-line"));
-  const cur = rows.indexOf(document.activeElement as HTMLButtonElement);
-  if (cur < 0) return;
-  e.preventDefault();
-  let next = cur;
-  if (e.key === "ArrowDown" || e.key === "ArrowRight") next = (cur + 1) % rows.length;
-  else if (e.key === "ArrowUp" || e.key === "ArrowLeft") next = (cur - 1 + rows.length) % rows.length;
-  else if (e.key === "Home") next = 0;
-  else if (e.key === "End") next = rows.length - 1;
-  rows[next].focus();
-  rows[next].click();
-}
 
 export default function SubscriptionPanel({
   offers,
@@ -63,11 +48,9 @@ export default function SubscriptionPanel({
     return (
       <div className="panel">
         <h2 className="panel-title">Подписка</h2>
-        <section className="console console-empty" aria-label="Тарифы">
-          <div className="console-corner console-corner-tl" aria-hidden="true" />
-          <div className="console-corner console-corner-tr" aria-hidden="true" />
+        <ConsoleFrame className="console-empty" aria-label="Тарифы">
           <p>Тарифы скоро появятся здесь. Пока пользуйся пробным периодом.</p>
-        </section>
+        </ConsoleFrame>
       </div>
     );
   }
@@ -76,12 +59,7 @@ export default function SubscriptionPanel({
   const daysLeft = sub ? Math.max(0, daysLeftUntil(sub.expire_at, now)) : 0;
   const remainder = daysLeft; // days that stack onto a purchase; 0 once expired
   const hasRemainder = remainder > 0;
-  const statusClass =
-    sub?.status === "ACTIVE"
-      ? ""
-      : sub?.status === "LIMITED"
-        ? "status-pill--warn"
-        : "status-pill--bad";
+  const statusClass = statusPillClass(sub?.status);
   const expirySoon = daysLeft > 0 && daysLeft <= 5;
 
   // One persistent live region announces the selection concisely (a fresh
@@ -108,9 +86,7 @@ export default function SubscriptionPanel({
       </div>
 
       {sub && (
-        <section className="console sub-current" aria-label="Текущая подписка">
-          <div className="console-corner console-corner-tl" aria-hidden="true" />
-          <div className="console-corner console-corner-tr" aria-hidden="true" />
+        <ConsoleFrame className="sub-current" aria-label="Текущая подписка">
           <div className="console-title">Текущая подписка</div>
           <header className="console-header">
             <span className="console-name">{sub.plan_name}</span>
@@ -131,7 +107,7 @@ export default function SubscriptionPanel({
               <span className="readout-val">{fmtDate(sub.expire_at)}</span>
             </div>
           </div>
-        </section>
+        </ConsoleFrame>
       )}
 
       <div className="panel-sub">
@@ -176,10 +152,10 @@ export default function SubscriptionPanel({
           const selPrice = selDur ? pickPrice(selDur) : null;
 
           return (
-            <section className={`console plan-console${isCurrentPlan ? " is-current" : ""}`} key={p.id}>
-              <div className="console-corner console-corner-tl" aria-hidden="true" />
-              <div className="console-corner console-corner-tr" aria-hidden="true" />
-
+            <ConsoleFrame
+              className={`plan-console${isCurrentPlan ? " is-current" : ""}`}
+              key={p.id}
+            >
               <header className="console-header">
                 <h3 className="console-name">
                   {p.name}
@@ -212,7 +188,12 @@ export default function SubscriptionPanel({
                 className="dur-ladder"
                 role="radiogroup"
                 aria-label={`Срок подписки — ${p.name}`}
-                onKeyDown={onLadderKeyDown}
+                onKeyDown={(e) =>
+                  onRovingKeyDown(
+                    e,
+                    Array.from(e.currentTarget.querySelectorAll<HTMLButtonElement>(".dur-line")),
+                  )
+                }
               >
                 {durations.map((d, idx) => {
                   const pr = pickPrice(d);
@@ -313,7 +294,7 @@ export default function SubscriptionPanel({
                     </div>
                   );
                 })()}
-            </section>
+            </ConsoleFrame>
           );
         })}
       </div>

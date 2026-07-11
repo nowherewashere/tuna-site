@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { api, ApiError, type Me } from "@/lib/api";
 import Icon from "@/components/Icon";
-import { Button, TextField } from "@/components/ui";
+import { Button, ConsoleFrame, TextField } from "@/components/ui";
 
 /**
  * The email half of the account-link surface — the mirror of `TelegramConsole`.
@@ -66,9 +66,7 @@ export default function EmailConsole({
   }
 
   return (
-    <section className="console tg-console" aria-label="Электронная почта">
-      <div className="console-corner console-corner-tl" aria-hidden="true" />
-      <div className="console-corner console-corner-tr" aria-hidden="true" />
+    <ConsoleFrame className="tg-console" aria-label="Электронная почта">
       <span className="tg-kicker mono">{"// почта"}</span>
 
       {step === "code" ? (
@@ -155,7 +153,7 @@ export default function EmailConsole({
           )}
         </>
       )}
-    </section>
+    </ConsoleFrame>
   );
 }
 

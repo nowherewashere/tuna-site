@@ -1,7 +1,9 @@
 "use client";
 
-import { useMemo, useRef, useState, useSyncExternalStore, type KeyboardEvent, type ReactNode } from "react";
+import { useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { useOnboarding } from "@/lib/useOnboarding";
+import { onRovingKeyDown } from "@/lib/roving";
+import { useCopyToClipboard } from "@/lib/useCopyToClipboard";
 import Icon, { type IconName } from "@/components/Icon";
 import { Button } from "@/components/ui";
 
@@ -79,7 +81,7 @@ export function detectPlatform(): PlatformId {
 }
 
 function SubCopyRow({ subUrl, label }: { subUrl: string; label?: string }) {
-  const [copied, setCopied] = useState(false);
+  const { copied, copy } = useCopyToClipboard();
   return (
     <>
       {label && <p className="copy-hint">{label}</p>}
@@ -99,9 +101,7 @@ function SubCopyRow({ subUrl, label }: { subUrl: string; label?: string }) {
           className="amber"
           onClick={() => {
             if (!subUrl) return;
-            navigator.clipboard?.writeText(subUrl);
-            setCopied(true);
-            setTimeout(() => setCopied(false), 1500);
+            copy(subUrl);
           }}
         >
           {copied ? (
@@ -136,20 +136,6 @@ export default function InstallBlock({ subUrl }: { subUrl: string }) {
   const isTv = platform === "apple_tv" || platform === "android_tv";
   const storeUrl = cfg && !isTv ? cfg.store_links[platform as StorePlatform] : "";
 
-  // Roving-tabindex + arrow keys for the platform radiogroup (mirrors CabinetTabs).
-  function onPickerKey(e: KeyboardEvent<HTMLButtonElement>, i: number) {
-    const n = PLATFORMS.length;
-    let next = i;
-    if (e.key === "ArrowRight" || e.key === "ArrowDown") next = (i + 1) % n;
-    else if (e.key === "ArrowLeft" || e.key === "ArrowUp") next = (i - 1 + n) % n;
-    else if (e.key === "Home") next = 0;
-    else if (e.key === "End") next = n - 1;
-    else return;
-    e.preventDefault();
-    setOverride(PLATFORMS[next].id as PlatformId);
-    btnRefs.current[next]?.focus();
-  }
-
   const tvKey: TvPlatform = platform === "apple_tv" ? "apple_tv" : "android_tv";
   const faqUrl = cfg ? cfg.tv.faq[tvKey] : "";
 
@@ -169,7 +155,7 @@ export default function InstallBlock({ subUrl }: { subUrl: string }) {
               tabIndex={platform === p.id ? 0 : -1}
               className={`plat${platform === p.id ? " on" : ""}`}
               onClick={() => setOverride(p.id as PlatformId)}
-              onKeyDown={(e) => onPickerKey(e, i)}
+              onKeyDown={(e) => onRovingKeyDown(e, btnRefs.current)}
             >
               <Icon name={p.icon} size={16} />
               {p.label}
