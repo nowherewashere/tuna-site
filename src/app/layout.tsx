@@ -8,7 +8,11 @@ import RefCapture from "@/components/RefCapture";
 // competes with it.
 const display = Unbounded({
   subsets: ["latin", "cyrillic"],
-  weight: ["500", "600", "700", "800"],
+  // Only 600/700/800 are actually used (nav-drawer link / titles / headings). Unbounded
+  // 500 was declared but never referenced, and no display element resolves to a weight
+  // near 400 that would fall back to it — so drop it to load one fewer woff2 (PERF-04).
+  // Body (Golos 400/500/600) and mono (IBM Plex 400/500) weights are all in use.
+  weight: ["600", "700", "800"],
   variable: "--font-display",
   display: "swap",
 });

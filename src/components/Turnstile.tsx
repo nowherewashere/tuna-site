@@ -34,21 +34,29 @@ function loadScript(): Promise<void> {
 
 /**
  * Cloudflare Turnstile widget (explicit render). Calls `onVerify` with the token
- * on success, or "" on error/expiry. Remount (change `key`) to force a reset.
+ * on success, or "" on error/expiry, and `onError` on a hard failure (challenge
+ * error or a blocked/failed script) so the caller can offer a retry instead of a
+ * silently-disabled submit. Remount (change `key`) to force a reset.
  */
 export default function Turnstile({
   siteKey,
   onVerify,
+  onError,
 }: {
   siteKey: string;
   onVerify: (token: string) => void;
+  onError?: () => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const cb = useRef(onVerify);
+  const errCb = useRef(onError);
 
   useEffect(() => {
     cb.current = onVerify;
   }, [onVerify]);
+  useEffect(() => {
+    errCb.current = onError;
+  }, [onError]);
 
   useEffect(() => {
     let widgetId: string | undefined;
@@ -61,11 +69,18 @@ export default function Turnstile({
           sitekey: siteKey,
           theme: "dark",
           callback: (token: string) => cb.current(token),
-          "error-callback": () => cb.current(""),
+          "error-callback": () => {
+            cb.current("");
+            errCb.current?.();
+          },
           "expired-callback": () => cb.current(""),
         });
       })
-      .catch(() => {});
+      .catch(() => {
+        // Script blocked (ad-blocker) or failed to load — surface a retryable
+        // failure rather than a submit that stays disabled looking like "loading".
+        if (!cancelled) errCb.current?.();
+      });
 
     return () => {
       cancelled = true;

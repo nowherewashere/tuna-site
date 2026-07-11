@@ -5,6 +5,7 @@ import { useEffect, useState, useSyncExternalStore } from "react";
 import { api, ApiError, trackFunnel, type TelegramAuthUser } from "@/lib/api";
 import { detectPlatform } from "@/components/InstallBlock";
 import { readRefCode } from "@/lib/referral";
+import { readSelectedPlan } from "@/lib/selectedPlan";
 import Turnstile from "@/components/Turnstile";
 import { useTurnstile } from "@/lib/useTurnstile";
 import { invalidateAuth } from "@/lib/useAuth";
@@ -14,6 +15,10 @@ import TelegramLoginButton from "@/components/TelegramLoginButton";
 import { TELEGRAM_BOT } from "@/lib/config";
 
 type Step = "email" | "code";
+
+// The in-progress email address is mirrored here so a reload, or a Back gesture on the
+// code step, doesn't wipe it (step itself is client state; see the popstate handler).
+const EMAIL_KEY = "login_email";
 
 // One passwordless screen for both sign-in and sign-up: the backend is
 // find-or-create, so there is no separate registration. New accounts are granted
@@ -25,11 +30,23 @@ export default function LoginPage() {
   // here goes straight to the cabinet instead of being asked to log in again.
   const [checking, setChecking] = useState(true);
   const [step, setStep] = useState<Step>("email");
-  const [email, setEmail] = useState("");
+  // Seeded from sessionStorage (SSR-safe: the email field isn't rendered until the
+  // session check clears, so this never mismatches hydration) and mirrored back on
+  // change — so a reload, or Back→forward on the code step, keeps the address.
+  const [email, setEmail] = useState<string>(() => {
+    try {
+      return typeof window !== "undefined" ? (sessionStorage.getItem(EMAIL_KEY) ?? "") : "";
+    } catch {
+      return "";
+    }
+  });
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [tgError, setTgError] = useState<string | null>(null);
+  // The Telegram widget's script/iframe failed to load (blocked, or bot domain not
+  // registered) — swap in a Russian fallback instead of a dead button / raw error.
+  const [tgWidgetFailed, setTgWidgetFailed] = useState(false);
 
   // Referral attribution captured from a /r/<code> visit (RefCapture). Client-only;
   // useSyncExternalStore returns null on the server so SSG markup matches (no flash).
@@ -47,7 +64,8 @@ export default function LoginPage() {
     api
       .me()
       .then(() => {
-        if (alive) router.replace("/cabinet");
+        // Honor a plan picked on the landing before this session was recognized.
+        if (alive) router.replace(readSelectedPlan() ? "/cabinet#sub" : "/cabinet");
       })
       .catch(() => {
         if (!alive) return;
@@ -58,6 +76,29 @@ export default function LoginPage() {
       alive = false;
     };
   }, [router]);
+
+  // Mirror the entered address to sessionStorage so a reload or a Back→forward cycle
+  // on the code step keeps it (seeded back via the useState initializer above).
+  useEffect(() => {
+    try {
+      if (email) sessionStorage.setItem(EMAIL_KEY, email);
+    } catch {
+      /* storage blocked — non-fatal */
+    }
+  }, [email]);
+
+  // A native Back on the code step pops the history entry requestCode() pushed and
+  // returns to the email step in place, instead of leaving /login and remounting with
+  // empty fields (the address is still in state / sessionStorage).
+  useEffect(() => {
+    function onPop() {
+      setStep("email");
+      setCode("");
+      setError(null);
+    }
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
 
   // Post-authentication routing, shared by the email and Telegram paths. A brand-new
   // account has no subscription → grant the trial (idempotent; 409 = already has one)
@@ -81,7 +122,9 @@ export default function LoginPage() {
         trackFunnel("app_install_shown", { platform, userRef: sub.user_remna_id });
       }
     }
-    router.push("/cabinet");
+    // A plan chosen on the landing (sessionStorage) deep-links into the Subscription
+    // tab, where the cabinet preselects it once offers load — instead of a blank Overview.
+    router.push(readSelectedPlan() ? "/cabinet#sub" : "/cabinet");
   }
 
   async function requestCode() {
@@ -94,6 +137,9 @@ export default function LoginPage() {
     setError(null);
     try {
       await api.requestLoginCode(email.trim(), ts.token || undefined, refCode || undefined);
+      // Push a history entry so a native Back returns to the email step (see popstate
+      // handler) instead of leaving /login and losing the in-progress login.
+      window.history.pushState({ loginStep: "code" }, "");
       setStep("code");
     } catch (e) {
       if (e instanceof ApiError && e.status === 403) {
@@ -212,11 +258,7 @@ export default function LoginPage() {
                 не пришло?{" "}
                 <Button
                   variant="link"
-                  onClick={() => {
-                    setStep("email");
-                    setCode("");
-                    setError(null);
-                  }}
+                  onClick={() => window.history.back()}
                 >
                   ввести другую почту
                 </Button>
@@ -242,7 +284,21 @@ export default function LoginPage() {
                 error={error}
               />
               {ts.siteKey && (
-                <Turnstile key={ts.resetKey} siteKey={ts.siteKey} onVerify={ts.setToken} />
+                <Turnstile
+                  key={ts.resetKey}
+                  siteKey={ts.siteKey}
+                  onVerify={ts.setToken}
+                  onError={ts.onError}
+                />
+              )}
+              {ts.failed && (
+                <p className="auth-ts-err" role="alert">
+                  Не удалось пройти проверку безопасности — возможно, её блокирует
+                  расширение в браузере.{" "}
+                  <Button variant="link" onClick={ts.reset}>
+                    Повторить проверку
+                  </Button>
+                </p>
               )}
               <Button
                 variant="amber"
@@ -259,12 +315,24 @@ export default function LoginPage() {
                 <div className="auth-tg">
                   <div className="auth-sep">или</div>
                   <p className="auth-tg-note">Уже заходили через Telegram? Войди одним нажатием.</p>
-                  <TelegramLoginButton
-                    botUsername={TELEGRAM_BOT}
-                    onAuth={loginWithTelegram}
-                    cornerRadius={12}
-                  />
-                  {tgError && <p className="auth-tg-err">{tgError}</p>}
+                  {tgWidgetFailed ? (
+                    <p className="auth-tg-fallback" role="alert">
+                      Не удалось загрузить вход через Telegram — обнови страницу или
+                      войди по почте выше.
+                    </p>
+                  ) : (
+                    <TelegramLoginButton
+                      botUsername={TELEGRAM_BOT}
+                      onAuth={loginWithTelegram}
+                      onError={() => setTgWidgetFailed(true)}
+                      cornerRadius={12}
+                    />
+                  )}
+                  {tgError && (
+                    <p className="auth-tg-err" role="alert">
+                      {tgError}
+                    </p>
+                  )}
                 </div>
               )}
             </>

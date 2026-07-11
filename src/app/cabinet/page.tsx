@@ -17,6 +17,7 @@ import { useHashTab } from "@/lib/useHashTab";
 import { redirectTo, reloadPage } from "@/lib/nav";
 import { userDisplayName } from "@/lib/format";
 import { invalidateAuth } from "@/lib/useAuth";
+import { readSelectedPlan, clearSelectedPlan } from "@/lib/selectedPlan";
 import { TAB_IDS, type Tab } from "@/components/cabinet/tabs";
 import CabinetTabs from "@/components/cabinet/CabinetTabs";
 import OverviewPanel from "@/components/cabinet/OverviewPanel";
@@ -60,6 +61,8 @@ export default function CabinetPage() {
   // tab has mounted its install guide, jump straight to it (see the effect below). A
   // ref, not state — it's a one-shot side-effect flag that shouldn't cause a render.
   const pendingInstallScroll = useRef(false);
+  // A plan chosen on the landing pricing cards, to preselect once Subscription offers load.
+  const pendingPlanCode = useRef<string | null>(null);
 
   // Auto-dismiss the toast; the merge notice is longer, so give it time to read.
   useEffect(() => {
@@ -82,6 +85,16 @@ export default function CabinetPage() {
     })();
   }, []);
 
+  // A plan chosen on the landing pricing cards (carried via sessionStorage) opens the
+  // Subscription tab; it's preselected once offers load (below), so a visitor who picked
+  // Pro lands in checkout for Pro instead of on a blank Overview.
+  useEffect(() => {
+    const code = readSelectedPlan();
+    if (!code) return;
+    pendingPlanCode.current = code;
+    if (window.location.hash.slice(1) !== "sub") window.location.hash = "sub";
+  }, []);
+
   // Lazy per-tab loading: a tab's data is fetched only when it is first opened,
   // then cached in state for the session. Keeps the heavy offers pricing/discount
   // computation and the referral endpoint off unrelated tabs and off every reload.
@@ -89,7 +102,23 @@ export default function CabinetPage() {
   useEffect(() => {
     if (tab === "sub" && !fetchedTabs.current.has("sub")) {
       fetchedTabs.current.add("sub");
-      api.subscriptionOffers().then(setOffers).catch(() => {});
+      api
+        .subscriptionOffers()
+        .then((o) => {
+          setOffers(o);
+          // Preselect a plan carried from the landing pricing cards, once offers exist.
+          const code = pendingPlanCode.current;
+          if (code) {
+            pendingPlanCode.current = null;
+            clearSelectedPlan();
+            const plan = o.plans.find((p) => p.public_code === code);
+            const days = plan
+              ? [...plan.durations].sort((a, b) => a.days - b.days)[0]?.days
+              : undefined;
+            if (plan && days != null) setSelected({ planCode: plan.public_code, days });
+          }
+        })
+        .catch(() => {});
     }
     if (tab === "ref" && !fetchedTabs.current.has("ref")) {
       fetchedTabs.current.add("ref");
@@ -253,68 +282,89 @@ export default function CabinetPage() {
 
   return (
     <div className="cab-wrap" ref={topRef}>
-      <div className="cab-topbar">
+      <header className="cab-topbar">
         <div className="wrap">
           <Link href="/" className="logo">
             Tuna VPN
           </Link>
-          <CabinetTabs tab={tab} onChange={changeTab} />
-          <button className="btn btn-ghost" style={{ padding: "8px 16px" }} onClick={logout}>
-            Выйти
-          </button>
+          {authed && (
+            <>
+              <CabinetTabs tab={tab} onChange={changeTab} />
+              <button className="btn btn-ghost" style={{ padding: "8px 16px" }} onClick={logout}>
+                Выйти
+              </button>
+            </>
+          )}
         </div>
-      </div>
+      </header>
 
-      <div className="cab-body">
-        <div className="wrap">
-          {tab === "overview" && (
-            <OverviewPanel
-              loading={loading}
-              authed={authed}
-              sub={sub}
-              devices={devices}
-              maxDevices={maxDevices}
-              displayName={displayName}
-              me={me}
-              onLinkTelegram={linkTelegram}
-              onEmailVerified={emailVerified}
-              onGetAccess={() => changeTab("sub")}
-              linkError={linkError}
-            />
-          )}
-          {tab === "devices" && (
-            <DevicesPanel
-              devices={devices}
-              maxDevices={maxDevices}
-              sub={sub}
-              onUnbind={unbind}
-              onAddDevice={addDevice}
-            />
-          )}
-          {tab === "sub" && (
-            <SubscriptionPanel
-              offers={offers}
-              sub={sub}
-              selected={selected}
-              setSelected={setSelected}
-              paying={paying}
-              payError={payError}
-              onPay={pay}
-              clearPayError={() => setPayError(null)}
-            />
-          )}
-          {tab === "ref" && (
-            <ReferralPanel
-              referral={referral}
-              loadError={referralError}
-              onRefresh={refreshReferral}
-            />
-          )}
-          {tab === "support" && <SupportPanel displayName={displayName} sub={sub} />}
-        </div>
-      </div>
+      <main className="cab-body" id="main">
+        <h1 className="sr-only">Личный кабинет</h1>
+        {!authed && !loading ? (
+          <div className="wrap">
+            <div className="cab-gate">
+              <span className="cab-gate-ic" aria-hidden="true">
+                <Icon name="shield" size={30} />
+              </span>
+              <p className="cab-gate-title">Нужно войти</p>
+              <p className="cab-gate-sub">
+                Войди, чтобы увидеть подписку, устройства и рефералов.
+              </p>
+              <a className="btn btn-amber" href="/login">
+                Войти
+              </a>
+            </div>
+          </div>
+        ) : (
+          <div className="wrap">
+            {tab === "overview" && (
+              <OverviewPanel
+                loading={loading}
+                sub={sub}
+                devices={devices}
+                maxDevices={maxDevices}
+                displayName={displayName}
+                me={me}
+                onLinkTelegram={linkTelegram}
+                onEmailVerified={emailVerified}
+                onGetAccess={() => changeTab("sub")}
+                linkError={linkError}
+              />
+            )}
+            {tab === "devices" && (
+              <DevicesPanel
+                devices={devices}
+                maxDevices={maxDevices}
+                sub={sub}
+                onUnbind={unbind}
+                onAddDevice={addDevice}
+              />
+            )}
+            {tab === "sub" && (
+              <SubscriptionPanel
+                offers={offers}
+                sub={sub}
+                selected={selected}
+                setSelected={setSelected}
+                paying={paying}
+                payError={payError}
+                onPay={pay}
+                clearPayError={() => setPayError(null)}
+              />
+            )}
+            {tab === "ref" && (
+              <ReferralPanel
+                referral={referral}
+                loadError={referralError}
+                onRefresh={refreshReferral}
+              />
+            )}
+            {tab === "support" && <SupportPanel displayName={displayName} sub={sub} />}
+          </div>
+        )}
+      </main>
 
-      {tab !== "support" && (
+      {authed && tab !== "support" && (
         <button className="chat-fab" onClick={openSupport}>
           <Icon name="message" size={18} /> Поддержка
         </button>

@@ -88,6 +88,31 @@
 .cab-body {
   padding: 40px 0 80px;
 }
+/* Logged-out gate: with no tabs / bottom bar when signed out, center the notice and
+   let it fill the frame, so /cabinet reached by a shared link or bookmark reads as
+   designed rather than a mostly-blank page with one small top-left notice (PDS-04). */
+.cab-gate {
+  min-height: calc(100vh - 220px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: var(--space-3);
+}
+.cab-gate-ic {
+  display: inline-flex;
+  color: var(--accent);
+}
+.cab-gate-title {
+  font-size: var(--text-xl);
+  font-weight: 600;
+  color: var(--ink-card);
+}
+.cab-gate-sub {
+  max-width: 42ch;
+  color: var(--ink-card-dim);
+}
 .panel {
   display: block;
   animation: fade 0.25s ease;
