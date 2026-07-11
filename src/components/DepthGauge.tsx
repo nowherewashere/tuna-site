@@ -22,7 +22,6 @@ const MARKS = [
 
 export default function DepthGauge() {
   const [active, setActive] = useState(0);
-  const [progress, setProgress] = useState(0);
   const raf = useRef<number | null>(null);
 
   useEffect(() => {
@@ -31,7 +30,10 @@ export default function DepthGauge() {
     const readProgress = () => {
       raf.current = null;
       const max = doc.scrollHeight - doc.clientHeight;
-      setProgress(max > 0 ? Math.min(1, Math.max(0, doc.scrollTop / max)) : 0);
+      // Write the scroll fraction straight to a CSS custom property (consumed by the
+      // three gauge elements via calc()) so scrolling never triggers a React re-render.
+      const frac = max > 0 ? Math.min(1, Math.max(0, doc.scrollTop / max)) : 0;
+      doc.style.setProperty("--pct", String(frac));
     };
     const onScroll = () => {
       if (raf.current == null) raf.current = requestAnimationFrame(readProgress);
@@ -85,18 +87,16 @@ export default function DepthGauge() {
     };
   }, []);
 
-  const pct = `${progress * 100}%`;
-
   return (
     <>
       <div className="dive-progress" aria-hidden="true">
-        <span style={{ width: pct }} />
+        <span />
       </div>
 
       <aside className="gauge" aria-hidden="true">
         <div className="gauge-rail">
-          <span className="gauge-fill" style={{ height: pct }} />
-          <span className="gauge-diver" style={{ top: pct }} />
+          <span className="gauge-fill" />
+          <span className="gauge-diver" />
         </div>
         <ol className="gauge-marks">
           {MARKS.map((m, i) => (
