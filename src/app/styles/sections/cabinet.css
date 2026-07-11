@@ -1445,7 +1445,14 @@
 }
 .cab-toast-x {
   flex-shrink: 0;
-  padding: 0 0 0 var(--space-2);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /* WCAG 2.5.8 minimum target size; spacing via margin so the 24x24 hit area stays centred. */
+  min-width: 24px;
+  min-height: 24px;
+  margin-left: var(--space-2);
+  padding: 0;
   background: none;
   border: 0;
   color: var(--ink-card-dim);
