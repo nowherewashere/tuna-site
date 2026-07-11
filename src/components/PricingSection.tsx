@@ -89,6 +89,13 @@ export default function PricingSection() {
           Прозрачные тарифы без скрытых платежей. Чем дольше подписка — тем ниже цена за месяц.
         </p>
 
+        {status === "loading" && (
+          <div className="price-grid" aria-hidden="true">
+            <div className="price-card price-card--skeleton" />
+            <div className="price-card price-card--skeleton" />
+          </div>
+        )}
+
         {status === "error" && (
           <div className="price-status" role="alert">
             <p>Не удалось загрузить тарифы. Проверьте соединение и попробуйте ещё раз.</p>
@@ -117,7 +124,7 @@ export default function PricingSection() {
                 {isRecommended && <div className="price-rec-badge">Рекомендуем</div>}
                 <div className="price-head">
                   <span className="price-icon">
-                    <Icon name={isRecommended ? "bolt" : "shield"} size={22} />
+                    <Icon name={isRecommended ? "gauge" : "shield"} size={22} />
                   </span>
                   <h3 className="price-name">{cleanPlanName(p.name)}</h3>
                   {p.description && <p className="price-desc">{p.description}</p>}

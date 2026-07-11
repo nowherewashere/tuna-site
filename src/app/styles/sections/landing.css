@@ -509,12 +509,10 @@ section {
   color: var(--ink-card);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 8px 24px rgba(4, 16, 31, 0.28);
   transition:
-    transform var(--dur-fast) var(--ease-std),
     border-color var(--dur-fast) var(--ease-std),
     box-shadow var(--dur-fast) var(--ease-std);
 }
 .price-card:hover {
-  transform: translateY(-4px);
   border-top-color: var(--amber-2);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 20px 46px rgba(4, 16, 31, 0.5);
 }
@@ -532,7 +530,6 @@ section {
     0 0 40px rgba(245, 166, 35, 0.14);
 }
 .price-card--rec:hover {
-  transform: translateY(-4px);
   border-color: rgba(245, 166, 35, 0.7);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.12),
@@ -541,11 +538,14 @@ section {
     0 0 48px rgba(245, 166, 35, 0.2);
 }
 
-/* "Рекомендуем" pill — in normal flow as the card's first row so it can never
-   overflow the box (matters at 375px) or collide with the plan name. */
+/* "Рекомендуем" pill — pinned to the card's top-right corner (out of flow) so it
+   never pushes the price row down (keeps cards row-aligned across the grid);
+   width-capped so it can't overflow the box at 375px. */
 .price-rec-badge {
-  align-self: flex-start;
-  max-width: 100%;
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  max-width: calc(100% - 28px);
   display: inline-flex;
   align-items: center;
   padding: 5px 12px;
@@ -559,8 +559,8 @@ section {
   text-transform: uppercase;
   box-shadow: var(--shadow-amber);
 }
-/* Plan identity mark — amber line-icon chip, driven by public_code (see
-   PricingSection.PLAN_ICON), replacing operator-supplied emoji. */
+/* Plan identity mark — amber line-icon chip chosen by price rank (top tier vs the
+   rest), replacing the operator-supplied emoji that used to sit in the plan name. */
 .price-icon {
   display: grid;
   place-items: center;
@@ -637,6 +637,30 @@ section {
   text-align: center;
   color: var(--ink-dim);
   font-size: 15px;
+}
+
+/* Loading placeholders — same grid footprint as real cards so plans arriving
+   don't shift the layout. Decorative (aria-hidden). */
+.price-card--skeleton {
+  min-height: 320px;
+  border-top-color: var(--line);
+  background: linear-gradient(180deg, rgba(16, 63, 102, 0.4), rgba(10, 34, 60, 0.5));
+  box-shadow: none;
+  animation: price-skeleton-pulse 1.4s ease-in-out infinite;
+}
+@keyframes price-skeleton-pulse {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .price-card--skeleton {
+    animation: none;
+  }
 }
 
 /* ── FAQ ─────────────────────────────────────────────────────────────────── */
