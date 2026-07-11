@@ -6,7 +6,6 @@ import Nav from "@/components/Nav";
 import HeroScene from "@/components/HeroScene";
 import PricingSection from "@/components/PricingSection";
 import { fetchLandingPlans } from "@/lib/plans.server";
-import { HERO_AVIF_SRCSET, HERO_SIZES, HERO_PRELOAD_HREF } from "@/lib/heroImage";
 import { Reveal } from "@/components/ui";
 
 const DIVE_STEPS: { icon: IconName; title: string; body: string }[] = [
@@ -159,20 +158,6 @@ export default async function LandingPage() {
 
   return (
     <>
-      {/* Preload the hero AVIF (the LCP element) so its download starts with the document
-          instead of after the <picture> is parsed (CWV-01). React 19 hoists this <link>
-          into <head>. type="image/avif" makes non-AVIF browsers skip it and fall back to
-          the WebP/PNG <source>s; imageSrcSet/imageSizes mirror HeroScene's AVIF <source>. */}
-      <link
-        rel="preload"
-        as="image"
-        type="image/avif"
-        href={HERO_PRELOAD_HREF}
-        imageSrcSet={HERO_AVIF_SRCSET}
-        imageSizes={HERO_SIZES}
-        fetchPriority="high"
-      />
-
       {/* Banner landmark so the skip link is contained in a region (axe). Kept separate
           from <Nav> because the nav is position:sticky — wrapping it in a short header
           would constrain its sticky containing block and break the pinned-on-scroll. */}

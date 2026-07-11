@@ -17,6 +17,3 @@ export const HERO_SIZES = "(max-width: 900px) 92vw, 56vw";
 export const HERO_FALLBACK_SRC = "/assets/images/hero-tuna-1040.png";
 export const HERO_WIDTH = 1200;
 export const HERO_HEIGHT = 800;
-// href for the preload link; the browser actually selects from imagesrcset, but a
-// concrete candidate is required — use the mid variant.
-export const HERO_PRELOAD_HREF = "/assets/images/hero-tuna-1040.avif";
