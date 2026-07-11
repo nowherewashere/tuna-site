@@ -3,6 +3,7 @@
 import { useMemo, useRef, useState, useSyncExternalStore, type KeyboardEvent, type ReactNode } from "react";
 import { useOnboarding } from "@/lib/useOnboarding";
 import Icon, { type IconName } from "@/components/Icon";
+import { Button } from "@/components/ui";
 
 /**
  * The single install UI used by both onboarding (connect) and the cabinet, so they
@@ -194,15 +195,17 @@ export default function InstallBlock({ subUrl }: { subUrl: string }) {
               введи код и вставь свою ссылку.
             </p>
             <SubCopyRow subUrl={subUrl} label="Ссылка для веб-импорта (нажми, чтобы скопировать):" />
-            <a
-              className="btn btn-ghost"
+            <Button
+              href={faqUrl}
+              variant="ghost"
+              loading={!cfg}
+              iconLeft={<Icon name="file" size={17} />}
               style={{ marginTop: 12 }}
-              href={faqUrl || undefined}
               target="_blank"
               rel="noreferrer"
             >
-              <Icon name="file" size={17} /> Инструкция со скриншотами
-            </a>
+              Инструкция со скриншотами
+            </Button>
           </div>
         </>
       ) : (
@@ -213,10 +216,16 @@ export default function InstallBlock({ subUrl }: { subUrl: string }) {
               <h4>Установи Happ</h4>
               <p>Приложение, через которое работает VPN.</p>
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 10 }}>
-                <a className="btn btn-ghost" href={storeUrl || undefined} target="_blank" rel="noreferrer">
-                  <Icon name="download" size={17} />{" "}
+                <Button
+                  href={storeUrl}
+                  variant="ghost"
+                  loading={!cfg}
+                  iconLeft={<Icon name="download" size={17} />}
+                  target="_blank"
+                  rel="noreferrer"
+                >
                   {isApple ? "Скачать Happ (AppStore вне РФ)" : "Скачать Happ"}
-                </a>
+                </Button>
                 {isApple && cfg?.store_link_ios_ru && (
                   <a
                     className="btn btn-ghost"
@@ -235,9 +244,15 @@ export default function InstallBlock({ subUrl }: { subUrl: string }) {
             <div className="istep-body">
               <h4>Добавь Tuna</h4>
               <p>Нажми кнопку ниже — подписка добавится сама.</p>
-              <a className="btn btn-amber" style={{ marginTop: 10 }} href={deepLink || undefined}>
-                <Icon name="bolt" size={17} /> Добавить подписку в Happ
-              </a>
+              <Button
+                href={deepLink}
+                variant="amber"
+                loading={!cfg}
+                iconLeft={<Icon name="bolt" size={17} />}
+                style={{ marginTop: 10 }}
+              >
+                Добавить подписку в Happ
+              </Button>
               <SubCopyRow
                 subUrl={subUrl}
                 label="Не сработало? Скопируй ссылку и добавь её в Happ вручную:"

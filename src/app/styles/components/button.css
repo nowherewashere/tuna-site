@@ -22,6 +22,14 @@
   transform: none;
   box-shadow: none;
 }
+/* Inert state for the <a>/<Link> button branch, which can't use :disabled — e.g. an
+   install button whose href is still loading. Looks dimmed and swallows the click. */
+.btn.is-loading,
+.btn.is-disabled {
+  opacity: 0.6;
+  cursor: default;
+  pointer-events: none;
+}
 .btn-amber {
   background: linear-gradient(180deg, var(--amber-2), var(--amber));
   color: var(--amber-ink);
