@@ -196,7 +196,7 @@ export default async function LandingPage() {
                   Tuna <span className="amber">VPN</span>
                 </h1>
                 <p className="hero-sub reveal d3">
-                  Свободный доступ к мировому океану интернета.
+                  Свободный доступ к мировому океану интернета — там, где обычные VPN уже не пускают.
                 </p>
                 <div className="hero-cta reveal d4">
                   <AuthCta
@@ -249,7 +249,7 @@ export default async function LandingPage() {
         <section className="why" id="why">
           <div className="wrap">
             <div className="sec-eyebrow">Почему Tuna VPN?</div>
-            <h2 className="sec-title">Свободный доступ к мировому интернету</h2>
+            <h2 className="sec-title">Умные протоколы вместо устаревших</h2>
             <p className="sec-intro">
               Адаптивные протоколы, которые подстраиваются под условия сети. Меняется обстановка —
               Tuna подстраивается, а ты остаёшься на связи.
