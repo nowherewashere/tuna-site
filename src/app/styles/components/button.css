@@ -30,6 +30,26 @@
   cursor: default;
   pointer-events: none;
 }
+/* A busy control also spins, so it reads as "working" rather than just disabled. */
+.btn.is-loading::after {
+  content: "";
+  width: 0.9em;
+  height: 0.9em;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: btn-spin 0.6s linear infinite;
+}
+@keyframes btn-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .btn.is-loading::after {
+    animation-duration: 1.6s;
+  }
+}
 .btn-amber {
   background: linear-gradient(180deg, var(--amber-2), var(--amber));
   color: var(--amber-ink);
