@@ -5,6 +5,7 @@ import DepthGauge from "@/components/DepthGauge";
 import Nav from "@/components/Nav";
 import HeroScene from "@/components/HeroScene";
 import PricingSection from "@/components/PricingSection";
+import { fetchLandingPlans } from "@/lib/plans.server";
 import { Reveal } from "@/components/ui";
 
 const DIVE_STEPS: { icon: IconName; title: string; body: string }[] = [
@@ -150,7 +151,11 @@ const faqJsonLd = {
   })),
 };
 
-export default function LandingPage() {
+export default async function LandingPage() {
+  // Fetched at build so the pricing cards ship in the served HTML (SEO-08 / GEO-01);
+  // PricingSection refreshes them client-side on mount.
+  const initialPlans = await fetchLandingPlans();
+
   return (
     <>
       {/* Banner landmark so the skip link is contained in a region (axe). Kept separate
@@ -259,7 +264,7 @@ export default function LandingPage() {
           </div>
         </section>
 
-        <PricingSection />
+        <PricingSection initialPlans={initialPlans} />
 
         <section id="faq">
           <div className="wrap">
