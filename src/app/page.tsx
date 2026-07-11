@@ -1,11 +1,62 @@
 import Link from "next/link";
 import AuthCta from "@/components/AuthCta";
-import Icon from "@/components/Icon";
+import Icon, { type IconName } from "@/components/Icon";
 import DepthGauge from "@/components/DepthGauge";
 import Nav from "@/components/Nav";
 import HeroScene from "@/components/HeroScene";
 import PricingSection from "@/components/PricingSection";
 import { Reveal } from "@/components/ui";
+
+const DIVE_STEPS: { icon: IconName; title: string; body: string }[] = [
+  {
+    icon: "mail",
+    title: "Получи доступ",
+    body: "Регистрируешься — мы сразу выдаём подписку. Можно войти через Telegram.",
+  },
+  {
+    icon: "download",
+    title: "Установи Happ",
+    body: "Приложение, через которое работает VPN. Ссылка под твою платформу.",
+  },
+  {
+    icon: "check",
+    title: "Добавь VPN профиль",
+    body: "Одно нажатие — всё настроится само. Открытый интернет без ограничений.",
+  },
+];
+
+const WHY_FEATURES: { icon: IconName; title: string; body: string }[] = [
+  {
+    icon: "globe",
+    title: "Умная маршрутизация",
+    body: "Несколько адаптивных протоколов — соединение держится там, где обычные VPN отваливаются. Tuna поможет преодолеть любой цифровой шторм.",
+  },
+  {
+    icon: "bolt",
+    title: "Быстро и удобно",
+    body: "Подключение за минуту, автоподбор лучшего сервера. Никаких ручных настроек.",
+  },
+  {
+    icon: "tv",
+    title: "Стриминг, звонки, игры",
+    body: "Видео в 4K, созвоны без лагов и низкий пинг в играх. Никаких искусственных ограничений скорости.",
+  },
+  {
+    icon: "phone",
+    title: "Единый доступ на всё",
+    body: "Телефон, ноутбук, планшет, ТВ — несколько устройств на одной подписке, зависит от тарифа.",
+  },
+  {
+    icon: "shield",
+    title: "Не храним твои данные",
+    body: "Не ведём логи подключений и не собираем историю трафика. Что ты открываешь и куда заходишь — знаешь только ты.",
+  },
+  {
+    icon: "refresh",
+    title: "Автообновление",
+    body: "Никаких запутанных интерфейсов — все обновления подключаются сами.",
+  },
+];
 
 // FAQPage structured data (SEO/AEO). The answer text is the plain-text sibling
 // of the visible answers below — keep the two in sync when editing copy.
@@ -171,42 +222,20 @@ export default function LandingPage() {
               Три шага до открытой воды
             </div>
             <div className="dive-track">
-              <Reveal className="dive-step" delay={0}>
-                <div className="ds-mark">
-                  <span className="ds-n">01</span>
-                </div>
-                <div className="ds-body">
-                  <div className="ds-ic">
-                    <Icon name="mail" size={24} />
+              {DIVE_STEPS.map((step, i) => (
+                <Reveal key={step.title} className="dive-step" delay={i * 0.08}>
+                  <div className="ds-mark">
+                    <span className="ds-n">{String(i + 1).padStart(2, "0")}</span>
                   </div>
-                  <h3>Получи доступ</h3>
-                  <p>Регистрируешься — мы сразу выдаём подписку. Можно войти через Telegram.</p>
-                </div>
-              </Reveal>
-              <Reveal className="dive-step" delay={0.08}>
-                <div className="ds-mark">
-                  <span className="ds-n">02</span>
-                </div>
-                <div className="ds-body">
-                  <div className="ds-ic">
-                    <Icon name="download" size={24} />
+                  <div className="ds-body">
+                    <div className="ds-ic">
+                      <Icon name={step.icon} size={24} />
+                    </div>
+                    <h3>{step.title}</h3>
+                    <p>{step.body}</p>
                   </div>
-                  <h3>Установи Happ</h3>
-                  <p>Приложение, через которое работает VPN. Ссылка под твою платформу.</p>
-                </div>
-              </Reveal>
-              <Reveal className="dive-step" delay={0.16}>
-                <div className="ds-mark">
-                  <span className="ds-n">03</span>
-                </div>
-                <div className="ds-body">
-                  <div className="ds-ic">
-                    <Icon name="check" size={24} />
-                  </div>
-                  <h3>Добавь VPN профиль</h3>
-                  <p>Одно нажатие — всё настроится само. Открытый интернет без ограничений.</p>
-                </div>
-              </Reveal>
+                </Reveal>
+              ))}
             </div>
           </div>
         </section>
@@ -220,72 +249,17 @@ export default function LandingPage() {
               Tuna подстраивается, а ты остаёшься на связи.
             </p>
             <div className="feat-grid">
-              <Reveal className="feat" delay={0}>
-                <span className="ic">
-                  <Icon name="globe" size={26} />
-                </span>
-                <div>
-                  <h3>Умная маршрутизация</h3>
-                  <p>
-                    Несколько адаптивных протоколов — соединение держится там, где обычные VPN
-                    отваливаются. Tuna поможет преодолеть любой цифровой шторм.
-                  </p>
-                </div>
-              </Reveal>
-              <Reveal className="feat" delay={0.06}>
-                <span className="ic">
-                  <Icon name="bolt" size={26} />
-                </span>
-                <div>
-                  <h3>Быстро и удобно</h3>
-                  <p>Подключение за минуту, автоподбор лучшего сервера. Никаких ручных настроек.</p>
-                </div>
-              </Reveal>
-              <Reveal className="feat" delay={0.12}>
-                <span className="ic">
-                  <Icon name="tv" size={26} />
-                </span>
-                <div>
-                  <h3>Стриминг, звонки, игры</h3>
-                  <p>
-                    Видео в 4K, созвоны без лагов и низкий пинг в играх. Никаких искусственных
-                    ограничений скорости.
-                  </p>
-                </div>
-              </Reveal>
-              <Reveal className="feat" delay={0.18}>
-                <span className="ic">
-                  <Icon name="phone" size={26} />
-                </span>
-                <div>
-                  <h3>Единый доступ на всё</h3>
-                  <p>
-                    Телефон, ноутбук, планшет, ТВ — несколько устройств на одной подписке, зависит
-                    от тарифа.
-                  </p>
-                </div>
-              </Reveal>
-              <Reveal className="feat" delay={0.24}>
-                <span className="ic">
-                  <Icon name="shield" size={26} />
-                </span>
-                <div>
-                  <h3>Не храним твои данные</h3>
-                  <p>
-                    Не ведём логи подключений и не собираем историю трафика. Что ты открываешь и
-                    куда заходишь — знаешь только ты.
-                  </p>
-                </div>
-              </Reveal>
-              <Reveal className="feat" delay={0.3}>
-                <span className="ic">
-                  <Icon name="refresh" size={26} />
-                </span>
-                <div>
-                  <h3>Автообновление</h3>
-                  <p>Никаких запутанных интерфейсов — все обновления подключаются сами.</p>
-                </div>
-              </Reveal>
+              {WHY_FEATURES.map((feature, i) => (
+                <Reveal key={feature.title} className="feat" delay={i * 0.06}>
+                  <span className="ic">
+                    <Icon name={feature.icon} size={26} />
+                  </span>
+                  <div>
+                    <h3>{feature.title}</h3>
+                    <p>{feature.body}</p>
+                  </div>
+                </Reveal>
+              ))}
             </div>
           </div>
         </section>
