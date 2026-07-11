@@ -6,6 +6,8 @@ import Nav from "@/components/Nav";
 import HeroScene from "@/components/HeroScene";
 import PricingSection from "@/components/PricingSection";
 import { fetchLandingPlans } from "@/lib/plans.server";
+import JsonLd from "@/components/JsonLd";
+import { softwareAppGraph } from "@/lib/structuredData";
 import { Reveal } from "@/components/ui";
 
 const DIVE_STEPS: { icon: IconName; title: string; body: string }[] = [
@@ -155,6 +157,10 @@ export default async function LandingPage() {
   // Fetched at build so the pricing cards ship in the served HTML (SEO-08 / GEO-01);
   // PricingSection refreshes them client-side on mount.
   const initialPlans = await fetchLandingPlans();
+  // SoftwareApplication + one Offer per plan — machine-readable pricing for search/AI
+  // (SEO-07 / GEO-01). Null when the build didn't seed prices (HTML shows skeletons),
+  // so we never mark up an offer that isn't visible on the page.
+  const appGraph = softwareAppGraph(initialPlans);
 
   return (
     <>
@@ -265,6 +271,7 @@ export default async function LandingPage() {
         </section>
 
         <PricingSection initialPlans={initialPlans} />
+        {appGraph && <JsonLd data={appGraph} />}
 
         <section id="faq">
           <div className="wrap">

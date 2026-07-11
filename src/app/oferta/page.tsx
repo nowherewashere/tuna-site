@@ -1,6 +1,8 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import Icon from "@/components/Icon";
+import JsonLd from "@/components/JsonLd";
+import { legalPageGraph } from "@/lib/structuredData";
 
 export const metadata: Metadata = {
   // Root layout's title.template appends " — Tuna VPN", so the rendered title stays
@@ -14,6 +16,9 @@ export const metadata: Metadata = {
 export default function OfertaPage() {
   return (
     <>
+      <JsonLd
+        data={legalPageGraph({ path: "/oferta", name: "Публичная оферта", date: "2026-07-07" })}
+      />
       <nav className="site-nav">
         <div className="wrap">
           <Link className="logo" href="/">

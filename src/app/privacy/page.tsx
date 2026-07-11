@@ -1,6 +1,8 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import Icon from "@/components/Icon";
+import JsonLd from "@/components/JsonLd";
+import { legalPageGraph } from "@/lib/structuredData";
 
 export const metadata: Metadata = {
   // Root layout's title.template appends " — Tuna VPN" (no double suffix).
@@ -13,6 +15,13 @@ export const metadata: Metadata = {
 export default function PrivacyPage() {
   return (
     <>
+      <JsonLd
+        data={legalPageGraph({
+          path: "/privacy",
+          name: "Политика конфиденциальности",
+          date: "2026-07-07",
+        })}
+      />
       <nav className="site-nav">
         <div className="wrap">
           <Link className="logo" href="/">
