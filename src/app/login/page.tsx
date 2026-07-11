@@ -9,6 +9,7 @@ import { readSelectedPlan } from "@/lib/selectedPlan";
 import Turnstile from "@/components/Turnstile";
 import { useTurnstile } from "@/lib/useTurnstile";
 import { invalidateAuth } from "@/lib/useAuth";
+import { hasSessionHint } from "@/lib/sessionHint";
 import { isValidEmail } from "@/lib/email";
 import Icon from "@/components/Icon";
 import { Button, TextField } from "@/components/ui";
@@ -67,7 +68,19 @@ export default function LoginPage() {
   // Already-authenticated guard. A valid session cookie (or a silent refresh of an
   // expired access token) resolves /auth/me → straight to the cabinet. Only when it
   // truly fails do we show the form and mark the funnel start.
+  //
+  // Gate the probe on the `has_session` hint: no hint means the visitor is definitely
+  // anonymous, so we skip /auth/me (no guest 401 on this page) and go straight to the
+  // form — identical outcome, minus the console error (SEO-11).
   useEffect(() => {
+    function showForm() {
+      setChecking(false);
+      trackFunnel("start", { platform: detectPlatform() });
+    }
+    if (!hasSessionHint()) {
+      showForm();
+      return;
+    }
     let alive = true;
     api
       .me()
@@ -76,9 +89,7 @@ export default function LoginPage() {
         if (alive) router.replace(readSelectedPlan() ? "/cabinet#sub" : "/cabinet");
       })
       .catch(() => {
-        if (!alive) return;
-        setChecking(false);
-        trackFunnel("start", { platform: detectPlatform() });
+        if (alive) showForm();
       });
     return () => {
       alive = false;

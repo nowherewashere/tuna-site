@@ -3,6 +3,14 @@
 import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import { motion, useReducedMotion, useScroll, useSpring, useTransform } from "motion/react";
+import {
+  HERO_AVIF_SRCSET,
+  HERO_WEBP_SRCSET,
+  HERO_SIZES,
+  HERO_FALLBACK_SRC,
+  HERO_WIDTH,
+  HERO_HEIGHT,
+} from "@/lib/heroImage";
 
 // The rAF particle canvas is decorative and sits behind the LCP hero, so it's split out
 // of the initial bundle and mounted only after an idle window (post-LCP), instead of its
@@ -77,24 +85,19 @@ export default function HeroScene() {
                 can't use next/image) rendered into a ~1040px box; width/height ties
                 CLS safety to the 3:2 asset. Decorative — alt="" inside aria-hidden. */}
             <picture>
-              <source
-                type="image/avif"
-                srcSet="/assets/images/hero-tuna-520.avif 520w, /assets/images/hero-tuna-1040.avif 1040w, /assets/images/hero-tuna-1560.avif 1560w, /assets/images/hero-tuna-2080.avif 2080w"
-                sizes="(max-width: 900px) 92vw, 56vw"
-              />
-              <source
-                type="image/webp"
-                srcSet="/assets/images/hero-tuna-520.webp 520w, /assets/images/hero-tuna-1040.webp 1040w, /assets/images/hero-tuna-1560.webp 1560w, /assets/images/hero-tuna-2080.webp 2080w"
-                sizes="(max-width: 900px) 92vw, 56vw"
-              />
-              {/* <img> inside <picture> is allowed by @next/next/no-img-element. */}
+              <source type="image/avif" srcSet={HERO_AVIF_SRCSET} sizes={HERO_SIZES} />
+              <source type="image/webp" srcSet={HERO_WEBP_SRCSET} sizes={HERO_SIZES} />
+              {/* <img> inside <picture> is allowed by @next/next/no-img-element. This is
+                  the LCP element, so fetchPriority="high" pairs with the <head> preload
+                  (see page.tsx / heroImage.ts) to pull it off the critical path early. */}
               <img
                 className="hero-tuna"
-                src="/assets/images/hero-tuna-1040.png"
+                src={HERO_FALLBACK_SRC}
                 alt=""
-                width={1200}
-                height={800}
+                width={HERO_WIDTH}
+                height={HERO_HEIGHT}
                 decoding="async"
+                fetchPriority="high"
               />
             </picture>
             {/* Caustic clipped to the fish silhouette (small variant as mask) so
