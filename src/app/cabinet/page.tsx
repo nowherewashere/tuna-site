@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   api,
   ApiError,
@@ -96,42 +96,75 @@ export default function CabinetPage() {
     if (window.location.hash.slice(1) !== "sub") window.location.hash = "sub";
   }, []);
 
-  // Lazy per-tab loading: a tab's data is fetched only when it is first opened,
-  // then cached in state for the session. Keeps the heavy offers pricing/discount
-  // computation and the referral endpoint off unrelated tabs and off every reload.
+  // Lazy per-tab loading: a tab's data is fetched once, then cached in state for the
+  // session. Keeps the heavy offers pricing/discount computation and the referral
+  // endpoint off the initial paint — but both are prefetched on idle right after the
+  // cabinet loads (below), so the first click on those tabs shows data immediately
+  // instead of a brief skeleton flash. A failed fetch clears its guard so it can retry.
   const fetchedTabs = useRef<Set<Tab>>(new Set());
+
+  const loadOffers = useCallback(() => {
+    if (fetchedTabs.current.has("sub")) return;
+    fetchedTabs.current.add("sub");
+    api
+      .subscriptionOffers()
+      .then((o) => {
+        setOffers(o);
+        // Preselect a plan carried from the landing pricing cards, once offers exist.
+        const code = pendingPlanCode.current;
+        if (code) {
+          pendingPlanCode.current = null;
+          clearSelectedPlan();
+          const plan = o.plans.find((p) => p.public_code === code);
+          const days = plan
+            ? [...plan.durations].sort((a, b) => a.days - b.days)[0]?.days
+            : undefined;
+          if (plan && days != null) setSelected({ planCode: plan.public_code, days });
+        }
+      })
+      .catch(() => fetchedTabs.current.delete("sub"));
+  }, []);
+
+  const loadReferral = useCallback(() => {
+    if (fetchedTabs.current.has("ref")) return;
+    fetchedTabs.current.add("ref");
+    api
+      .referralProgram()
+      .then((r) => {
+        setReferral(r);
+        setReferralError(null);
+      })
+      .catch((e) => {
+        fetchedTabs.current.delete("ref");
+        setReferralError(e);
+      });
+  }, []);
+
   useEffect(() => {
-    if (tab === "sub" && !fetchedTabs.current.has("sub")) {
-      fetchedTabs.current.add("sub");
-      api
-        .subscriptionOffers()
-        .then((o) => {
-          setOffers(o);
-          // Preselect a plan carried from the landing pricing cards, once offers exist.
-          const code = pendingPlanCode.current;
-          if (code) {
-            pendingPlanCode.current = null;
-            clearSelectedPlan();
-            const plan = o.plans.find((p) => p.public_code === code);
-            const days = plan
-              ? [...plan.durations].sort((a, b) => a.days - b.days)[0]?.days
-              : undefined;
-            if (plan && days != null) setSelected({ planCode: plan.public_code, days });
-          }
-        })
-        .catch(() => {});
-    }
-    if (tab === "ref" && !fetchedTabs.current.has("ref")) {
-      fetchedTabs.current.add("ref");
-      api
-        .referralProgram()
-        .then((r) => {
-          setReferral(r);
-          setReferralError(null);
-        })
-        .catch(setReferralError);
-    }
-  }, [tab]);
+    if (tab === "sub") loadOffers();
+    if (tab === "ref") loadReferral();
+  }, [tab, loadOffers, loadReferral]);
+
+  // Warm the lazy tabs on idle once the cabinet has painted, so switching to
+  // Subscription/Referral shows populated cards instead of a split-second loader.
+  // The per-tab guards make this a no-op if the user already opened the tab.
+  useEffect(() => {
+    if (loading || !authed) return;
+    const ric =
+      typeof window.requestIdleCallback === "function" ? window.requestIdleCallback : null;
+    const run = () => {
+      loadOffers();
+      loadReferral();
+    };
+    const id = ric ? ric(run) : window.setTimeout(run, 400);
+    return () => {
+      if (ric && typeof window.cancelIdleCallback === "function") {
+        window.cancelIdleCallback(id as number);
+      } else {
+        clearTimeout(id as number);
+      }
+    };
+  }, [loading, authed, loadOffers, loadReferral]);
 
   // Re-pull referral + subscription after a payout or a pay-with-balance action:
   // the balance changes on both, and pay-with-balance also extends the subscription,
@@ -324,7 +357,8 @@ export default function CabinetPage() {
           // time, so its id matches the selected tab's aria-controls (the inactive tabs'
           // controls point at not-yet-mounted ids, which AT tolerates).
           <div
-            className="wrap"
+            key={tab}
+            className="wrap cab-panel-fade"
             role="tabpanel"
             id={`cab-panel-${tab}`}
             aria-labelledby={`cab-tab-${tab}`}

@@ -110,7 +110,7 @@ export default function SubscriptionPanel({
         </ConsoleFrame>
       )}
 
-      <div className="panel-sub">
+      <div className="panel-sub panel-sub--center">
         {sub
           ? "Продли текущий тариф или выбери другой — новые дни добавятся к остатку, ничего не сгорит."
           : "Выбери тариф и срок — чем дольше период, тем ниже цена за месяц."}
@@ -298,11 +298,6 @@ export default function SubscriptionPanel({
           );
         })}
       </div>
-
-      <p className="modal-note">
-        Оплата разовая. Новые дни всегда добавляются к текущему остатку — при смене тарифа ничего не
-        сгорает.
-      </p>
     </div>
   );
 }

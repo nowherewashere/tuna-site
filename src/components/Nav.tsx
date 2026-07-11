@@ -68,7 +68,7 @@ export default function Nav() {
           <AuthCta
             className="btn btn-ghost nav-cta"
             guest={{ href: "/login", label: "Войти" }}
-            authed={{ href: "/cabinet", label: "Личный кабинет" }}
+            authed={{ href: "/cabinet", label: "Личный кабинет", className: "btn btn-amber nav-cta" }}
           />
         </div>
 

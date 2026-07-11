@@ -4,7 +4,10 @@ import Link from "next/link";
 import { type CSSProperties } from "react";
 import { useAuth } from "@/lib/useAuth";
 
-type Variant = { href: string; label: string } | null;
+// `className` on a variant overrides the shared one for that auth state — lets a
+// single CTA render, say, a ghost "Войти" for guests and an amber "Личный кабинет"
+// for signed-in users (nav desktop).
+type Variant = { href: string; label: string; className?: string } | null;
 
 /**
  * Auth-aware call-to-action. Renders the `authed` variant when a session is
@@ -29,7 +32,7 @@ export default function AuthCta({
   const variant = isAuthed ? authed : guest;
   if (!variant) return null;
   return (
-    <Link className={className} style={style} href={variant.href} onClick={onClick}>
+    <Link className={variant.className ?? className} style={style} href={variant.href} onClick={onClick}>
       {variant.label}
     </Link>
   );

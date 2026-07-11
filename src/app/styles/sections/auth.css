@@ -83,6 +83,9 @@
   justify-content: center;
   padding: 60px 0;
   overflow-x: clip;
+  /* Flat darkest-blue surface instead of the descending ocean gradient (matches
+     the cabinet) — the auth screen is a calm single surface, not a scene. */
+  background: var(--bg-abyss);
 }
 .login-card {
   position: relative;

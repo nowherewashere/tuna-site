@@ -2,6 +2,9 @@
 .cab-wrap {
   color: var(--ink-card);
   min-height: 100vh;
+  /* Flat darkest-blue surface (the abyss end of the site gradient) instead of the
+     descending ocean gradient — the cabinet reads as a calm, single-surface app. */
+  background: var(--bg-abyss);
 }
 .cab-topbar {
   position: sticky;
@@ -88,6 +91,24 @@
 .cab-body {
   padding: 40px 0 80px;
 }
+/* Tab content eases in on switch (and on first paint), so a panel whose data lands a
+   beat later resolves smoothly instead of popping in. Keyed remount replays it per
+   tab; disabled under reduced-motion. */
+@media (prefers-reduced-motion: no-preference) {
+  .cab-panel-fade {
+    animation: cabPanelIn 200ms var(--ease-std) both;
+  }
+}
+@keyframes cabPanelIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
 /* Logged-out gate: with no tabs / bottom bar when signed out, center the notice and
    let it fill the frame, so /cabinet reached by a shared link or bookmark reads as
    designed rather than a mostly-blank page with one small top-left notice (PDS-04). */
@@ -138,6 +159,11 @@
   color: var(--ink-card-dim);
   font-size: 15px;
   margin-bottom: 28px;
+}
+.panel-sub--center {
+  text-align: center;
+  margin-inline: auto;
+  max-width: 46ch;
 }
 
 /* ══ Console: one recessed surface carved into the deep, split by hairlines ══
@@ -511,11 +537,6 @@
   display: inline-flex;
   color: var(--success);
   flex-shrink: 0;
-}
-.modal-note {
-  font-size: 13px;
-  color: var(--ink-card-dim);
-  margin-top: 14px;
 }
 
 /* Mono eyebrow above the ladder. */

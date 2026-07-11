@@ -5,7 +5,6 @@ import { api, type PublicPlanLanding } from "@/lib/api";
 import { plural, fmtBytes } from "@/lib/format";
 import { storeSelectedPlan } from "@/lib/selectedPlan";
 import AuthCta from "@/components/AuthCta";
-import Icon from "@/components/Icon";
 import { Reveal } from "@/components/ui";
 
 function trafficLabel(bytes: number): string {
@@ -35,12 +34,6 @@ function recommendedCode(plans: PublicPlanLanding[]): string | null {
   return plans.reduce((top, p) =>
     parseFloat(p.monthly_from_rub) > parseFloat(top.monthly_from_rub) ? p : top,
   ).public_code;
-}
-
-/** Drop any leading emoji / variation-selector / ZWJ run an operator may have
- *  prefixed to the plan name, keeping the clean text for the heading. */
-function cleanPlanName(name: string): string {
-  return name.replace(/^[\p{Extended_Pictographic}\u{FE0F}\u{200D}\s]+/u, "");
 }
 
 type LoadStatus = "loading" | "error" | "ready";
@@ -140,10 +133,7 @@ export default function PricingSection({
               >
                 {isRecommended && <div className="price-rec-badge">Рекомендуем</div>}
                 <div className="price-head">
-                  <span className="price-icon">
-                    <Icon name={isRecommended ? "gauge" : "shield"} size={22} />
-                  </span>
-                  <h3 className="price-name">{cleanPlanName(p.name)}</h3>
+                  <h3 className="price-name">{p.name}</h3>
                   {p.description && <p className="price-desc">{p.description}</p>}
                 </div>
                 <div className="price-amount">
@@ -153,11 +143,11 @@ export default function PricingSection({
                 </div>
                 <ul className="price-meta">
                   <li>
-                    <Icon name="phone" size={17} />
+                    <span className="price-meta-ic" aria-hidden="true">📱</span>
                     {deviceLabel(p.device_limit)}
                   </li>
                   <li>
-                    <Icon name="bolt" size={17} />
+                    <span className="price-meta-ic" aria-hidden="true">⚡</span>
                     {trafficLabel(p.traffic_limit)}
                   </li>
                 </ul>

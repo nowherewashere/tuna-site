@@ -1,8 +1,7 @@
 "use client";
 
-import { useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
+import { useMemo, useState, useSyncExternalStore, type ReactNode } from "react";
 import { useOnboarding } from "@/lib/useOnboarding";
-import { onRovingKeyDown } from "@/lib/roving";
 import { useCopyToClipboard } from "@/lib/useCopyToClipboard";
 import Icon, { type IconName } from "@/components/Icon";
 import { Button } from "@/components/ui";
@@ -125,7 +124,7 @@ export default function InstallBlock({ subUrl }: { subUrl: string }) {
   const detected = useSyncExternalStore(() => () => {}, detectPlatform, () => "ios" as PlatformId);
   const [override, setOverride] = useState<PlatformId | null>(null);
   const platform = override ?? detected;
-  const btnRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const selectedPlatform = PLATFORMS.find((p) => p.id === platform) ?? PLATFORMS[0];
 
   const deepLink = useMemo(
     () => (cfg && subUrl ? cfg.happ_import_template.replace("{sub_url}", subUrl) : ""),
@@ -142,26 +141,26 @@ export default function InstallBlock({ subUrl }: { subUrl: string }) {
   return (
     <div className="install-block">
       <div className="plat-select">
-        <div className="plat-picker" role="radiogroup" aria-label="Устройство">
-          {PLATFORMS.map((p, i) => (
-            <button
-              key={p.id}
-              ref={(el) => {
-                btnRefs.current[i] = el;
-              }}
-              type="button"
-              role="radio"
-              aria-checked={platform === p.id}
-              tabIndex={platform === p.id ? 0 : -1}
-              className={`plat${platform === p.id ? " on" : ""}`}
-              onClick={() => setOverride(p.id as PlatformId)}
-              onKeyDown={(e) => onRovingKeyDown(e, btnRefs.current)}
-            >
-              <Icon name={p.icon} size={16} />
-              {p.label}
-            </button>
-          ))}
-        </div>
+        <label className="plat-field">
+          <span className="plat-field-ic" aria-hidden="true">
+            <Icon name={selectedPlatform.icon} size={18} />
+          </span>
+          <select
+            className="plat-native"
+            aria-label="Устройство"
+            value={platform}
+            onChange={(e) => setOverride(e.target.value as PlatformId)}
+          >
+            {PLATFORMS.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.label}
+              </option>
+            ))}
+          </select>
+          <span className="plat-field-chevron" aria-hidden="true">
+            <Icon name="chevron" size={16} />
+          </span>
+        </label>
       </div>
 
       {isTv ? (
@@ -201,10 +200,11 @@ export default function InstallBlock({ subUrl }: { subUrl: string }) {
             <div className="istep-body">
               <h4>Установи Happ</h4>
               <p>Приложение, через которое работает VPN.</p>
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 10 }}>
+              <div className="install-actions">
                 <Button
                   href={storeUrl}
                   variant="ghost"
+                  full
                   loading={!cfg}
                   iconLeft={<Icon name="download" size={17} />}
                   target="_blank"
@@ -214,7 +214,7 @@ export default function InstallBlock({ subUrl }: { subUrl: string }) {
                 </Button>
                 {isApple && cfg?.store_link_ios_ru && (
                   <a
-                    className="btn btn-ghost"
+                    className="btn btn-ghost btn-full"
                     href={cfg.store_link_ios_ru}
                     target="_blank"
                     rel="noreferrer"
@@ -233,6 +233,7 @@ export default function InstallBlock({ subUrl }: { subUrl: string }) {
               <Button
                 href={deepLink}
                 variant="amber"
+                full
                 loading={!cfg}
                 iconLeft={<Icon name="bolt" size={17} />}
                 style={{ marginTop: 10 }}

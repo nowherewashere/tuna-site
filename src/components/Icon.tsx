@@ -57,6 +57,7 @@ const PATHS: Record<string, ReactNode> = {
   ),
   message: <path d="M4 5h16a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H9l-5 4V6a1 1 0 0 1 1-1z" />,
   plus: <path d="M12 5v14M5 12h14" />,
+  chevron: <path d="M6 9l6 6 6-6" />,
   arrowRight: <path d="M5 12h14M13 6l6 6-6 6" />,
   arrowLeft: <path d="M19 12H5M11 18l-6-6 6-6" />,
   file: (
