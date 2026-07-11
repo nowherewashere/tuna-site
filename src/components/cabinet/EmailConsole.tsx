@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { api, ApiError, type Me } from "@/lib/api";
+import { api, type Me } from "@/lib/api";
+import { apiErrorMessage } from "@/lib/apiError";
 import Icon from "@/components/Icon";
-import { Button, TextField } from "@/components/ui";
+import { Button, ConsoleFrame, TextField } from "@/components/ui";
 
 /**
  * The email half of the account-link surface — the mirror of `TelegramConsole`.
@@ -66,9 +67,7 @@ export default function EmailConsole({
   }
 
   return (
-    <section className="console tg-console" aria-label="Электронная почта">
-      <div className="console-corner console-corner-tl" aria-hidden="true" />
-      <div className="console-corner console-corner-tr" aria-hidden="true" />
+    <ConsoleFrame className="tg-console" aria-label="Электронная почта">
       <span className="tg-kicker mono">{"// почта"}</span>
 
       {step === "code" ? (
@@ -155,33 +154,37 @@ export default function EmailConsole({
           )}
         </>
       )}
-    </section>
+    </ConsoleFrame>
   );
 }
 
 function sendError(e: unknown): string {
-  if (e instanceof ApiError) {
-    if (e.status === 429) return "Код уже отправлен. Подожди минуту и запроси новый.";
-    if (e.status === 503) return "Отправка писем сейчас недоступна. Напиши в поддержку.";
-    if (e.status === 502) return "Письмо не ушло. Попробуй ещё раз.";
-    if (e.status === 409) return "Эта почта уже подтверждена на твоём аккаунте.";
-    if (e.status === 422) return "Проверь адрес — похоже, в нём опечатка.";
-  }
-  return "Не удалось отправить код. Попробуй ещё раз.";
+  return apiErrorMessage(e, {
+    byStatus: {
+      429: "Код уже отправлен. Подожди минуту и запроси новый.",
+      503: "Отправка писем сейчас недоступна. Напиши в поддержку.",
+      502: "Письмо не ушло. Попробуй ещё раз.",
+      409: "Эта почта уже подтверждена на твоём аккаунте.",
+      422: "Проверь адрес — похоже, в нём опечатка.",
+    },
+    fallback: "Не удалось отправить код. Попробуй ещё раз.",
+  });
 }
 
 function confirmError(e: unknown): string {
-  if (e instanceof ApiError) {
-    if (e.status === 410) return "Код истёк. Запроси новый.";
-    if (e.status === 403) return "Аккаунт с этой почтой заблокирован.";
-    if (e.status === 409) {
-      // Both 409s mean the same thing to the user: the accounts can't be joined
-      // automatically, and support has to do it. The reasons differ, so does the copy.
-      return e.detail === "two_active_subscriptions"
-        ? "У обоих аккаунтов активная подписка — напиши в поддержку, объединим вручную."
-        : "К этой почте привязан другой Telegram — напиши в поддержку, объединим вручную.";
-    }
-    if (e.status === 400) return "Неверный код. Проверь письмо и попробуй ещё раз.";
-  }
-  return "Не удалось подтвердить почту. Попробуй ещё раз.";
+  return apiErrorMessage(e, {
+    // Both 409s mean the same thing to the user: the accounts can't be joined
+    // automatically, and support has to do it. The reasons differ, so does the copy.
+    byDetail: {
+      two_active_subscriptions:
+        "У обоих аккаунтов активная подписка — напиши в поддержку, объединим вручную.",
+    },
+    byStatus: {
+      410: "Код истёк. Запроси новый.",
+      403: "Аккаунт с этой почтой заблокирован.",
+      409: "К этой почте привязан другой Telegram — напиши в поддержку, объединим вручную.",
+      400: "Неверный код. Проверь письмо и попробуй ещё раз.",
+    },
+    fallback: "Не удалось подтвердить почту. Попробуй ещё раз.",
+  });
 }

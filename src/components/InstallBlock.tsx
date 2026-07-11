@@ -1,8 +1,11 @@
 "use client";
 
-import { useMemo, useRef, useState, useSyncExternalStore, type KeyboardEvent, type ReactNode } from "react";
+import { useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { useOnboarding } from "@/lib/useOnboarding";
+import { onRovingKeyDown } from "@/lib/roving";
+import { useCopyToClipboard } from "@/lib/useCopyToClipboard";
 import Icon, { type IconName } from "@/components/Icon";
+import { Button } from "@/components/ui";
 
 /**
  * The single install UI used by both onboarding (connect) and the cabinet, so they
@@ -78,7 +81,7 @@ export function detectPlatform(): PlatformId {
 }
 
 function SubCopyRow({ subUrl, label }: { subUrl: string; label?: string }) {
-  const [copied, setCopied] = useState(false);
+  const { copied, copy } = useCopyToClipboard();
   return (
     <>
       {label && <p className="copy-hint">{label}</p>}
@@ -98,9 +101,7 @@ function SubCopyRow({ subUrl, label }: { subUrl: string; label?: string }) {
           className="amber"
           onClick={() => {
             if (!subUrl) return;
-            navigator.clipboard?.writeText(subUrl);
-            setCopied(true);
-            setTimeout(() => setCopied(false), 1500);
+            copy(subUrl);
           }}
         >
           {copied ? (
@@ -135,20 +136,6 @@ export default function InstallBlock({ subUrl }: { subUrl: string }) {
   const isTv = platform === "apple_tv" || platform === "android_tv";
   const storeUrl = cfg && !isTv ? cfg.store_links[platform as StorePlatform] : "";
 
-  // Roving-tabindex + arrow keys for the platform radiogroup (mirrors CabinetTabs).
-  function onPickerKey(e: KeyboardEvent<HTMLButtonElement>, i: number) {
-    const n = PLATFORMS.length;
-    let next = i;
-    if (e.key === "ArrowRight" || e.key === "ArrowDown") next = (i + 1) % n;
-    else if (e.key === "ArrowLeft" || e.key === "ArrowUp") next = (i - 1 + n) % n;
-    else if (e.key === "Home") next = 0;
-    else if (e.key === "End") next = n - 1;
-    else return;
-    e.preventDefault();
-    setOverride(PLATFORMS[next].id as PlatformId);
-    btnRefs.current[next]?.focus();
-  }
-
   const tvKey: TvPlatform = platform === "apple_tv" ? "apple_tv" : "android_tv";
   const faqUrl = cfg ? cfg.tv.faq[tvKey] : "";
 
@@ -168,7 +155,7 @@ export default function InstallBlock({ subUrl }: { subUrl: string }) {
               tabIndex={platform === p.id ? 0 : -1}
               className={`plat${platform === p.id ? " on" : ""}`}
               onClick={() => setOverride(p.id as PlatformId)}
-              onKeyDown={(e) => onPickerKey(e, i)}
+              onKeyDown={(e) => onRovingKeyDown(e, btnRefs.current)}
             >
               <Icon name={p.icon} size={16} />
               {p.label}
@@ -194,15 +181,17 @@ export default function InstallBlock({ subUrl }: { subUrl: string }) {
               введи код и вставь свою ссылку.
             </p>
             <SubCopyRow subUrl={subUrl} label="Ссылка для веб-импорта (нажми, чтобы скопировать):" />
-            <a
-              className="btn btn-ghost"
+            <Button
+              href={faqUrl}
+              variant="ghost"
+              loading={!cfg}
+              iconLeft={<Icon name="file" size={17} />}
               style={{ marginTop: 12 }}
-              href={faqUrl || undefined}
               target="_blank"
               rel="noreferrer"
             >
-              <Icon name="file" size={17} /> Инструкция со скриншотами
-            </a>
+              Инструкция со скриншотами
+            </Button>
           </div>
         </>
       ) : (
@@ -213,10 +202,16 @@ export default function InstallBlock({ subUrl }: { subUrl: string }) {
               <h4>Установи Happ</h4>
               <p>Приложение, через которое работает VPN.</p>
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 10 }}>
-                <a className="btn btn-ghost" href={storeUrl || undefined} target="_blank" rel="noreferrer">
-                  <Icon name="download" size={17} />{" "}
+                <Button
+                  href={storeUrl}
+                  variant="ghost"
+                  loading={!cfg}
+                  iconLeft={<Icon name="download" size={17} />}
+                  target="_blank"
+                  rel="noreferrer"
+                >
                   {isApple ? "Скачать Happ (AppStore вне РФ)" : "Скачать Happ"}
-                </a>
+                </Button>
                 {isApple && cfg?.store_link_ios_ru && (
                   <a
                     className="btn btn-ghost"
@@ -235,9 +230,15 @@ export default function InstallBlock({ subUrl }: { subUrl: string }) {
             <div className="istep-body">
               <h4>Добавь Tuna</h4>
               <p>Нажми кнопку ниже — подписка добавится сама.</p>
-              <a className="btn btn-amber" style={{ marginTop: 10 }} href={deepLink || undefined}>
-                <Icon name="bolt" size={17} /> Добавить подписку в Happ
-              </a>
+              <Button
+                href={deepLink}
+                variant="amber"
+                loading={!cfg}
+                iconLeft={<Icon name="bolt" size={17} />}
+                style={{ marginTop: 10 }}
+              >
+                Добавить подписку в Happ
+              </Button>
               <SubCopyRow
                 subUrl={subUrl}
                 label="Не сработало? Скопируй ссылку и добавь её в Happ вручную:"

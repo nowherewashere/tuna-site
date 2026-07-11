@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Icon, { type IconName } from "@/components/Icon";
 import type { SubscriptionInfo } from "@/lib/api";
+import { ConsoleFrame } from "@/components/ui";
 
 type ChatMsg = { who: "them" | "me" | "sys"; text: string };
 
@@ -50,9 +51,7 @@ export default function SupportPanel({
         Не подключается? Чаще всего помогает — попробуй сам за минуту. Не вышло — напиши в чат.
       </div>
 
-      <section className="console" aria-label="Быстрая помощь">
-        <div className="console-corner console-corner-tl" aria-hidden="true" />
-        <div className="console-corner console-corner-tr" aria-hidden="true" />
+      <ConsoleFrame aria-label="Быстрая помощь">
         <ul className="help-rows">
           {HELP.map((h) => (
             <li className="help-row" key={h.title}>
@@ -66,7 +65,7 @@ export default function SupportPanel({
             </li>
           ))}
         </ul>
-      </section>
+      </ConsoleFrame>
 
       <div className="chat-box">
         <div className="chat-head">

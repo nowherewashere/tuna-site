@@ -15,6 +15,7 @@ import {
 } from "@/lib/api";
 import { useHashTab } from "@/lib/useHashTab";
 import { redirectTo, reloadPage } from "@/lib/nav";
+import { apiErrorMessage } from "@/lib/apiError";
 import { userDisplayName } from "@/lib/format";
 import { invalidateAuth } from "@/lib/useAuth";
 import { readSelectedPlan, clearSelectedPlan } from "@/lib/selectedPlan";
@@ -180,9 +181,12 @@ export default function CabinetPage() {
       reloadPage(); // free / instant activation, no redirect
     } catch (e) {
       setPayError(
-        e instanceof ApiError
-          ? e.detail || "Не удалось создать платёж. Попробуй позже."
-          : "Сеть недоступна. Попробуй ещё раз.",
+        apiErrorMessage(e, {
+          preferDetail: true,
+          fallback: e instanceof ApiError
+            ? "Не удалось создать платёж. Попробуй позже."
+            : "Сеть недоступна. Попробуй ещё раз.",
+        }),
       );
       setPaying(false);
     }
@@ -211,25 +215,25 @@ export default function CabinetPage() {
       // Keep the raw error in the console so the exact status/detail is visible
       // when diagnosing a failed link.
       console.error("Telegram link failed:", e);
-      if (e instanceof ApiError && e.status === 409) {
-        setLinkError(
-          e.detail === "two_active_subscriptions"
-            ? "У обоих аккаунтов активная подписка — напиши в поддержку, объединим вручную."
-            : "Этот Telegram уже привязан к другому аккаунту.",
-        );
-      } else if (e instanceof ApiError && e.status === 401) {
-        // The link endpoint needs a live session; a 401 here means it expired
-        // (and the silent refresh couldn't recover it) between page load and click.
-        setLinkError("Сессия истекла. Обнови страницу, войди снова и повтори привязку.");
-      } else if (e instanceof ApiError && e.status === 403) {
-        setLinkError("Этот Telegram-аккаунт заблокирован.");
-      } else {
-        setLinkError(
-          e instanceof ApiError && e.detail
-            ? `Не удалось подключить Telegram: ${e.detail}`
-            : "Не удалось подключить Telegram. Попробуй ещё раз.",
-        );
-      }
+      setLinkError(
+        apiErrorMessage(e, {
+          byDetail: {
+            two_active_subscriptions:
+              "У обоих аккаунтов активная подписка — напиши в поддержку, объединим вручную.",
+          },
+          byStatus: {
+            409: "Этот Telegram уже привязан к другому аккаунту.",
+            // The link endpoint needs a live session; a 401 here means it expired
+            // (and the silent refresh couldn't recover it) between page load and click.
+            401: "Сессия истекла. Обнови страницу, войди снова и повтори привязку.",
+            403: "Этот Telegram-аккаунт заблокирован.",
+          },
+          fallback:
+            e instanceof ApiError && e.detail
+              ? `Не удалось подключить Telegram: ${e.detail}`
+              : "Не удалось подключить Telegram. Попробуй ещё раз.",
+        }),
+      );
     }
   }
 

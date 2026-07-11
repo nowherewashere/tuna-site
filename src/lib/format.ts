@@ -51,6 +51,11 @@ export const STATUS_LABEL: Record<string, string> = {
   DISABLED: "Отключена",
 };
 
+/** Modifier class for the status pill: none for ACTIVE, warn for LIMITED, bad otherwise. */
+export function statusPillClass(status: string | undefined): string {
+  return status === "ACTIVE" ? "" : status === "LIMITED" ? "status-pill--warn" : "status-pill--bad";
+}
+
 export function fmtDate(iso: string): string {
   return new Intl.DateTimeFormat("ru-RU", {
     day: "numeric",

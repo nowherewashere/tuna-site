@@ -62,6 +62,28 @@ export default function Button(props: ButtonAsButton | ButtonAsLink) {
   );
 
   if (typeof props.href === "string") {
+    const disabled = (rest as { disabled?: boolean }).disabled;
+    // While loading (or disabled) the destination isn't ready, so render a
+    // non-navigating placeholder: an <a> without href is neither focusable nor
+    // keyboard-activatable, and `pointer-events:none` (via .is-loading/.is-disabled)
+    // stops the click. This keeps the control from looking live while doing nothing.
+    if (loading || disabled) {
+      const inertRest: Record<string, unknown> = { ...rest };
+      delete inertRest.href;
+      delete inertRest.disabled;
+      return (
+        <a
+          className={[cn, loading ? "is-loading" : "is-disabled"].join(" ")}
+          role="link"
+          aria-disabled="true"
+          aria-busy={loading || undefined}
+          tabIndex={-1}
+          {...(inertRest as ComponentPropsWithoutRef<"a">)}
+        >
+          {content}
+        </a>
+      );
+    }
     return (
       <Link className={cn} {...(rest as ComponentPropsWithoutRef<typeof Link>)}>
         {content}
