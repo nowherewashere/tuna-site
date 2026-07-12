@@ -3,12 +3,12 @@
   position: relative;
   overflow: clip; /* clips decorative bleed → never a source of horizontal scroll */
   isolation: isolate;
-  /* Fill the viewport below the 64px sticky nav so the first screen is exactly one
-     screenful — the next section ("Три шага") never peeks. dvh (dynamic), not svh:
-     svh sizes for the toolbar-visible viewport, so when iOS Safari's bottom bar
-     retracts the viewport grows and the next section peeks; dvh tracks the live
-     viewport so the fill (and the bottom-pinned mobile CTA) stay correct. */
-  min-height: calc(100dvh - 64px);
+  /* Fill the viewport below the 64px sticky nav so the first screen is one screenful.
+     svh (toolbar-visible height), NOT dvh: dvh was tried to stop the next section
+     peeking when iOS Safari's bottom bar retracts, but on a real iPhone it made things
+     worse (the live-resizing hero reflows/jumps as the toolbar animates), so we keep
+     svh and accept the minor peek. */
+  min-height: calc(100svh - 64px);
   display: flex;
   flex-direction: column;
   justify-content: center;
