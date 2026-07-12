@@ -1,5 +1,6 @@
 import Link from "next/link";
 import AuthCta from "@/components/AuthCta";
+import Icon, { type IconName } from "@/components/Icon";
 import DepthGauge from "@/components/DepthGauge";
 import Nav from "@/components/Nav";
 import HeroScene from "@/components/HeroScene";
@@ -9,52 +10,52 @@ import JsonLd from "@/components/JsonLd";
 import { softwareAppGraph } from "@/lib/structuredData";
 import { Reveal } from "@/components/ui";
 
-const DIVE_STEPS: { emoji: string; title: string; body: string }[] = [
+const DIVE_STEPS: { icon: IconName; title: string; body: string }[] = [
   {
-    emoji: "✉️",
+    icon: "mail",
     title: "Получи доступ",
     body: "Регистрируешься — мы сразу выдаём подписку. Можно войти через Telegram.",
   },
   {
-    emoji: "📲",
+    icon: "download",
     title: "Установи Happ",
     body: "Приложение, через которое работает VPN. Ссылка под твою платформу.",
   },
   {
-    emoji: "✅",
+    icon: "check",
     title: "Добавь VPN профиль",
     body: "Одно нажатие — всё настроится само. Открытый интернет без ограничений.",
   },
 ];
 
-const WHY_FEATURES: { emoji: string; title: string; body: string }[] = [
+const WHY_FEATURES: { icon: IconName; title: string; body: string }[] = [
   {
-    emoji: "🧭",
+    icon: "globe",
     title: "Умная маршрутизация",
     body: "Несколько адаптивных протоколов — соединение держится там, где обычные VPN отваливаются. Tuna поможет преодолеть любой цифровой шторм.",
   },
   {
-    emoji: "⚡",
+    icon: "bolt",
     title: "Быстро и удобно",
     body: "Подключение за минуту, автоподбор лучшего сервера. Никаких ручных настроек.",
   },
   {
-    emoji: "📺",
+    icon: "tv",
     title: "Стриминг, звонки, игры",
     body: "Видео в 4K, созвоны без лагов и низкий пинг в играх. Никаких искусственных ограничений скорости.",
   },
   {
-    emoji: "📱",
+    icon: "phone",
     title: "Единый доступ на всё",
     body: "Телефон, ноутбук, планшет, ТВ — несколько устройств на одной подписке, зависит от тарифа.",
   },
   {
-    emoji: "🔒",
+    icon: "shield",
     title: "Не храним твои данные",
     body: "Не ведём логи подключений и не собираем историю трафика. Что ты открываешь и куда заходишь — знаешь только ты.",
   },
   {
-    emoji: "🔄",
+    icon: "refresh",
     title: "Автообновление",
     body: "Никаких запутанных интерфейсов — все обновления подключаются сами.",
   },
@@ -200,8 +201,8 @@ export default async function LandingPage() {
                 <div className="hero-cta reveal d4">
                   <AuthCta
                     className="btn btn-amber btn-lg"
-                    guest={{ href: "/login", label: "🚀 Подключить" }}
-                    authed={{ href: "/cabinet", label: "🚀 Открыть кабинет" }}
+                    guest={{ href: "/login", label: "Подключить" }}
+                    authed={{ href: "/cabinet", label: "Открыть кабинет" }}
                   />
                   <AuthCta
                     className="btn btn-ghost btn-lg"
@@ -209,6 +210,9 @@ export default async function LandingPage() {
                     authed={null}
                   />
                 </div>
+                {/* Sentinel: the Nav watches this to reveal its compact CTA once the
+                    hero CTA has scrolled away (so the first screen shows only one). */}
+                <span id="hero-cta-anchor" aria-hidden="true" />
                 <p className="hero-note reveal d5">
                   Бесплатный пробный период · без карты
                 </p>
@@ -233,8 +237,8 @@ export default async function LandingPage() {
                     <span className="ds-n">{String(i + 1).padStart(2, "0")}</span>
                   </div>
                   <div className="ds-body">
-                    <div className="ds-ic" aria-hidden="true">
-                      {step.emoji}
+                    <div className="ds-ic">
+                      <Icon name={step.icon} size={24} />
                     </div>
                     <h3>{step.title}</h3>
                     <p>{step.body}</p>
@@ -256,8 +260,8 @@ export default async function LandingPage() {
             <div className="feat-grid">
               {WHY_FEATURES.map((feature, i) => (
                 <Reveal key={feature.title} className="feat" delay={i * 0.06}>
-                  <span className="ic" aria-hidden="true">
-                    {feature.emoji}
+                  <span className="ic">
+                    <Icon name={feature.icon} size={26} />
                   </span>
                   <div>
                     <h3>{feature.title}</h3>
@@ -306,8 +310,8 @@ export default async function LandingPage() {
             <p>Бесплатный пробный период. Без карты. Мы уверены в своём качестве.</p>
             <AuthCta
               className="btn btn-amber btn-lg"
-              guest={{ href: "/login", label: "🚀 Подключить" }}
-              authed={{ href: "/cabinet", label: "🚀 Открыть кабинет" }}
+              guest={{ href: "/login", label: "Подключить" }}
+              authed={{ href: "/cabinet", label: "Открыть кабинет" }}
             />
           </div>
         </section>

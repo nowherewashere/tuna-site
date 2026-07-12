@@ -200,27 +200,43 @@ export default function InstallBlock({ subUrl }: { subUrl: string }) {
             <div className="istep-body">
               <h4>Установи Happ</h4>
               <p>Приложение, через которое работает VPN.</p>
+              {/* iOS with both store links: two compact "App Store" buttons whose
+                  region (вне РФ / в РФ) is a caption underneath — not baked into the
+                  label. Everyone else: a single content-width "Скачать Happ". */}
               <div className="install-actions">
-                <Button
-                  href={storeUrl}
-                  variant="ghost"
-                  full
-                  loading={!cfg}
-                  iconLeft={<Icon name="download" size={17} />}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  {isApple ? "Скачать Happ (AppStore вне РФ)" : "Скачать Happ"}
-                </Button>
-                {isApple && cfg?.store_link_ios_ru && (
-                  <a
-                    className="btn btn-ghost btn-full"
-                    href={cfg.store_link_ios_ru}
+                {isApple && cfg?.store_link_ios_ru ? (
+                  <>
+                    <div className="store-btn">
+                      <Button
+                        href={storeUrl}
+                        variant="ghost"
+                        loading={!cfg}
+                        iconLeft={<Icon name="download" size={17} />}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        App Store
+                      </Button>
+                      <span className="store-cap">вне РФ</span>
+                    </div>
+                    <div className="store-btn">
+                      <a className="btn btn-ghost" href={cfg.store_link_ios_ru} target="_blank" rel="noreferrer">
+                        <Icon name="download" size={17} /> App Store
+                      </a>
+                      <span className="store-cap">в РФ</span>
+                    </div>
+                  </>
+                ) : (
+                  <Button
+                    href={storeUrl}
+                    variant="ghost"
+                    loading={!cfg}
+                    iconLeft={<Icon name="download" size={17} />}
                     target="_blank"
                     rel="noreferrer"
                   >
-                    <Icon name="download" size={17} /> Скачать Happ (AppStore в РФ)
-                  </a>
+                    Скачать Happ
+                  </Button>
                 )}
               </div>
             </div>
@@ -233,7 +249,6 @@ export default function InstallBlock({ subUrl }: { subUrl: string }) {
               <Button
                 href={deepLink}
                 variant="amber"
-                full
                 loading={!cfg}
                 iconLeft={<Icon name="bolt" size={17} />}
                 style={{ marginTop: 10 }}

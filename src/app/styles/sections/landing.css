@@ -4,14 +4,22 @@
   overflow: clip; /* clips decorative bleed → never a source of horizontal scroll */
   isolation: isolate;
   /* Fill the viewport below the 64px sticky nav so the first screen is exactly one
-     screenful — the next section ("Три шага") never peeks under the fold, and the
-     content sits optically centred in the scene. svh (not vh) keeps it stable under
-     the mobile URL-bar show/hide. */
-  min-height: calc(100svh - 64px);
+     screenful — the next section ("Три шага") never peeks. dvh (dynamic), not svh:
+     svh sizes for the toolbar-visible viewport, so when iOS Safari's bottom bar
+     retracts the viewport grows and the next section peeks; dvh tracks the live
+     viewport so the fill (and the bottom-pinned mobile CTA) stay correct. */
+  min-height: calc(100dvh - 64px);
   display: flex;
   flex-direction: column;
   justify-content: center;
   padding: clamp(40px, 7vh, 96px) 0;
+}
+/* Desktop: nudge the copy off the far-left edge toward the right-hand fish so the
+   tuna doesn't read as isolated in the corner. */
+@media (min-width: 901px) {
+  .hero-grid {
+    margin-inline-start: clamp(0px, 9vw, 150px);
+  }
 }
 /* Depth scrim behind the copy (left) — darker water that also lifts text
    contrast to AA over the bright surface band; fades out before the fish. */
@@ -251,25 +259,51 @@ h1.hero-title .amber {
   }
 }
 
-/* Tablet / phone: the fish becomes a quieter motif behind the copy. */
+/* Tablet / phone: a top→bottom first screen. The copy sits high, the primary CTA
+   is pinned to the bottom, and the fish floats in the band between them (instead of
+   hiding behind the text). The flex chain fills the dvh hero so margin-top:auto can
+   push the CTA down. */
 @media (max-width: 900px) {
-  .hero-tuna,
-  .hero-caustic-fish {
-    width: clamp(300px, 92vw, 520px);
-    right: -14%;
-    top: 8%;
-    transform: none;
-    opacity: 0.5;
+  .hero {
+    justify-content: stretch;
+    padding: clamp(24px, 5vh, 44px) 0 clamp(24px, 5vh, 44px);
   }
-  .hero-fish-glow {
-    width: clamp(360px, 96vw, 560px);
-    right: -14%;
-    top: 2%;
-    transform: none;
+  .hero > .wrap {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
   }
   .hero-grid {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
     min-height: auto;
-    grid-template-columns: minmax(0, 1fr);
+  }
+  .hero-copy {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+  /* Pin the CTA (and its note) to the bottom of the first screen. */
+  .hero-cta {
+    margin-top: auto;
+  }
+  /* Fish floats in the middle band — below the copy, above the CTA — centred. */
+  .hero-tuna,
+  .hero-caustic-fish {
+    width: clamp(280px, 76vw, 460px);
+    right: auto;
+    left: 50%;
+    top: 40%;
+    transform: translateX(-50%);
+    opacity: 0.62;
+  }
+  .hero-fish-glow {
+    width: clamp(320px, 82vw, 520px);
+    right: auto;
+    left: 50%;
+    top: 38%;
+    transform: translateX(-50%);
   }
   h1.hero-title {
     font-size: clamp(44px, 12vw, 72px);
@@ -414,9 +448,9 @@ section {
   backdrop-filter: blur(4px);
 }
 .ds-ic {
-  font-size: 28px;
-  line-height: 1;
+  color: var(--amber);
   margin-bottom: 10px;
+  line-height: 0;
 }
 .dive-step h3 {
   font-size: 18px;
@@ -461,13 +495,15 @@ section {
   box-shadow: 0 14px 34px rgba(4, 16, 31, 0.32);
 }
 .feat .ic {
+  color: var(--amber);
   flex-shrink: 0;
-  line-height: 1;
+  line-height: 0;
   display: grid;
   place-items: center;
   width: 46px;
   height: 46px;
-  font-size: 28px;
+  border-radius: var(--radius-md);
+  background: rgba(245, 166, 35, 0.12);
 }
 .feat h3 {
   font-size: 19px;
@@ -617,12 +653,9 @@ section {
   font-size: 14.5px;
   color: var(--ink-card-dim);
 }
-.price-meta-ic {
+.price-meta li svg {
+  color: var(--amber);
   flex-shrink: 0;
-  font-size: 16px;
-  line-height: 1;
-  width: 18px;
-  text-align: center;
 }
 .price-cta {
   width: 100%;

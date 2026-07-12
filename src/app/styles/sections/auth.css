@@ -83,9 +83,10 @@
   justify-content: center;
   padding: 60px 0;
   overflow-x: clip;
-  /* Flat darkest-blue surface instead of the descending ocean gradient (matches
-     the cabinet) — the auth screen is a calm single surface, not a scene. */
-  background: var(--bg-abyss);
+  /* Flat surface instead of the descending ocean gradient (matches the cabinet) —
+     the auth screen is a calm single surface, not a scene. --bg-deep, not abyss, so
+     the login card (translucent dark) reads as a panel against it. */
+  background: var(--bg-deep);
 }
 .login-card {
   position: relative;

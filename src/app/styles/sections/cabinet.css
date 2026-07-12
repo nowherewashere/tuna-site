@@ -2,9 +2,10 @@
 .cab-wrap {
   color: var(--ink-card);
   min-height: 100vh;
-  /* Flat darkest-blue surface (the abyss end of the site gradient) instead of the
-     descending ocean gradient — the cabinet reads as a calm, single-surface app. */
-  background: var(--bg-abyss);
+  /* Flat surface instead of the descending ocean gradient — the cabinet reads as a
+     calm, single-surface app. Uses --bg-deep (upper-mid of the gradient), not the
+     abyss end: the consoles are translucent abyss, so a darker bg made them vanish. */
+  background: var(--bg-deep);
 }
 .cab-topbar {
   position: sticky;
@@ -694,12 +695,16 @@
   line-height: 1.72;
 }
 .legal-doc h1 {
-  font-size: clamp(30px, 4.5vw, 42px);
+  font-size: clamp(24px, 6.2vw, 42px);
   font-weight: 800;
   letter-spacing: -0.02em;
   line-height: 1.1;
   color: var(--ink);
   margin-bottom: 12px;
+  /* Long single words like "конфиденциальности" must break rather than overflow the
+     375px screen (the 30px floor was too high + no wrapping). */
+  overflow-wrap: break-word;
+  hyphens: auto;
 }
 .legal-date {
   font-family: var(--font-mono), monospace;

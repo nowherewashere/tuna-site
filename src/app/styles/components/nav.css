@@ -63,12 +63,28 @@
 .nav-cta-sm {
   padding: 8px 16px;
   font-size: 14px;
+  /* Hidden on the first screen; revealed (via .is-visible from Nav's scroll observer)
+     once the hero CTA scrolls away, so it appears to move up into the bar. Kept out
+     of the tab order while hidden. Desktop is unaffected — .nav-mobile-only is
+     display:none there. */
+  opacity: 0;
+  transform: translateY(-6px);
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    opacity 0.22s var(--ease-std),
+    transform 0.22s var(--ease-std),
+    visibility 0.22s var(--ease-std);
 }
-/* On narrow phones the inline CTA + logo + burger stop fitting — drop it (the
-   burger menu and the hero both carry a Подключить). */
-@media (max-width: 420px) {
+.nav-cta-sm.is-visible {
+  opacity: 1;
+  transform: none;
+  visibility: visible;
+  pointer-events: auto;
+}
+@media (prefers-reduced-motion: reduce) {
   .nav-cta-sm {
-    display: none;
+    transition: none;
   }
 }
 

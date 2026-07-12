@@ -5,6 +5,7 @@ import { api, type PublicPlanLanding } from "@/lib/api";
 import { plural, fmtBytes } from "@/lib/format";
 import { storeSelectedPlan } from "@/lib/selectedPlan";
 import AuthCta from "@/components/AuthCta";
+import Icon from "@/components/Icon";
 import { Reveal } from "@/components/ui";
 
 function trafficLabel(bytes: number): string {
@@ -143,11 +144,11 @@ export default function PricingSection({
                 </div>
                 <ul className="price-meta">
                   <li>
-                    <span className="price-meta-ic" aria-hidden="true">📱</span>
+                    <Icon name="phone" size={17} />
                     {deviceLabel(p.device_limit)}
                   </li>
                   <li>
-                    <span className="price-meta-ic" aria-hidden="true">⚡</span>
+                    <Icon name="bolt" size={17} />
                     {trafficLabel(p.traffic_limit)}
                   </li>
                 </ul>

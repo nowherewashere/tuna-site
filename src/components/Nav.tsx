@@ -4,17 +4,37 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import AuthCta from "./AuthCta";
 
+// Order mirrors the page's section order (hero → how → why → pricing → faq) so
+// clicking left-to-right always scrolls downward — no jump back up.
 const LINKS = [
-  { href: "#why", label: "Почему Tuna" },
   { href: "#how", label: "Подключение" },
+  { href: "#why", label: "Почему Tuna" },
   { href: "#pricing", label: "Тарифы" },
   { href: "#faq", label: "Вопросы" },
 ];
 
 export default function Nav() {
   const [open, setOpen] = useState(false);
+  // Mobile: the compact nav CTA stays hidden while the hero CTA is on screen, then
+  // fades into the bar once the user scrolls past it — so the first screen shows a
+  // single CTA (the on-screen one), not a duplicate in the bar.
+  const [ctaRevealed, setCtaRevealed] = useState(false);
   const drawerRef = useRef<HTMLDivElement>(null);
   const burgerRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    // Nav renders only on the landing, so the hero sentinel is always present.
+    const anchor = document.getElementById("hero-cta-anchor");
+    if (!anchor) return;
+    // IntersectionObserver (not a scroll listener) — reveal once the sentinel below
+    // the hero CTA clears the sticky nav. rootMargin offsets the 64px bar.
+    const io = new IntersectionObserver(
+      ([entry]) => setCtaRevealed(!entry.isIntersecting),
+      { rootMargin: "-64px 0px 0px 0px" },
+    );
+    io.observe(anchor);
+    return () => io.disconnect();
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -74,7 +94,7 @@ export default function Nav() {
 
         <div className="nav-mobile-only">
           <AuthCta
-            className="btn btn-amber nav-cta-sm"
+            className={`btn btn-amber nav-cta-sm${ctaRevealed ? " is-visible" : ""}`}
             guest={{ href: "/login", label: "Подключить" }}
             authed={{ href: "/cabinet", label: "Кабинет" }}
           />
