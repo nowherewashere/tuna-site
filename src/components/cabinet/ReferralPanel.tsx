@@ -7,10 +7,11 @@ import {
   type ReferralProgram,
   type SubscriptionOffers,
 } from "@/lib/api";
-import { durationLabel, fmtDate, fmtRub, pickPrice } from "@/lib/format";
+import { durationLabel, fmtDate, fmtRub, pickPrice, plural } from "@/lib/format";
 import { apiErrorMessage } from "@/lib/apiError";
 import { onRovingKeyDown } from "@/lib/roving";
 import { useCopyToClipboard } from "@/lib/useCopyToClipboard";
+import { usePublicConfig } from "@/lib/usePublicConfig";
 import Icon from "@/components/Icon";
 import { Button, ConsoleFrame, TextField } from "@/components/ui";
 
@@ -60,6 +61,11 @@ export default function ReferralPanel({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Days a referred friend gets free — the same value the bot shows, sourced from the
+  // shared /config (never hardcoded). Null while config loads or when there is no
+  // invited-only trial plan, in which case the "друзьям N дней" copy is simply omitted.
+  const trialDays = usePublicConfig()?.referred_trial_days ?? null;
+
   // Crypto payout
   const [wallet, setWallet] = useState("");
   const [payoutDone, setPayoutDone] = useState(false);
@@ -101,6 +107,13 @@ export default function ReferralPanel({
     referral.stars_payout_enabled &&
     referral.balance_kop >= referral.stars_min_kop &&
     !referral.has_open_payout;
+
+  // "Как это работает" explainer (mirrors the bot's invite screens, all data-driven).
+  const hasTrial = trialDays != null && trialDays > 0;
+  const trialLabel = hasTrial ? `${trialDays} ${plural(trialDays, "день", "дня", "дней")}` : "";
+  // Multi-level rewards are vestigial in the money model (a single flat commission), so
+  // this only renders on the rare config where more than one level is actually set.
+  const showLevels = referral.max_level > 1 && referral.reward_levels.length > 1;
 
   function resetTransient() {
     setError(null);
@@ -523,6 +536,119 @@ export default function ReferralPanel({
           )}
         </ConsoleFrame>
       )}
+
+      {/* ── How it works — the offer, spelled out (mirrors the bot's invite screens) ── */}
+      <ConsoleFrame className="ref-about" aria-label="Как работает реферальная программа">
+        <div className="console-title">Как это работает</div>
+
+        <div className="ref-hero">
+          <div className="ref-hero-rate">
+            <span className="ref-hero-num">
+              {referral.commission_percent}
+              <span className="ref-hero-pct">%</span>
+            </span>
+            <span className="ref-hero-cap">
+              с каждого платежа приглашённых — <b>навсегда</b>
+            </span>
+          </div>
+          {hasTrial && (
+            <span className="ref-trial-chip">
+              <span className="ref-trial-ic" aria-hidden="true">
+                🎁
+              </span>
+              друзьям {trialLabel} бесплатно
+            </span>
+          )}
+        </div>
+
+        {/* role="list" restores the semantics WebKit drops on list-style:none — the
+            step order (which the aria-hidden number badges show visually) then reaches
+            screen readers as posinset 1/2/3. */}
+        <ol className="ref-steps" role="list">
+          <li className="ref-step">
+            <span className="ref-step-n" aria-hidden="true">
+              1
+            </span>
+            <div className="ref-step-body">
+              <b>Поделись ссылкой</b>
+              <p>Отправь другу ссылку для бота или для сайта — они выше.</p>
+            </div>
+          </li>
+          <li className="ref-step">
+            <span className="ref-step-n" aria-hidden="true">
+              2
+            </span>
+            <div className="ref-step-body">
+              <b>Друг оформляет подписку</b>
+              <p>
+                {hasTrial
+                  ? `По твоей ссылке он получает ${trialLabel} бесплатно, а потом продлевает подписку.`
+                  : "Он регистрируется по твоей ссылке и оформляет подписку."}
+              </p>
+            </div>
+          </li>
+          <li className="ref-step">
+            <span className="ref-step-n" aria-hidden="true">
+              3
+            </span>
+            <div className="ref-step-body">
+              <b>Получаешь процент на баланс</b>
+              <p>
+                {referral.commission_percent}% с каждого его платежа, включая продления, —
+                сразу на твой баланс.
+              </p>
+            </div>
+          </li>
+        </ol>
+
+        <ul className="ref-terms" role="list">
+          <li className="ref-term">
+            <Icon name="wallet" size={18} className="ref-term-ic" />
+            <span>
+              Вывод реальными деньгами от <b>{fmtRub(referral.payout_min_kop)} ₽</b> — выплаты
+              по понедельникам.
+            </span>
+          </li>
+          {referral.stars_payout_enabled && (
+            <li className="ref-term">
+              <span className="ref-term-ic ref-term-star" aria-hidden="true">
+                ⭐
+              </span>
+              <span>
+                Или Telegram Stars от <b>{fmtRub(referral.stars_min_kop)} ₽</b> —{" "}
+                <a
+                  className="ref-stars-link"
+                  href={referral.bot_referral_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  получить в боте
+                  <span className="sr-only"> (откроется в Telegram)</span>
+                </a>
+                .
+              </span>
+            </li>
+          )}
+          <li className="ref-term">
+            <Icon name="coin" size={18} className="ref-term-ic" />
+            <span>Или оплати балансом свою подписку — дни добавятся к текущим.</span>
+          </li>
+        </ul>
+
+        {showLevels && (
+          <div className="ref-levels">
+            <div className="dur-eyebrow">Уровни вознаграждения</div>
+            <div className="ref-levels-row">
+              {referral.reward_levels.map((lvl) => (
+                <div className="ref-level" key={lvl.level}>
+                  <span className="readout-label">Уровень {lvl.level}</span>
+                  <span className="readout-val">{lvl.value}%</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </ConsoleFrame>
     </div>
   );
 }

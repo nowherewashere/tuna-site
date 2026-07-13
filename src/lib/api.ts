@@ -254,6 +254,9 @@ export interface ReferralProgram {
   site_referral_url: string | null;
   invited_count: number;
   invited_with_payment_count: number;
+  // Commission earned on every referred payment, as a whole percent — drives the
+  // "N% с каждого платежа" headline (mirrors the bot's invite screen).
+  commission_percent: number;
   // Money referral (amounts in kopecks; ₽ formatting is view-side via fmtRub).
   balance_kop: number;
   withdrawn_kop: number;

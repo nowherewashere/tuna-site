@@ -1101,6 +1101,163 @@
   text-decoration: none;
 }
 
+/* ══ "Как это работает" — the offer console. Reference material, so it sits below
+   the working instrument. Amber leads with the commission-rate hero; the step badges
+   and term icons are quiet amber-soft supporting marks, never a second headline. ══ */
+.ref-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+  padding-bottom: var(--space-5);
+  margin-bottom: var(--space-5);
+  border-bottom: 1px solid var(--border-soft);
+}
+.ref-hero-rate {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.ref-hero-num {
+  font-family: var(--font-mono), monospace;
+  /* A deliberate hero size, matched to the Overview time readout. */
+  font-size: clamp(34px, 9vw, 46px);
+  font-weight: 600;
+  line-height: 1;
+  color: var(--amber);
+  font-variant-numeric: tabular-nums;
+}
+.ref-hero-pct {
+  font-size: 0.55em;
+  margin-left: 2px;
+}
+.ref-hero-cap {
+  font-size: var(--text-sm);
+  color: var(--ink-card-dim);
+  max-width: 34ch;
+}
+.ref-hero-cap b {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+/* Friends-trial reward — a quiet amber pill, not a second hero number. */
+.ref-trial-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-pill);
+  background: var(--fill-accent-soft);
+  border: 1px solid rgba(245, 166, 35, 0.24);
+  color: var(--text-primary);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+.ref-trial-ic {
+  font-size: 15px;
+  line-height: 1;
+}
+
+/* The three steps — a genuine sequence (share → subscribe → earn), so the numbers
+   carry real order, not decoration. */
+.ref-steps {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+.ref-step {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-4);
+}
+.ref-step-n {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-round);
+  background: rgba(245, 166, 35, 0.14);
+  color: var(--amber);
+  font-family: var(--font-mono), monospace;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.ref-step-body {
+  min-width: 0;
+}
+.ref-step-body b {
+  display: block;
+  font-size: var(--text-base);
+  margin-bottom: 3px;
+  color: var(--text-primary);
+}
+.ref-step-body p {
+  font-size: var(--text-sm);
+  line-height: var(--leading-snug);
+  color: var(--ink-card-dim);
+}
+
+/* Terms/perks — hairline-topped list, each line an icon + one plain fact. */
+.ref-terms {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-top: var(--space-5);
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--border-soft);
+}
+.ref-term {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  font-size: var(--text-sm);
+  line-height: var(--leading-snug);
+  color: var(--ink-card);
+}
+.ref-term-ic {
+  flex-shrink: 0;
+  color: var(--amber);
+  margin-top: 1px;
+}
+/* The Stars ⭐ is an emoji (consistent with the instrument console's Stars hint), so
+   box it to the 18px icon width and center it to sit on the same rail as the wallet /
+   coin vector icons above and below it. */
+.ref-term-star {
+  width: 18px;
+  text-align: center;
+  font-size: 15px;
+  line-height: 1.2;
+}
+.ref-term b {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+/* Multi-level rewards (dormant in the flat-commission money model — only rendered
+   when a config actually sets more than one level). */
+.ref-levels {
+  margin-top: var(--space-5);
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--border-soft);
+}
+.ref-levels-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-5) var(--space-6);
+}
+.ref-level {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
 /* Inline action sub-consoles (payout / pay-with-balance) — the anti-modal. An
    amber ring ties each back to the CTA that opened it. */
 .ref-inline {
