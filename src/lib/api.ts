@@ -349,11 +349,32 @@ export interface PaymentInit {
   currency: string;
 }
 
+export interface SupportConfig {
+  // True when the live in-cabinet support chat is on; otherwise the widget shows the
+  // Telegram fallback link.
+  enabled: boolean;
+  telegram_url: string | null;
+}
+
 export interface PublicConfig {
   turnstile_site_key: string | null;
   // Trial length (days) referred friends get — drives the "N дней бесплатно" pill.
   // Null when there is no invited-only trial plan (no referral bonus).
   referred_trial_days: number | null;
+  support: SupportConfig;
+}
+
+export interface SupportMessage {
+  id: number;
+  author: "user" | "operator" | "system";
+  text: string;
+  created_at: string; // ISO 8601
+}
+
+export interface SupportHistory {
+  enabled: boolean;
+  status: string | null; // open / closed
+  messages: SupportMessage[];
 }
 
 export interface OnboardingConfig {
@@ -438,4 +459,11 @@ export const api = {
       duration_days: durationDays,
       gateway_type: gatewayType,
     }),
+
+  // Support chat. History on load (after = 0), then poll with the last seen id as the
+  // cursor. Sending relays the message into the user's Telegram operator topic.
+  supportHistory: (after = 0) =>
+    req<SupportHistory>("GET", `/support/messages?after=${after}`),
+  sendSupportMessage: (text: string) =>
+    req<SupportMessage>("POST", "/support/messages", { text }),
 };
