@@ -380,6 +380,12 @@ export interface SupportHistory {
   messages: SupportMessage[];
 }
 
+// One frame off the support SSE stream (`GET /support/stream`), discriminated by
+// `type`: a new message to append, or a conversation status change (open/closed).
+export type SupportStreamEvent =
+  | { type: "message"; message: SupportMessage }
+  | { type: "status"; status: string };
+
 export interface OnboardingConfig {
   happ_import_template: string;
   refresh_video_url: string | null;
@@ -463,10 +469,17 @@ export const api = {
       gateway_type: gatewayType,
     }),
 
-  // Support chat. History on load (after = 0), then poll with the last seen id as the
-  // cursor. Sending relays the message into the user's Telegram operator topic.
+  // Support chat. History on load (after = 0); live updates then arrive via the SSE
+  // stream below (with the history poll as a fallback). Sending relays the message
+  // into the user's Telegram operator topic.
   supportHistory: (after = 0) =>
     req<SupportHistory>("GET", `/support/messages?after=${after}`),
   sendSupportMessage: (text: string) =>
     req<SupportMessage>("POST", "/support/messages", { text }),
+
+  // Support live stream (SSE). EventSource carries the first-party cookies same-origin
+  // but can't use req()'s headers/refresh, so this just returns the URL to hand to
+  // `new EventSource(url, { withCredentials: true })`. `after` seeds the server's
+  // catch-up cursor on the first connection; reconnects resume via Last-Event-ID.
+  supportStreamUrl: (after = 0) => `${BASE}/support/stream?after=${after}`,
 };

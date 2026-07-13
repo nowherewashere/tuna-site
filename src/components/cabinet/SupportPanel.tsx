@@ -2,7 +2,12 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Icon, { type IconName } from "@/components/Icon";
-import { api, type SubscriptionInfo, type SupportMessage } from "@/lib/api";
+import {
+  api,
+  type SubscriptionInfo,
+  type SupportMessage,
+  type SupportStreamEvent,
+} from "@/lib/api";
 import { ConsoleFrame } from "@/components/ui";
 
 const GREETING =
@@ -13,7 +18,12 @@ const HELP: { icon: IconName; title: string; text: string }[] = [
   { icon: "globe", title: "Смени локацию", text: "Переключи локацию или протокол в Happ — иногда пробивает лучше." },
 ];
 
-const POLL_INTERVAL_MS = 4000;
+// Polling is the fallback for when the SSE stream is down/unsupported. It idles from
+// fast (a reply likely incoming) up to a slow ceiling (quiet chat), resetting to fast
+// on any send or received message so a live exchange stays responsive.
+const POLL_MIN_MS = 4000;
+const POLL_MAX_MS = 15000;
+const POLL_BACKOFF = 1.5;
 
 type Who = "them" | "me" | "sys";
 
@@ -41,6 +51,9 @@ export default function SupportPanel({
 
   const cursorRef = useRef(0);
   const logRef = useRef<HTMLDivElement>(null);
+  // Set by the transport effect; lets `sendMsg` reset the polling cadence to fast when
+  // it is the active transport (no-op while SSE is healthy and polling is stopped).
+  const pokePollRef = useRef<() => void>(() => {});
 
   const appendServer = useCallback((incoming: SupportMessage[]) => {
     if (incoming.length === 0) return;
@@ -81,31 +94,102 @@ export default function SupportPanel({
     };
   }, []);
 
-  // Poll for operator replies while the chat is open and the tab is visible.
+  // Live updates: prefer the SSE push stream; fall back to the history poll (with idle
+  // backoff) whenever SSE is unsupported, errored, or terminally closed. Both feed the
+  // same dedupe-by-id merge, so overlap during a handover is harmless.
   useEffect(() => {
     if (!enabled) return;
     let stopped = false;
-    let timer: ReturnType<typeof setTimeout>;
+    let es: EventSource | null = null;
+    let pollTimer: ReturnType<typeof setTimeout> | undefined;
+    let pollDelay = POLL_MIN_MS;
 
-    const tick = async () => {
-      if (!document.hidden) {
-        try {
-          const history = await api.supportHistory(cursorRef.current);
-          if (!stopped) {
-            setStatus(history.status);
-            appendServer(history.messages);
-          }
-        } catch {
-          // transient — keep polling
-        }
+    // --- polling fallback (idle backoff, visibility-paused) ---------------------
+    const schedulePoll = (delay: number) => {
+      clearTimeout(pollTimer);
+      pollTimer = setTimeout(poll, delay);
+    };
+    const poll = async () => {
+      if (stopped) return;
+      // Keep the tab-hidden pause: don't fetch while hidden, just re-check soon.
+      if (document.hidden) {
+        schedulePoll(POLL_MIN_MS);
+        return;
       }
-      if (!stopped) timer = setTimeout(tick, POLL_INTERVAL_MS);
+      let gotNew = false;
+      try {
+        const history = await api.supportHistory(cursorRef.current);
+        if (!stopped) {
+          setStatus(history.status);
+          gotNew = history.messages.length > 0;
+          appendServer(history.messages);
+        }
+      } catch {
+        // transient — keep polling
+      }
+      if (stopped) return;
+      // Reset to fast on activity, otherwise ramp toward the idle ceiling.
+      pollDelay = gotNew ? POLL_MIN_MS : Math.min(POLL_MAX_MS, Math.round(pollDelay * POLL_BACKOFF));
+      schedulePoll(pollDelay);
+    };
+    const startPolling = () => {
+      if (pollTimer !== undefined) return; // already polling
+      pollDelay = POLL_MIN_MS;
+      schedulePoll(POLL_MIN_MS);
+    };
+    const stopPolling = () => {
+      clearTimeout(pollTimer);
+      pollTimer = undefined;
+    };
+    // Let `sendMsg` snap polling back to fast (only meaningful while polling is active).
+    pokePollRef.current = () => {
+      if (pollTimer !== undefined) {
+        pollDelay = POLL_MIN_MS;
+        schedulePoll(POLL_MIN_MS);
+      }
     };
 
-    timer = setTimeout(tick, POLL_INTERVAL_MS);
+    // --- SSE primary ------------------------------------------------------------
+    const handleFrame = (data: string) => {
+      try {
+        const ev = JSON.parse(data) as SupportStreamEvent;
+        if (ev.type === "message") appendServer([ev.message]);
+        else if (ev.type === "status") setStatus(ev.status);
+      } catch {
+        /* ignore a malformed frame */
+      }
+    };
+
+    if (typeof EventSource !== "undefined") {
+      es = new EventSource(api.supportStreamUrl(cursorRef.current), { withCredentials: true });
+      es.onopen = () => stopPolling(); // stream healthy → stop the fallback poll
+      es.onmessage = (e) => handleFrame(e.data);
+      es.onerror = () => {
+        // Terminal (server error / support disabled) → EventSource won't retry, so fall
+        // back to polling for good. Transient (network blip) → the browser auto-reconnects
+        // with Last-Event-ID; poll as a safety net until onopen stops it again.
+        if (es && es.readyState === EventSource.CLOSED) {
+          es.close();
+          es = null;
+        }
+        startPolling();
+      };
+    } else {
+      startPolling(); // no EventSource support → polling only
+    }
+
+    // Re-poll immediately when a hidden tab returns (skips the paused wait).
+    const onVisible = () => {
+      if (!document.hidden && pollTimer !== undefined) schedulePoll(0);
+    };
+    document.addEventListener("visibilitychange", onVisible);
+
     return () => {
       stopped = true;
-      clearTimeout(timer);
+      stopPolling();
+      pokePollRef.current = () => {};
+      document.removeEventListener("visibilitychange", onVisible);
+      if (es) es.close();
     };
   }, [enabled, appendServer]);
 
@@ -125,6 +209,7 @@ export default function SupportPanel({
       const message = await api.sendSupportMessage(value);
       appendServer([message]);
       setStatus("open");
+      pokePollRef.current(); // a reply is likely incoming — poll fast if SSE is down
     } catch {
       setSendError(true);
       setDraft(value); // restore so the user can retry
