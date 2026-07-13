@@ -612,6 +612,9 @@
   flex-direction: column;
   gap: 12px;
   min-height: 180px;
+  max-height: 52vh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 .msg {
   display: flex;

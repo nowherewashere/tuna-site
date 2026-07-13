@@ -11,7 +11,6 @@ const GREETING =
 const HELP: { icon: IconName; title: string; text: string }[] = [
   { icon: "refresh", title: "Обнови в Happ", text: "Открой Happ и нажми «Обновить» — подтянет свежие сервера." },
   { icon: "globe", title: "Смени локацию", text: "Переключи локацию или протокол в Happ — иногда пробивает лучше." },
-  { icon: "phone", title: "Переподключись", text: "Отвяжи устройство во вкладке «Устройства» и добавь профиль заново." },
 ];
 
 const POLL_INTERVAL_MS = 4000;
