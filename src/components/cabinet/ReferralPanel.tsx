@@ -223,6 +223,16 @@ export default function ReferralPanel({
     }
   }
 
+  // The site referral link: prefer the backend value (set when REFERRAL_SITE_URL is
+  // configured), else derive it from the cabinet's own origin so a shareable /r/ link is
+  // ALWAYS available — no ops toggle needed. The capture pipeline (RefCapture → localStorage
+  // + cookie → attach at signup) already works; this just makes the link obtainable.
+  const siteReferralUrl =
+    referral.site_referral_url ??
+    (typeof window !== "undefined" && referral.referral_code
+      ? `${window.location.origin}/r/${referral.referral_code}`
+      : null);
+
   return (
     <div className="panel">
       <h2 className="panel-title">Приглашай друзей</h2>
@@ -239,9 +249,7 @@ export default function ReferralPanel({
 
         <div className="ref-links">
           <UriField label="Ссылка для бота" value={referral.bot_referral_url} />
-          {referral.site_referral_url && (
-            <UriField label="Ссылка для сайта" value={referral.site_referral_url} />
-          )}
+          {siteReferralUrl && <UriField label="Ссылка для сайта" value={siteReferralUrl} />}
         </div>
 
         <div className="console-readouts ref-readouts">
