@@ -345,8 +345,6 @@ export default function SupportPanel({
   const showGreeting = enabled && !loading && messages.length === 0;
   const rows = useMemo(() => buildRows(messages), [messages]);
   const closed = status === "closed";
-  const awaitingOperator =
-    enabled && !closed && messages.length > 0 && messages[messages.length - 1].author === "user";
 
   return (
     <div className="panel">
@@ -416,16 +414,6 @@ export default function SupportPanel({
                 ) : (
                   <MessageRow key={row.key} m={row.m} grouped={row.grouped} />
                 ),
-              )}
-              {awaitingOperator && (
-                <div className="msg them">
-                  <div className="chat-pending" aria-live="polite">
-                    <span className="chat-typing" aria-hidden="true">
-                      <i /><i /><i />
-                    </span>
-                    оператор скоро ответит
-                  </div>
-                </div>
               )}
               {closed && (
                 <div className="msg sys">
