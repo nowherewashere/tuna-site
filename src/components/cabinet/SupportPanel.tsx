@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Icon, { type IconName } from "@/components/Icon";
 import {
   api,
+  ApiError,
   type SubscriptionInfo,
   type SupportMessage,
   type SupportStreamEvent,
@@ -110,7 +111,8 @@ export default function SupportPanel({
   const [conn, setConn] = useState<Conn>("connecting");
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
-  const [sendError, setSendError] = useState(false);
+  const [sendError, setSendError] = useState<string | null>(null);
+  const [loadFailed, setLoadFailed] = useState(false);
   const [unread, setUnread] = useState(0);
   const [atBottom, setAtBottom] = useState(true);
 
@@ -155,8 +157,10 @@ export default function SupportPanel({
     if (bottom) setUnread(0);
   }, []);
 
-  // Initial load: history (which also tells us if live chat is on) + the Telegram
-  // fallback link when it isn't.
+  // Initial load (re-runnable via reloadKey): history tells us whether live chat is on;
+  // the Telegram fallback link when it isn't. On failure we surface an explicit "Обновить"
+  // affordance rather than a dead, button-less stub.
+  const [reloadKey, setReloadKey] = useState(0);
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -173,7 +177,7 @@ export default function SupportPanel({
           if (!cancelled) setTelegramUrl(cfg.support?.telegram_url ?? null);
         }
       } catch {
-        // Leave the widget in its fallback state; the self-help block still helps.
+        if (!cancelled) setLoadFailed(true);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -181,7 +185,7 @@ export default function SupportPanel({
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [reloadKey]);
 
   // Live updates: prefer the SSE push stream; fall back to the history poll (with idle
   // backoff) whenever SSE is unsupported, errored, or terminally closed. Both feed the
@@ -314,12 +318,18 @@ export default function SupportPanel({
     if (el) el.scrollTop = el.scrollHeight;
   }, [loading]);
 
-  // Auto-grow the composer up to a cap, so multi-line problems are readable while typing.
+  // Auto-grow the composer up to a cap. `scrollHeight` is the content+padding height; on a
+  // border-box textarea the box must also include the border to fit exactly — otherwise
+  // it's ~1–2px short, which showed a spurious scrollbar after every send. Add that border
+  // delta, and only allow scrolling once content genuinely exceeds the 140px cap.
   useEffect(() => {
     const el = taRef.current;
     if (!el) return;
     el.style.height = "auto";
-    el.style.height = `${Math.min(el.scrollHeight, 140)}px`;
+    const border = el.offsetHeight - el.clientHeight;
+    const full = el.scrollHeight + border;
+    el.style.height = `${Math.min(full, 140)}px`;
+    el.style.overflowY = full > 140 ? "auto" : "hidden";
   }, [draft]);
 
   async function sendMsg() {
@@ -327,24 +337,35 @@ export default function SupportPanel({
     if (!value || sending) return;
     setDraft("");
     setSending(true);
-    setSendError(false);
+    setSendError(null);
     forceScrollRef.current = true; // always follow your own message down
     try {
       const message = await api.sendSupportMessage(value);
       appendServer([message]);
       setStatus("open");
       pokePollRef.current(); // a reply is likely incoming — poll fast if SSE is down
-    } catch {
-      setSendError(true);
+    } catch (e) {
+      setSendError(
+        e instanceof ApiError && e.status === 429
+          ? "Слишком часто — подождите немного и попробуйте снова."
+          : "Не удалось отправить. Проверьте связь и попробуйте ещё раз.",
+      );
       setDraft(value); // restore so the user can retry
     } finally {
       setSending(false);
+      // The textarea is never disabled, but refocus anyway so Enter-to-send flows
+      // continuously (and returns focus after a restored draft on error).
+      taRef.current?.focus();
     }
   }
 
   const showGreeting = enabled && !loading && messages.length === 0;
   const rows = useMemo(() => buildRows(messages), [messages]);
   const closed = status === "closed";
+  // The auto-close heads-up is only meaningful for an active conversation with messages —
+  // hide it when there's nothing yet, and when closed (the banner already says it).
+  const showCloseNote = enabled && !closed && messages.length > 0;
+  const showCount = draft.length > MAX_LEN - 500;
 
   return (
     <div className="panel">
@@ -442,29 +463,54 @@ export default function SupportPanel({
                   sendMsg();
                 }
               }}
-              disabled={sending}
               aria-label="Сообщение в поддержку"
             />
             <button className="btn btn-amber" onClick={sendMsg} disabled={sending || !draft.trim()}>
               {sending ? "Отправляем…" : "Отправить"}
             </button>
           </div>
-          <div className="chat-foot">
-            <span className="chat-note-inline">
-              <Icon name="refresh" size={13} /> Чат закроется после долгой паузы — просто напишите
-              снова, чтобы продолжить.
-            </span>
-            {draft.length > MAX_LEN - 500 && (
-              <span className="chat-count">
-                {draft.length}/{MAX_LEN}
-              </span>
-            )}
-          </div>
+          {(showCloseNote || showCount) && (
+            <div className="chat-foot">
+              {showCloseNote ? (
+                <span className="chat-note-inline">
+                  <Icon name="refresh" size={13} /> Чат закроется после долгой паузы — просто напишите
+                  снова, чтобы продолжить.
+                </span>
+              ) : (
+                <span />
+              )}
+              {showCount && (
+                <span className="chat-count">
+                  {draft.length}/{MAX_LEN}
+                </span>
+              )}
+            </div>
+          )}
           {sendError && (
             <p className="chat-error" role="alert">
-              Не удалось отправить. Проверьте связь и попробуйте ещё раз.
+              {sendError}
             </p>
           )}
+        </div>
+      ) : loadFailed ? (
+        <div className="chat-box">
+          <div className="chat-log">
+            <div className="msg sys">
+              <span>Не удалось загрузить чат. Проверьте связь и попробуйте снова.</span>
+            </div>
+          </div>
+          <div className="chat-input">
+            <button
+              className="btn btn-amber"
+              onClick={() => {
+                setLoadFailed(false);
+                setLoading(true);
+                setReloadKey((k) => k + 1);
+              }}
+            >
+              Обновить
+            </button>
+          </div>
         </div>
       ) : (
         <div className="chat-box">

@@ -651,6 +651,8 @@
   border-radius: 14px;
   font-size: 14px;
   line-height: 1.5;
+  /* A long URL / unbroken token must wrap, not overflow the bubble. */
+  overflow-wrap: anywhere;
 }
 .msg.them .bubble {
   background: var(--ocean);
@@ -768,6 +770,9 @@
   max-height: 140px;
   line-height: 1.4;
   font-family: inherit;
+  /* JS toggles this to `auto` only past the 140px cap; hidden by default so a 1–2px
+     border/scrollHeight mismatch never shows a spurious scrollbar. */
+  overflow-y: hidden;
 }
 .chat-foot {
   display: flex;
