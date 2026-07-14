@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Icon, { type IconName } from "@/components/Icon";
 import {
   api,
@@ -25,12 +25,74 @@ const POLL_MIN_MS = 4000;
 const POLL_MAX_MS = 15000;
 const POLL_BACKOFF = 1.5;
 
+const MAX_LEN = 4000;
+const GROUP_WINDOW_MS = 5 * 60 * 1000; // messages within 5 min from the same author group
+const NEAR_BOTTOM_PX = 48;
+
+// Transport health, surfaced by the header dot so the user can see the chat is live.
+type Conn = "connecting" | "live" | "polling";
+const CONN_LABEL: Record<Conn, string> = {
+  connecting: "подключаемся…",
+  live: "на связи · отвечаем ~10 мин",
+  polling: "обновляем…",
+};
+
 type Who = "them" | "me" | "sys";
 
 function authorToWho(author: SupportMessage["author"]): Who {
   if (author === "operator") return "them";
   if (author === "system") return "sys";
   return "me";
+}
+
+const timeFmt = new Intl.DateTimeFormat("ru-RU", { hour: "2-digit", minute: "2-digit" });
+const dayFmt = new Intl.DateTimeFormat("ru-RU", { day: "numeric", month: "long" });
+
+function msgTime(iso: string): string {
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime()) ? "" : timeFmt.format(d);
+}
+function dayLabel(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const today = new Date();
+  const yesterday = new Date();
+  yesterday.setDate(today.getDate() - 1);
+  if (d.toDateString() === today.toDateString()) return "Сегодня";
+  if (d.toDateString() === yesterday.toDateString()) return "Вчера";
+  return dayFmt.format(d);
+}
+
+// Flatten the message list into render rows: day dividers between calendar days, plus a
+// `grouped` flag when a message continues the same author within a short window (tighter
+// spacing), so the log reads as a conversation rather than a flat wall of bubbles.
+type Row =
+  | { kind: "day"; key: string; label: string }
+  | { kind: "msg"; key: number; m: SupportMessage; grouped: boolean };
+
+function buildRows(messages: SupportMessage[]): Row[] {
+  const rows: Row[] = [];
+  let lastDay = "";
+  let lastAuthor: SupportMessage["author"] | null = null;
+  let lastTime = 0;
+  for (const m of messages) {
+    const d = new Date(m.created_at);
+    const valid = !Number.isNaN(d.getTime());
+    const dayKey = valid ? d.toDateString() : "";
+    if (dayKey && dayKey !== lastDay) {
+      rows.push({ kind: "day", key: `day-${dayKey}`, label: dayLabel(m.created_at) });
+      lastDay = dayKey;
+      lastAuthor = null;
+      lastTime = 0;
+    }
+    const t = valid ? d.getTime() : 0;
+    const grouped =
+      m.author === lastAuthor && t > 0 && lastTime > 0 && t - lastTime < GROUP_WINDOW_MS;
+    rows.push({ kind: "msg", key: m.id, m, grouped });
+    lastAuthor = m.author;
+    if (t > 0) lastTime = t;
+  }
+  return rows;
 }
 
 export default function SupportPanel({
@@ -45,15 +107,25 @@ export default function SupportPanel({
   const [telegramUrl, setTelegramUrl] = useState<string | null>(null);
   const [messages, setMessages] = useState<SupportMessage[]>([]);
   const [status, setStatus] = useState<string | null>(null);
+  const [conn, setConn] = useState<Conn>("connecting");
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState(false);
+  const [unread, setUnread] = useState(0);
+  const [atBottom, setAtBottom] = useState(true);
 
   const cursorRef = useRef(0);
   const logRef = useRef<HTMLDivElement>(null);
+  const taRef = useRef<HTMLTextAreaElement>(null);
   // Set by the transport effect; lets `sendMsg` reset the polling cadence to fast when
   // it is the active transport (no-op while SSE is healthy and polling is stopped).
   const pokePollRef = useRef<() => void>(() => {});
+  // Smart-autoscroll bookkeeping (kept in refs so the messages effect isn't a closure
+  // over stale state): are we pinned to the bottom, how long was the list, and a
+  // one-shot "force scroll" for the user's own send.
+  const atBottomRef = useRef(true);
+  const prevLenRef = useRef(0);
+  const forceScrollRef = useRef(false);
 
   const appendServer = useCallback((incoming: SupportMessage[]) => {
     if (incoming.length === 0) return;
@@ -64,6 +136,23 @@ export default function SupportPanel({
       return merged;
     });
     cursorRef.current = incoming.reduce((max, m) => Math.max(max, m.id), cursorRef.current);
+  }, []);
+
+  const scrollToBottom = useCallback(() => {
+    const el = logRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
+    atBottomRef.current = true;
+    setAtBottom(true);
+    setUnread(0);
+  }, []);
+
+  const onLogScroll = useCallback(() => {
+    const el = logRef.current;
+    if (!el) return;
+    const bottom = el.scrollHeight - el.scrollTop - el.clientHeight < NEAR_BOTTOM_PX;
+    atBottomRef.current = bottom;
+    setAtBottom(bottom);
+    if (bottom) setUnread(0);
   }, []);
 
   // Initial load: history (which also tells us if live chat is on) + the Telegram
@@ -96,7 +185,8 @@ export default function SupportPanel({
 
   // Live updates: prefer the SSE push stream; fall back to the history poll (with idle
   // backoff) whenever SSE is unsupported, errored, or terminally closed. Both feed the
-  // same dedupe-by-id merge, so overlap during a handover is harmless.
+  // same dedupe-by-id merge, so overlap during a handover is harmless. `conn` mirrors the
+  // transport so the header dot can show live / connecting / polling.
   useEffect(() => {
     if (!enabled) return;
     let stopped = false;
@@ -111,6 +201,7 @@ export default function SupportPanel({
     };
     const poll = async () => {
       if (stopped) return;
+      setConn("polling"); // reaching the poll means SSE isn't the live transport
       // Keep the tab-hidden pause: don't fetch while hidden, just re-check soon.
       if (document.hidden) {
         schedulePoll(POLL_MIN_MS);
@@ -162,20 +253,25 @@ export default function SupportPanel({
 
     if (typeof EventSource !== "undefined") {
       es = new EventSource(api.supportStreamUrl(cursorRef.current), { withCredentials: true });
-      es.onopen = () => stopPolling(); // stream healthy → stop the fallback poll
+      es.onopen = () => {
+        setConn("live"); // real-time push established
+        stopPolling(); // stream healthy → stop the fallback poll
+      };
       es.onmessage = (e) => handleFrame(e.data);
       es.onerror = () => {
         // Terminal (server error / support disabled) → EventSource won't retry, so fall
         // back to polling for good. Transient (network blip) → the browser auto-reconnects
-        // with Last-Event-ID; poll as a safety net until onopen stops it again.
+        // with Last-Event-ID; poll as a safety net until onopen stops it again (which also
+        // flips `conn` back to live). `poll` itself sets conn to "polling".
         if (es && es.readyState === EventSource.CLOSED) {
           es.close();
           es = null;
+          setConn("polling"); // terminal — reflect the fallback immediately (callback, not effect body)
         }
         startPolling();
       };
     } else {
-      startPolling(); // no EventSource support → polling only
+      startPolling(); // no EventSource support → polling only (poll sets conn)
     }
 
     // Re-poll immediately when a hidden tab returns (skips the paused wait).
@@ -193,11 +289,38 @@ export default function SupportPanel({
     };
   }, [enabled, appendServer]);
 
-  // Keep the log pinned to the latest message.
+  // Smart autoscroll: pin to the newest message only when the user is already at the
+  // bottom (or just sent) — otherwise count arrivals for the "new messages" pill so
+  // reading scrollback isn't yanked away.
   useEffect(() => {
     const el = logRef.current;
+    if (!el) return;
+    const added = messages.length - prevLenRef.current;
+    prevLenRef.current = messages.length;
+    if (forceScrollRef.current || atBottomRef.current) {
+      el.scrollTop = el.scrollHeight;
+      setUnread(0);
+      forceScrollRef.current = false;
+    } else if (added > 0) {
+      setUnread((u) => u + added);
+    }
+  }, [messages]);
+
+  // First paint of the chat: land at the bottom (DOM-only; atBottom/unread already
+  // default to bottom/0, so no state change is needed here).
+  useEffect(() => {
+    if (loading) return;
+    const el = logRef.current;
     if (el) el.scrollTop = el.scrollHeight;
-  }, [messages, loading]);
+  }, [loading]);
+
+  // Auto-grow the composer up to a cap, so multi-line problems are readable while typing.
+  useEffect(() => {
+    const el = taRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight, 140)}px`;
+  }, [draft]);
 
   async function sendMsg() {
     const value = draft.trim();
@@ -205,6 +328,7 @@ export default function SupportPanel({
     setDraft("");
     setSending(true);
     setSendError(false);
+    forceScrollRef.current = true; // always follow your own message down
     try {
       const message = await api.sendSupportMessage(value);
       appendServer([message]);
@@ -219,6 +343,10 @@ export default function SupportPanel({
   }
 
   const showGreeting = enabled && !loading && messages.length === 0;
+  const rows = useMemo(() => buildRows(messages), [messages]);
+  const closed = status === "closed";
+  const awaitingOperator =
+    enabled && !closed && messages.length > 0 && messages[messages.length - 1].author === "user";
 
   return (
     <div className="panel">
@@ -255,46 +383,94 @@ export default function SupportPanel({
         <div className="chat-box">
           <div className="chat-head">
             <div className="chat-title">
-              <span className="chat-online" /> Чат поддержки{" "}
-              <span className="chat-eta">отвечаем ~10 мин</span>
+              <span
+                className={`chat-dot chat-dot--${conn}`}
+                aria-hidden="true"
+              />
+              Чат поддержки <span className="chat-eta">{CONN_LABEL[conn]}</span>
             </div>
             <span className="chat-ctx">
               {displayName} · {sub?.plan_name ?? "—"}
             </span>
           </div>
-          <div className="chat-log" ref={logRef} role="log" aria-live="polite">
-            {showGreeting && (
-              <div className="msg them">
-                <div className="bubble">{GREETING}</div>
-              </div>
-            )}
-            {messages.map((m) => {
-              const who = authorToWho(m.author);
-              return (
-                <div key={m.id} className={`msg ${who}`}>
-                  {who === "sys" ? <span>{m.text}</span> : <div className="bubble">{m.text}</div>}
+          <div className="chat-scroll">
+            <div
+              className="chat-log"
+              ref={logRef}
+              onScroll={onLogScroll}
+              role="log"
+              aria-live="polite"
+            >
+              {showGreeting && (
+                <div className="msg them">
+                  <div className="msg-wrap">
+                    <div className="bubble">{GREETING}</div>
+                  </div>
                 </div>
-              );
-            })}
-            {status === "closed" && (
-              <div className="msg sys">
-                <span>Диалог закрыт оператором. Напишите сообщение, чтобы продолжить.</span>
-              </div>
+              )}
+              {rows.map((row) =>
+                row.kind === "day" ? (
+                  <div className="chat-day" key={row.key}>
+                    <span>{row.label}</span>
+                  </div>
+                ) : (
+                  <MessageRow key={row.key} m={row.m} grouped={row.grouped} />
+                ),
+              )}
+              {awaitingOperator && (
+                <div className="msg them">
+                  <div className="chat-pending" aria-live="polite">
+                    <span className="chat-typing" aria-hidden="true">
+                      <i /><i /><i />
+                    </span>
+                    оператор скоро ответит
+                  </div>
+                </div>
+              )}
+              {closed && (
+                <div className="msg sys">
+                  <span>Диалог закрыт. Напишите сообщение, чтобы продолжить.</span>
+                </div>
+              )}
+            </div>
+            {!atBottom && unread > 0 && (
+              <button type="button" className="chat-jump" onClick={scrollToBottom}>
+                ↓ Новые сообщения{unread > 1 ? ` · ${unread}` : ""}
+              </button>
             )}
           </div>
           <div className="chat-input">
-            <input
-              className="field"
+            <textarea
+              ref={taRef}
+              className="field chat-textarea"
+              rows={1}
+              maxLength={MAX_LEN}
               placeholder="Опиши проблему…"
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && sendMsg()}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  sendMsg();
+                }
+              }}
               disabled={sending}
               aria-label="Сообщение в поддержку"
             />
             <button className="btn btn-amber" onClick={sendMsg} disabled={sending || !draft.trim()}>
               {sending ? "Отправляем…" : "Отправить"}
             </button>
+          </div>
+          <div className="chat-foot">
+            <span className="chat-note-inline">
+              <Icon name="refresh" size={13} /> Чат закроется после долгой паузы — просто напишите
+              снова, чтобы продолжить.
+            </span>
+            {draft.length > MAX_LEN - 500 && (
+              <span className="chat-count">
+                {draft.length}/{MAX_LEN}
+              </span>
+            )}
           </div>
           {sendError && (
             <p className="chat-error" role="alert">
@@ -320,6 +496,30 @@ export default function SupportPanel({
           )}
         </div>
       )}
+    </div>
+  );
+}
+
+function MessageRow({ m, grouped }: { m: SupportMessage; grouped: boolean }) {
+  const who = authorToWho(m.author);
+  if (who === "sys") {
+    return (
+      <div className="msg sys">
+        <span>{m.text}</span>
+      </div>
+    );
+  }
+  const time = msgTime(m.created_at);
+  return (
+    <div className={`msg ${who}${grouped ? " is-grouped" : ""}`}>
+      <div className="msg-wrap">
+        <div className="bubble">{m.text}</div>
+        {time && (
+          <time className="msg-time" dateTime={m.created_at}>
+            {time}
+          </time>
+        )}
+      </div>
     </div>
   );
 }

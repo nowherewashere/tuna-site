@@ -584,12 +584,32 @@
   align-items: center;
   gap: 8px;
 }
-.chat-online {
+/* Header status dot — reflects the live transport (green = SSE push, amber =
+   connecting / polling fallback), so the user can see the chat is actually live. */
+.chat-dot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
   background: var(--green);
   box-shadow: 0 0 0 3px rgba(63, 192, 122, 0.25);
+  flex-shrink: 0;
+}
+.chat-dot--connecting,
+.chat-dot--polling {
+  background: var(--amber);
+  box-shadow: 0 0 0 3px rgba(245, 166, 35, 0.22);
+}
+.chat-dot--connecting {
+  animation: chat-dot-pulse 1.3s ease-in-out infinite;
+}
+@keyframes chat-dot-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
 }
 .chat-eta {
   font-size: 12px;
@@ -656,6 +676,7 @@
 }
 .chat-input {
   display: flex;
+  align-items: flex-end;
   gap: 10px;
   padding: 16px 20px;
   border-top: 1px solid var(--line);
@@ -679,6 +700,143 @@
 .chat-note svg {
   vertical-align: -3px;
   color: var(--amber);
+}
+
+/* --- chat UX: day dividers, timestamps, grouping, typing, jump pill, composer --- */
+.chat-scroll {
+  position: relative;
+}
+.chat-day {
+  display: flex;
+  justify-content: center;
+  margin: 2px 0;
+}
+.chat-day span {
+  font-size: 11px;
+  color: var(--ink-card-dim);
+  background: var(--ocean);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 3px 12px;
+}
+.msg-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  max-width: 80%;
+}
+.msg.me .msg-wrap {
+  align-items: flex-end;
+}
+.msg.them .msg-wrap {
+  align-items: flex-start;
+}
+.msg-wrap .bubble {
+  max-width: 100%;
+}
+.msg-time {
+  font-size: 10.5px;
+  color: var(--ink-card-dim);
+  padding: 0 4px;
+}
+.msg.is-grouped {
+  margin-top: -8px;
+}
+.chat-pending {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  color: var(--ink-card-dim);
+  background: var(--ocean);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  border-bottom-left-radius: 4px;
+  padding: 10px 14px;
+}
+.chat-typing {
+  display: inline-flex;
+  gap: 3px;
+}
+.chat-typing i {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--ink-card-dim);
+  animation: chat-typing 1s infinite ease-in-out;
+}
+.chat-typing i:nth-child(2) {
+  animation-delay: 0.15s;
+}
+.chat-typing i:nth-child(3) {
+  animation-delay: 0.3s;
+}
+@keyframes chat-typing {
+  0%,
+  60%,
+  100% {
+    opacity: 0.3;
+    transform: translateY(0);
+  }
+  30% {
+    opacity: 1;
+    transform: translateY(-2px);
+  }
+}
+.chat-jump {
+  position: absolute;
+  left: 50%;
+  bottom: 12px;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--amber-ink);
+  background: var(--amber);
+  border: none;
+  border-radius: 999px;
+  padding: 7px 14px;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.28);
+}
+.chat-textarea {
+  flex: 1;
+  min-width: 0;
+  resize: none;
+  min-height: 44px;
+  max-height: 140px;
+  line-height: 1.4;
+  font-family: inherit;
+}
+.chat-foot {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 0 20px 14px;
+}
+.chat-note-inline {
+  font-size: 11.5px;
+  color: var(--ink-card-dim);
+}
+.chat-note-inline svg {
+  vertical-align: -2px;
+  color: var(--amber);
+  margin-right: 3px;
+}
+.chat-count {
+  flex-shrink: 0;
+  font-size: 11px;
+  color: var(--ink-card-dim);
+  font-family: var(--font-mono), monospace;
+}
+@media (prefers-reduced-motion: reduce) {
+  .chat-dot--connecting,
+  .chat-typing i {
+    animation: none;
+  }
 }
 .eyebrow-legal {
   display: inline-flex;
