@@ -14,11 +14,18 @@
   justify-content: center;
   padding: clamp(40px, 7vh, 96px) 0;
 }
-/* Desktop: nudge the copy off the far-left edge toward the right-hand fish so the
-   tuna doesn't read as isolated in the corner. */
+/* Desktop: anchor the copy on the site's left content column. In this flex-column hero
+   the .wrap otherwise shrinks to its content and self-centres (margin:0 auto), which
+   dragged the copy toward the middle; width:100% lets it fill the 1140 container so the
+   copy lines up with the nav/footer gutter, then a small inward nudge keeps it off the
+   flush edge without reaching centre. Whole block is desktop-gated — the mobile
+   (max-width:900px) layout, which relies on the shrink-to-content wrap, is untouched. */
 @media (min-width: 901px) {
+  .hero > .wrap {
+    width: 100%;
+  }
   .hero-grid {
-    margin-inline-start: clamp(0px, 9vw, 150px);
+    margin-inline-start: clamp(0px, 4vw, 80px);
   }
 }
 /* Depth scrim behind the copy (left) — darker water that also lifts text
