@@ -196,7 +196,7 @@ export default async function LandingPage() {
                   Tuna <span className="amber">VPN</span>
                 </h1>
                 <p className="hero-sub reveal d3">
-                  Свободный доступ к мировому океану интернета — там, где обычные VPN уже не пускают.
+                  Свободный доступ к мировому океану интернета — там, где обычные VPN отваливаются.
                 </p>
                 <div className="hero-cta reveal d4">
                   <AuthCta
