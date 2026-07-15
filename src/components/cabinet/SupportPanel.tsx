@@ -371,7 +371,8 @@ export default function SupportPanel({
     <div className="panel">
       <div className="panel-title">Поддержка</div>
       <div className="panel-sub">
-        Не подключается? Чаще всего помогает — попробуй сам за минуту. Не вышло — напиши в чат.
+        Не подключается? Чаще всего это решается за минуту — попробуй советы ниже. Если не
+        помогло — напиши в чат, оператор на связи и поможет.
       </div>
 
       <ConsoleFrame aria-label="Быстрая помощь">
