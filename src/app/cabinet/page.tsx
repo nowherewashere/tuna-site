@@ -202,11 +202,11 @@ export default function CabinetPage() {
     loadDevices();
   }
 
-  async function pay(planCode: string, days: number, gateway: string) {
+  async function pay(planCode: string, days: number, gateway: string, paymentMethod?: number) {
     setPaying(true);
     setPayError(null);
     try {
-      const res = await api.purchase(planCode, days, gateway);
+      const res = await api.purchase(planCode, days, gateway, paymentMethod);
       if (res.payment_url) {
         redirectTo(res.payment_url); // hand off to the gateway
         return;

@@ -38,7 +38,7 @@ export default function SubscriptionPanel({
   setSelected: (s: Selected) => void;
   paying: boolean;
   payError: string | null;
-  onPay: (planCode: string, days: number, gateway: string) => void;
+  onPay: (planCode: string, days: number, gateway: string, paymentMethod?: number) => void;
   clearPayError: () => void;
 }) {
   // Captured once on mount (pure render); the day counter doesn't need to tick.
@@ -288,19 +288,40 @@ export default function SubscriptionPanel({
                           </>
                         )}
                       </p>
-                      {selDur.prices.map((pr) => (
-                        <button
-                          key={pr.gateway_type}
-                          className="btn btn-amber btn-full checkout-pay"
-                          disabled={paying}
-                          onClick={() => onPay(p.public_code, selDur.days, pr.gateway_type)}
-                        >
-                          {paying
-                            ? "Переход к оплате…"
-                            : `${payVerb} · ${pr.final_amount} ${pr.currency_symbol}` +
-                              (selDur.prices.length > 1 ? ` · ${pr.gateway_type}` : "")}
-                        </button>
-                      ))}
+                      {selDur.prices.map((pr) => {
+                        const methods = offers.gateways.find(
+                          (g) => g.gateway_type === pr.gateway_type,
+                        )?.methods;
+                        // Platega with an in-cabinet method choice: one pay button per
+                        // method (СБП / карта / крипта). The total is already shown above.
+                        if (methods && methods.length > 0) {
+                          return methods.map((m) => (
+                            <button
+                              key={`${pr.gateway_type}-${m.id}`}
+                              className="btn btn-amber btn-full checkout-pay"
+                              disabled={paying}
+                              onClick={() =>
+                                onPay(p.public_code, selDur.days, pr.gateway_type, m.id)
+                              }
+                            >
+                              {paying ? "Переход к оплате…" : `${payVerb} · ${m.label}`}
+                            </button>
+                          ));
+                        }
+                        return (
+                          <button
+                            key={pr.gateway_type}
+                            className="btn btn-amber btn-full checkout-pay"
+                            disabled={paying}
+                            onClick={() => onPay(p.public_code, selDur.days, pr.gateway_type)}
+                          >
+                            {paying
+                              ? "Переход к оплате…"
+                              : `${payVerb} · ${pr.final_amount} ${pr.currency_symbol}` +
+                                (selDur.prices.length > 1 ? ` · ${pr.gateway_type}` : "")}
+                          </button>
+                        );
+                      })}
                       {payError && (
                         <p className="checkout-error" role="alert">
                           {payError}

@@ -323,7 +323,14 @@ export interface PlanOffer {
 }
 
 export interface SubscriptionOffers {
-  gateways: { gateway_type: string; currency: string; currency_symbol: string }[];
+  gateways: {
+    gateway_type: string;
+    currency: string;
+    currency_symbol: string;
+    // Platega sub-methods (СБП / карта / крипта …) the user can pick; absent for other
+    // gateways or when Platega has no in-bot methods configured.
+    methods?: { id: number; label: string }[];
+  }[];
   plans: PlanOffer[];
   has_current_subscription: boolean;
   current_subscription_status: string | null;
@@ -462,11 +469,17 @@ export const api = {
     }),
 
   // Create a payment for a plan/duration via a gateway → returns a redirect URL.
-  purchase: (planCode: string, durationDays: number, gatewayType: string) =>
+  purchase: (
+    planCode: string,
+    durationDays: number,
+    gatewayType: string,
+    paymentMethod?: number,
+  ) =>
     req<PaymentInit>("POST", "/subscription/purchase", {
       plan_code: planCode,
       duration_days: durationDays,
       gateway_type: gatewayType,
+      payment_method: paymentMethod,
     }),
 
   // Support chat. History on load (after = 0); live updates then arrive via the SSE
