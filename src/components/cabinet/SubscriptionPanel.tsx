@@ -71,11 +71,15 @@ export default function SubscriptionPanel({
     if (!p || !d) return "";
     const pr = pickPrice(d);
     const isCur = !!sub && !isTrial && sub.plan_name === p.name;
+    const isSwitch = !!sub && !isTrial && !isCur;
     const modeWord = !sub || isTrial ? "Оформление" : isCur ? "Продление" : "Смена тарифа";
-    const exp = expiryAfterAdding(hasRemainder ? sub!.expire_at : null, d.days, now);
-    return `${modeWord}: ${p.name}, ${durationLabel(d.days)}${
-      pr ? `, ${pr.final_amount} ${pr.currency_symbol}` : ""
-    }, действует до ${exp}`;
+    const priceStr = pr ? `, ${pr.final_amount} ${pr.currency_symbol}` : "";
+    // On a switch the remainder converts to bonus days, so no exact end date up front.
+    const tail =
+      isSwitch && hasRemainder
+        ? `, остаток ${remainder} ${daysWord(remainder)} пересчитается в бонусные дни`
+        : `, действует до ${expiryAfterAdding(hasRemainder ? sub!.expire_at : null, d.days, now)}`;
+    return `${modeWord}: ${p.name}, ${durationLabel(d.days)}${priceStr}${tail}`;
   })();
 
   return (
@@ -112,7 +116,7 @@ export default function SubscriptionPanel({
 
       <div className="panel-sub panel-sub--center">
         {sub
-          ? "Продли текущий тариф или выбери другой — новые дни добавятся к остатку, ничего не сгорит."
+          ? "Продли текущий тариф или выбери другой — оставшееся время не сгорит."
           : "Выбери тариф и срок — чем дольше период, тем ниже цена за месяц."}
       </div>
 
@@ -249,15 +253,16 @@ export default function SubscriptionPanel({
                   const keepNote = hasRemainder
                     ? ` Остаток ${remainder} ${daysWord(remainder)} сохранится.`
                     : "";
+                  // On a plan switch the remaining value is converted to bonus days on the
+                  // new plan (not day-stacked), so an exact end date can't be shown up front.
+                  const isSwitchWithRemainder = mode === "switch" && hasRemainder;
                   const label =
                     mode === "renew" ? "Продление" : mode === "switch" ? "Смена тарифа" : "Оформление";
                   const context =
                     mode === "renew"
                       ? `Продлим «${p.name}» на ${term}.${keepNote}`
                       : mode === "switch"
-                        ? `Перейдём на «${p.name}» и добавим ${term}.${
-                            hasRemainder ? ` Остаток ${remainder} ${daysWord(remainder)} не сгорит.` : ""
-                          }`
+                        ? `Перейдём на «${p.name}» на ${term}.`
                         : `Активируем «${p.name}» на ${term}.${keepNote}`;
                   const payVerb = mode === "renew" ? "Продлить" : "Оплатить";
 
@@ -271,7 +276,17 @@ export default function SubscriptionPanel({
                       </div>
                       <p className="checkout-sub">{context}</p>
                       <p className="checkout-meta">
-                        <Icon name="calendar" size={14} /> Действует до <b>{newExpiry}</b>
+                        <Icon name="calendar" size={14} />{" "}
+                        {isSwitchWithRemainder ? (
+                          <>
+                            Остаток {remainder} {daysWord(remainder)} пересчитается в бонусные дни
+                            нового тарифа
+                          </>
+                        ) : (
+                          <>
+                            Действует до <b>{newExpiry}</b>
+                          </>
+                        )}
                       </p>
                       {selDur.prices.map((pr) => (
                         <button
