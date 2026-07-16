@@ -540,6 +540,29 @@
   flex-shrink: 0;
 }
 
+/* Per-plan locations (flag emojis) — shown under the plan name (current sub) and
+   under the feature list (offer cards). Flags may wrap, so the icon top-aligns. */
+.plan-locations-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  color: var(--ink-card-dim);
+  word-break: break-word;
+  margin-bottom: var(--space-4);
+}
+.plan-locations-row svg {
+  color: var(--amber);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+/* Flags appended inline after the plan name in the Overview «Тариф» readout —
+   lighter weight so they read as a suffix, not part of the tariff name. */
+.readout-locations {
+  font-weight: 400;
+}
+
 /* Mono eyebrow above the ladder. */
 .dur-eyebrow {
   font-family: var(--font-mono), monospace;

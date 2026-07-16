@@ -175,6 +175,9 @@ export interface SubscriptionInfo {
   expire_at: string;
   url: string;
   plan_name: string;
+  // Per-plan flag/location string of the live plan (opaque emoji text), e.g. "🇩🇪 | 🇯🇵".
+  // Optional: absent on responses cached before this field shipped.
+  plan_locations?: string | null;
   plan_duration_days: number;
   used_traffic_bytes: number | null;
   lifetime_used_traffic_bytes: number | null;
@@ -315,6 +318,8 @@ export interface PlanOffer {
   public_code: string;
   name: string;
   description: string | null;
+  // Per-plan flag/location string (opaque emoji text), e.g. "🇩🇪 | 🇯🇵 | 🇷🇺".
+  locations?: string | null;
   traffic_limit: number;
   device_limit: number;
   type: string;
@@ -342,6 +347,8 @@ export interface PublicPlanLanding {
   public_code: string;
   name: string;
   description: string | null;
+  // Per-plan flag/location string (opaque emoji text), e.g. "🇩🇪 | 🇯🇵 | 🇷🇺".
+  locations?: string | null;
   traffic_limit: number;
   device_limit: number;
   monthly_from_rub: string;

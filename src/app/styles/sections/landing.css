@@ -664,6 +664,15 @@ section {
   color: var(--amber);
   flex-shrink: 0;
 }
+/* Per-plan locations (flag emojis) — may span several flags, so allow the row to
+   top-align its icon and let the flags wrap instead of overflowing a narrow card. */
+.price-meta li.price-meta-loc {
+  align-items: flex-start;
+}
+.price-locations {
+  line-height: 1.5;
+  word-break: break-word;
+}
 .price-cta {
   width: 100%;
   justify-content: center;

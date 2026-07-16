@@ -116,7 +116,15 @@ export default function OverviewPanel({
         <div className="console-readouts">
           <div className="readout">
             <span className="readout-label">Тариф</span>
-            <span className="readout-val">{sub.plan_name}</span>
+            <span className="readout-val">
+              {sub.plan_name}
+              {sub.plan_locations && (
+                <span className="readout-locations" aria-label="Локации">
+                  {" "}
+                  {sub.plan_locations}
+                </span>
+              )}
+            </span>
           </div>
           <div className="readout">
             <span className="readout-label">Устройства</span>

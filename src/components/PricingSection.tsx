@@ -151,6 +151,14 @@ export default function PricingSection({
                     <Icon name="bolt" size={17} />
                     {trafficLabel(p.traffic_limit)}
                   </li>
+                  {p.locations && (
+                    <li className="price-meta-loc">
+                      <Icon name="globe" size={17} />
+                      <span className="price-locations" aria-label="Локации">
+                        {p.locations}
+                      </span>
+                    </li>
+                  )}
                 </ul>
                 <AuthCta
                   className="btn btn-amber price-cta"

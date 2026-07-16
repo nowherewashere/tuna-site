@@ -99,6 +99,12 @@ export default function SubscriptionPanel({
               {isTrial ? "Пробный период" : (STATUS_LABEL[sub.status] ?? sub.status)}
             </span>
           </header>
+          {sub.plan_locations && (
+            <div className="plan-locations-row">
+              <Icon name="globe" size={15} />
+              <span aria-label="Локации">{sub.plan_locations}</span>
+            </div>
+          )}
           <div className="console-readouts">
             <div className="readout">
               <span className="readout-label">Осталось</span>
@@ -186,6 +192,13 @@ export default function SubscriptionPanel({
                   </li>
                 ))}
               </ul>
+
+              {p.locations && (
+                <div className="plan-locations-row">
+                  <Icon name="globe" size={15} />
+                  <span aria-label="Локации">{p.locations}</span>
+                </div>
+              )}
 
               <div className="dur-eyebrow">Срок подписки</div>
               <div
