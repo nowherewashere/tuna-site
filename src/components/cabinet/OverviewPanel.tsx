@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import InstallBlock from "@/components/InstallBlock";
+import LocationFlags from "@/components/LocationFlags";
 import EmailConsole from "@/components/cabinet/EmailConsole";
 import TelegramConsole from "@/components/cabinet/TelegramConsole";
 import type { Device, Me, SubscriptionInfo, TelegramAuthUser } from "@/lib/api";
@@ -119,9 +120,8 @@ export default function OverviewPanel({
             <span className="readout-val">
               {sub.plan_name}
               {sub.plan_locations && (
-                <span className="readout-locations" aria-label="Локации">
-                  {" "}
-                  {sub.plan_locations}
+                <span className="readout-locations">
+                  <LocationFlags locations={sub.plan_locations} />
                 </span>
               )}
             </span>

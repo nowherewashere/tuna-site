@@ -1,0 +1,25 @@
+/* LocationFlags — per-plan location flags rendered as vendored SVG icons
+   (flag-icons → /public/assets/flags/, see LICENSE.txt there). Replaces the
+   admin-typed flag emoji, which Windows browsers render as bare letter pairs.
+   Used in the landing pricing meta and the cabinet subscription/overview. */
+.loc-flags {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  vertical-align: middle;
+}
+.loc-flags img {
+  display: block;
+  width: 21px;
+  height: 16px;
+  border-radius: 3px;
+  /* Hairline ring so light flags (Japan et al.) keep an edge on both themes;
+     an inset outline adds no layout size. */
+  outline: 1px solid var(--border-soft);
+  outline-offset: -1px;
+}
+/* Non-flag text the admin typed alongside the emoji, kept after the icons. */
+.loc-flags-rest {
+  margin-left: 2px;
+}

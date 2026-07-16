@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Icon from "@/components/Icon";
+import LocationFlags from "@/components/LocationFlags";
 import type { SubscriptionInfo, SubscriptionOffers } from "@/lib/api";
 import {
   daysLeftUntil,
@@ -102,7 +103,7 @@ export default function SubscriptionPanel({
           {sub.plan_locations && (
             <div className="plan-locations-row">
               <Icon name="globe" size={15} />
-              <span aria-label="Локации">{sub.plan_locations}</span>
+              <LocationFlags locations={sub.plan_locations} />
             </div>
           )}
           <div className="console-readouts">
@@ -196,7 +197,7 @@ export default function SubscriptionPanel({
               {p.locations && (
                 <div className="plan-locations-row">
                   <Icon name="globe" size={15} />
-                  <span aria-label="Локации">{p.locations}</span>
+                  <LocationFlags locations={p.locations} />
                 </div>
               )}
 

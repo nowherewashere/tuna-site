@@ -26,6 +26,7 @@
 @import "./styles/components/button.css";
 @import "./styles/components/nav.css";
 @import "./styles/components/forms.css";
+@import "./styles/components/flags.css";
 
 /* Sections + shared blocks — kept in original source order so the cascade is
    byte-for-byte the pre-split behaviour. */

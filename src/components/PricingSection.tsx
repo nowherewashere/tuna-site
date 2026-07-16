@@ -6,6 +6,7 @@ import { plural, fmtBytes } from "@/lib/format";
 import { storeSelectedPlan } from "@/lib/selectedPlan";
 import AuthCta from "@/components/AuthCta";
 import Icon from "@/components/Icon";
+import LocationFlags from "@/components/LocationFlags";
 import { Reveal } from "@/components/ui";
 
 function trafficLabel(bytes: number): string {
@@ -154,8 +155,8 @@ export default function PricingSection({
                   {p.locations && (
                     <li className="price-meta-loc">
                       <Icon name="globe" size={17} />
-                      <span className="price-locations" aria-label="Локации">
-                        {p.locations}
+                      <span className="price-locations">
+                        <LocationFlags locations={p.locations} />
                       </span>
                     </li>
                   )}
