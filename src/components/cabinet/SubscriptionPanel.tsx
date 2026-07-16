@@ -100,12 +100,6 @@ export default function SubscriptionPanel({
               {isTrial ? "Пробный период" : (STATUS_LABEL[sub.status] ?? sub.status)}
             </span>
           </header>
-          {sub.plan_locations && (
-            <div className="plan-locations-row">
-              <Icon name="globe" size={15} />
-              <LocationFlags locations={sub.plan_locations} />
-            </div>
-          )}
           <div className="console-readouts">
             <div className="readout">
               <span className="readout-label">Осталось</span>

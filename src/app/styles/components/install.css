@@ -1,27 +1,34 @@
 /* ── Install block (shared) ──────────────────────────────────────────────── */
+/* Platform picker: one compact custom dropdown (button + styled listbox) —
+   the former native <select>'s OS popup couldn't be themed and only the inner
+   select box was clickable. The leading mark reflects the current platform;
+   auto-detection still supplies the default value. */
 .plat-select {
+  position: relative;
+  max-width: 320px;
   margin: 20px 0 24px;
 }
-/* Platform picker: one compact dropdown (native <select>) instead of a row of
-   buttons — de-clutters the block and gives mobile the OS-native wheel picker.
-   The leading mark reflects the current platform; auto-detection still supplies
-   the default value. */
 .plat-field {
-  position: relative;
   display: flex;
   align-items: center;
   gap: 10px;
-  max-width: 320px;
+  width: 100%;
   padding: 11px 14px;
   border-radius: 12px;
   border: 1px solid var(--line);
   background: var(--card-2);
   color: var(--ink-card);
+  font-family: var(--font-body), sans-serif;
+  font-size: 15px;
+  line-height: 1.2;
+  text-align: left;
   cursor: pointer;
+  user-select: none;
   transition: border-color 0.15s ease;
 }
 .plat-field:hover,
-.plat-field:focus-within {
+.plat-field:focus-visible,
+.plat-select.is-open .plat-field {
   border-color: var(--amber);
 }
 .plat-field-ic {
@@ -29,30 +36,82 @@
   color: var(--amber);
   flex-shrink: 0;
 }
-.plat-native {
-  appearance: none;
-  -webkit-appearance: none;
+.plat-field-label {
   flex: 1;
   min-width: 0;
-  margin: 0;
-  border: none;
-  background: transparent;
-  color: inherit;
-  font-family: var(--font-body), sans-serif;
-  font-size: 15px;
-  line-height: 1.2;
-  cursor: pointer;
-  outline: none;
-}
-/* The open list is OS-chrome (usually light), so force readable dark option text. */
-.plat-native option {
-  color: #10233f;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .plat-field-chevron {
   display: inline-flex;
   color: var(--ink-card-dim);
   flex-shrink: 0;
-  pointer-events: none;
+  transition: transform 0.15s ease;
+}
+.plat-select.is-open .plat-field-chevron {
+  transform: rotate(180deg);
+}
+/* The open list — themed like the cabinet cards instead of OS chrome. */
+.plat-pop {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 30;
+  list-style: none;
+  margin: 0;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: var(--card-2);
+  box-shadow: var(--shadow-card);
+  animation: plat-pop-in 0.12s ease;
+}
+@keyframes plat-pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.plat-opt {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  border-radius: 8px;
+  font-size: 15px;
+  color: var(--ink-card);
+  cursor: pointer;
+  user-select: none;
+}
+.plat-opt:hover,
+.plat-opt:focus-visible {
+  background: var(--alpha-white-08);
+  outline: none;
+}
+.plat-opt-ic {
+  display: inline-flex;
+  color: var(--ink-card-dim);
+  flex-shrink: 0;
+}
+.plat-opt[aria-selected="true"] {
+  color: var(--amber);
+}
+.plat-opt[aria-selected="true"] .plat-opt-ic,
+.plat-opt-check {
+  color: var(--amber);
+}
+.plat-opt-check {
+  display: inline-flex;
+  margin-left: auto;
 }
 /* Install-step download CTAs: content-width buttons in a wrapping row (they read as
    buttons on desktop, wrap on mobile — no full-bleed, no right-overflow). */

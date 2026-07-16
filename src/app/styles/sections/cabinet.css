@@ -540,8 +540,8 @@
   flex-shrink: 0;
 }
 
-/* Per-plan locations (flag emojis) — shown under the plan name (current sub) and
-   under the feature list (offer cards). Flags may wrap, so the icon top-aligns. */
+/* Per-plan locations (flag icons) — shown under the feature list of each
+   purchasable plan card. Flags may wrap, so the icon top-aligns. */
 .plan-locations-row {
   display: flex;
   align-items: flex-start;
@@ -556,12 +556,6 @@
   color: var(--amber);
   flex-shrink: 0;
   margin-top: 2px;
-}
-/* Flag icons appended inline after the plan name in the Overview «Тариф»
-   readout; lighter weight covers any leftover free text next to the icons. */
-.readout-locations {
-  font-weight: 400;
-  margin-left: 8px;
 }
 
 /* Mono eyebrow above the ladder. */
@@ -659,6 +653,31 @@
   max-height: 52vh;
   overflow-y: auto;
   overscroll-behavior: contain;
+}
+/* Thin cabinet-styled scrollbars for the support chat surfaces — the browser
+   default is a glaring white bar on the dark theme. `scrollbar-color` covers
+   Firefox + modern Chromium; the ::-webkit-* rules cover older WebKit. */
+.chat-log,
+.chat-textarea {
+  scrollbar-width: thin;
+  scrollbar-color: var(--alpha-white-14) transparent;
+}
+.chat-log::-webkit-scrollbar,
+.chat-textarea::-webkit-scrollbar {
+  width: 8px;
+}
+.chat-log::-webkit-scrollbar-track,
+.chat-textarea::-webkit-scrollbar-track {
+  background: transparent;
+}
+.chat-log::-webkit-scrollbar-thumb,
+.chat-textarea::-webkit-scrollbar-thumb {
+  background: var(--alpha-white-14);
+  border-radius: 8px;
+}
+.chat-log::-webkit-scrollbar-thumb:hover,
+.chat-textarea::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.24);
 }
 .msg {
   display: flex;

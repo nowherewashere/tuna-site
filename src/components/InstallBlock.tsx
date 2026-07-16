@@ -1,8 +1,16 @@
 "use client";
 
-import { useMemo, useState, useSyncExternalStore, type ReactNode } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type ReactNode,
+} from "react";
 import { useOnboarding } from "@/lib/useOnboarding";
 import { useCopyToClipboard } from "@/lib/useCopyToClipboard";
+import { openStoreWithFallback } from "@/lib/appStore";
 import Icon, { type IconName } from "@/components/Icon";
 import { Button } from "@/components/ui";
 
@@ -79,6 +87,140 @@ export function detectPlatform(): PlatformId {
   return "ios";
 }
 
+/**
+ * Custom platform picker (button + styled listbox). Replaces the former native
+ * <select>: its OS popup can't be themed at all, and only the inner select box
+ * was clickable — the padded label around it just selected text. The whole
+ * field is now one real <button>, and the open list is ours to style.
+ * Keyboard: Arrow/Home/End move between options, Enter/Space picks, Esc and
+ * outside click close (focus returns to the trigger).
+ */
+function PlatformPicker({
+  platform,
+  onPick,
+}: {
+  platform: PlatformId;
+  onPick: (id: PlatformId) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const listRef = useRef<HTMLUListElement>(null);
+  const selected = PLATFORMS.find((p) => p.id === platform) ?? PLATFORMS[0];
+
+  // Close on any press outside the picker.
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: PointerEvent) => {
+      if (!rootRef.current?.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("pointerdown", onDown);
+    return () => document.removeEventListener("pointerdown", onDown);
+  }, [open]);
+
+  // Opening moves focus into the list, onto the current platform.
+  useEffect(() => {
+    if (!open) return;
+    const el =
+      listRef.current?.querySelector<HTMLElement>('[aria-selected="true"]') ??
+      (listRef.current?.firstElementChild as HTMLElement | null);
+    el?.focus();
+  }, [open]);
+
+  const close = (refocus: boolean) => {
+    setOpen(false);
+    if (refocus) btnRef.current?.focus();
+  };
+  const pick = (id: PlatformId) => {
+    onPick(id);
+    close(true);
+  };
+
+  const onListKeyDown = (e: React.KeyboardEvent<HTMLUListElement>) => {
+    const opts = Array.from(
+      listRef.current?.querySelectorAll<HTMLElement>('[role="option"]') ?? [],
+    );
+    const cur = opts.indexOf(document.activeElement as HTMLElement);
+    const move = (i: number) => {
+      e.preventDefault();
+      opts[i]?.focus();
+    };
+    if (e.key === "ArrowDown" || e.key === "ArrowRight") move((cur + 1) % opts.length);
+    else if (e.key === "ArrowUp" || e.key === "ArrowLeft") move((cur - 1 + opts.length) % opts.length);
+    else if (e.key === "Home") move(0);
+    else if (e.key === "End") move(opts.length - 1);
+    else if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      const id = (document.activeElement as HTMLElement | null)?.dataset.id;
+      if (id) pick(id as PlatformId);
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      close(true);
+    } else if (e.key === "Tab") close(false);
+  };
+
+  return (
+    <div className={`plat-select${open ? " is-open" : ""}`} ref={rootRef}>
+      <button
+        type="button"
+        ref={btnRef}
+        className="plat-field"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-label={`Устройство: ${selected.label}`}
+        onClick={() => setOpen((v) => !v)}
+        onKeyDown={(e) => {
+          if (!open && (e.key === "ArrowDown" || e.key === "ArrowUp")) {
+            e.preventDefault();
+            setOpen(true);
+          } else if (open && e.key === "Escape") {
+            setOpen(false);
+          }
+        }}
+      >
+        <span className="plat-field-ic" aria-hidden="true">
+          <Icon name={selected.icon} size={18} />
+        </span>
+        <span className="plat-field-label">{selected.label}</span>
+        <span className="plat-field-chevron" aria-hidden="true">
+          <Icon name="chevron" size={16} />
+        </span>
+      </button>
+      {open && (
+        <ul
+          className="plat-pop"
+          role="listbox"
+          aria-label="Устройство"
+          ref={listRef}
+          onKeyDown={onListKeyDown}
+        >
+          {PLATFORMS.map((p) => (
+            <li
+              key={p.id}
+              role="option"
+              aria-selected={p.id === platform}
+              tabIndex={-1}
+              data-id={p.id}
+              className="plat-opt"
+              onClick={() => pick(p.id as PlatformId)}
+            >
+              <span className="plat-opt-ic" aria-hidden="true">
+                <Icon name={p.icon} size={17} />
+              </span>
+              {p.label}
+              {p.id === platform && (
+                <span className="plat-opt-check" aria-hidden="true">
+                  <Icon name="check" size={14} />
+                </span>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 function SubCopyRow({ subUrl, label }: { subUrl: string; label?: string }) {
   const { copied, copy } = useCopyToClipboard();
   return (
@@ -124,7 +266,6 @@ export default function InstallBlock({ subUrl }: { subUrl: string }) {
   const detected = useSyncExternalStore(() => () => {}, detectPlatform, () => "ios" as PlatformId);
   const [override, setOverride] = useState<PlatformId | null>(null);
   const platform = override ?? detected;
-  const selectedPlatform = PLATFORMS.find((p) => p.id === platform) ?? PLATFORMS[0];
 
   const deepLink = useMemo(
     () => (cfg && subUrl ? cfg.happ_import_template.replace("{sub_url}", subUrl) : ""),
@@ -135,33 +276,18 @@ export default function InstallBlock({ subUrl }: { subUrl: string }) {
   const isTv = platform === "apple_tv" || platform === "android_tv";
   const storeUrl = cfg && !isTv ? cfg.store_links[platform as StorePlatform] : "";
 
+  // On a real iPhone/Mac/Android the platform store app is guaranteed, so the
+  // download buttons first try its deep link (itms-apps:/market:), falling back
+  // to the https listing. Gated by the *detected* device, not the manual pick —
+  // a Windows user browsing the iOS links must keep plain https.
+  const nativeStore = detected === "ios" || detected === "android";
+
   const tvKey: TvPlatform = platform === "apple_tv" ? "apple_tv" : "android_tv";
   const faqUrl = cfg ? cfg.tv.faq[tvKey] : "";
 
   return (
     <div className="install-block">
-      <div className="plat-select">
-        <label className="plat-field">
-          <span className="plat-field-ic" aria-hidden="true">
-            <Icon name={selectedPlatform.icon} size={18} />
-          </span>
-          <select
-            className="plat-native"
-            aria-label="Устройство"
-            value={platform}
-            onChange={(e) => setOverride(e.target.value as PlatformId)}
-          >
-            {PLATFORMS.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.label}
-              </option>
-            ))}
-          </select>
-          <span className="plat-field-chevron" aria-hidden="true">
-            <Icon name="chevron" size={16} />
-          </span>
-        </label>
-      </div>
+      <PlatformPicker platform={platform} onPick={setOverride} />
 
       {isTv ? (
         <>
@@ -214,13 +340,24 @@ export default function InstallBlock({ subUrl }: { subUrl: string }) {
                         iconLeft={<Icon name="download" size={17} />}
                         target="_blank"
                         rel="noreferrer"
+                        onClick={nativeStore ? (e) => openStoreWithFallback(e, storeUrl) : undefined}
                       >
                         App Store
                       </Button>
                       <span className="store-cap">вне РФ</span>
                     </div>
                     <div className="store-btn">
-                      <a className="btn btn-ghost" href={cfg.store_link_ios_ru} target="_blank" rel="noreferrer">
+                      <a
+                        className="btn btn-ghost"
+                        href={cfg.store_link_ios_ru}
+                        target="_blank"
+                        rel="noreferrer"
+                        onClick={
+                          nativeStore
+                            ? (e) => openStoreWithFallback(e, cfg.store_link_ios_ru!)
+                            : undefined
+                        }
+                      >
                         <Icon name="download" size={17} /> App Store
                       </a>
                       <span className="store-cap">в РФ</span>
@@ -234,6 +371,7 @@ export default function InstallBlock({ subUrl }: { subUrl: string }) {
                     iconLeft={<Icon name="download" size={17} />}
                     target="_blank"
                     rel="noreferrer"
+                    onClick={nativeStore ? (e) => openStoreWithFallback(e, storeUrl) : undefined}
                   >
                     Скачать Happ
                   </Button>
