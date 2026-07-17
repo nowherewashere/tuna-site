@@ -402,6 +402,8 @@ export type SupportStreamEvent =
 
 export interface OnboardingConfig {
   happ_import_template: string;
+  // Apple-only alternative client (INCY) import deeplink template; same {sub_url}.
+  incy_import_template: string;
   refresh_video_url: string | null;
   store_links: { ios: string; android: string; windows: string; mac: string; linux: string };
   store_link_ios_ru: string;

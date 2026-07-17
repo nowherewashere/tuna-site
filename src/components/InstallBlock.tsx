@@ -271,6 +271,12 @@ export default function InstallBlock({ subUrl }: { subUrl: string }) {
     () => (cfg && subUrl ? cfg.happ_import_template.replace("{sub_url}", subUrl) : ""),
     [cfg, subUrl],
   );
+  // INCY import deeplink — only surfaced on Apple, where INCY is offered as the
+  // alternative client (see the two-app store buttons + the Apple-only copy below).
+  const incyDeepLink = useMemo(
+    () => (cfg && subUrl ? cfg.incy_import_template.replace("{sub_url}", subUrl) : ""),
+    [cfg, subUrl],
+  );
 
   const isApple = platform === "ios";
   const isTv = platform === "apple_tv" || platform === "android_tv";
@@ -324,11 +330,17 @@ export default function InstallBlock({ subUrl }: { subUrl: string }) {
           <div className="istep">
             <div className="istep-n">1</div>
             <div className="istep-body">
-              <h4>Установи Happ</h4>
-              <p>Приложение, через которое работает VPN.</p>
-              {/* iOS with both store links: two compact "App Store" buttons whose
-                  region (вне РФ / в РФ) is a caption underneath — not baked into the
-                  label. Everyone else: a single content-width "Скачать Happ". */}
+              <h4>Установи Happ{isApple ? " / INCY" : ""}</h4>
+              <p>
+                {isApple
+                  ? "Приложения, через которые работает VPN."
+                  : "Приложение, через которое работает VPN."}
+              </p>
+              {isApple && <p>Happ может быть недоступен для российского региона AppStore.</p>}
+              {/* iOS offers two apps: Happ from the global App Store, and Incy — an
+                  alternative client — for RU, where Happ's listing is geo-blocked.
+                  Each button is labelled by its app; the region (вне РФ / в РФ) is a
+                  caption underneath. Everyone else: a single content-width "Скачать Happ". */}
               <div className="install-actions">
                 {isApple && cfg?.store_link_ios_ru ? (
                   <>
@@ -342,7 +354,7 @@ export default function InstallBlock({ subUrl }: { subUrl: string }) {
                         rel="noreferrer"
                         onClick={nativeStore ? (e) => openStoreWithFallback(e, storeUrl) : undefined}
                       >
-                        App Store
+                        Скачать Happ
                       </Button>
                       <span className="store-cap">вне РФ</span>
                     </div>
@@ -358,7 +370,7 @@ export default function InstallBlock({ subUrl }: { subUrl: string }) {
                             : undefined
                         }
                       >
-                        <Icon name="download" size={17} /> App Store
+                        <Icon name="download" size={17} /> Скачать INCY
                       </a>
                       <span className="store-cap">в РФ</span>
                     </div>
@@ -393,9 +405,26 @@ export default function InstallBlock({ subUrl }: { subUrl: string }) {
               >
                 Добавить подписку в Happ
               </Button>
+              {/* Apple gets a twin button for INCY (its alternative client), same
+                  one-tap import via INCY's own scheme. */}
+              {isApple && (
+                <Button
+                  href={incyDeepLink}
+                  variant="amber"
+                  loading={!cfg}
+                  iconLeft={<Icon name="bolt" size={17} />}
+                  style={{ marginTop: 10 }}
+                >
+                  Добавить подписку в INCY
+                </Button>
+              )}
               <SubCopyRow
                 subUrl={subUrl}
-                label="Не сработало? Скопируй ссылку и добавь её в Happ вручную:"
+                label={
+                  isApple
+                    ? "Не сработало? Скопируй ссылку и добавь её в Happ / INCY вручную:"
+                    : "Не сработало? Скопируй ссылку и добавь её в Happ вручную:"
+                }
               />
             </div>
           </div>
