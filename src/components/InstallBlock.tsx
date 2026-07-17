@@ -396,28 +396,29 @@ export default function InstallBlock({ subUrl }: { subUrl: string }) {
             <div className="istep-body">
               <h4>Добавь Tuna</h4>
               <p>Нажми кнопку ниже — подписка добавится сама.</p>
-              <Button
-                href={deepLink}
-                variant="amber"
-                loading={!cfg}
-                iconLeft={<Icon name="bolt" size={17} />}
-                style={{ marginTop: 10 }}
-              >
-                Добавить подписку в Happ
-              </Button>
               {/* Apple gets a twin button for INCY (its alternative client), same
-                  one-tap import via INCY's own scheme. */}
-              {isApple && (
+                  one-tap import via INCY's own scheme. The wrapping row keeps a gap
+                  between them when they share a line on desktop. */}
+              <div className="install-imports">
                 <Button
-                  href={incyDeepLink}
+                  href={deepLink}
                   variant="amber"
                   loading={!cfg}
                   iconLeft={<Icon name="bolt" size={17} />}
-                  style={{ marginTop: 10 }}
                 >
-                  Добавить подписку в INCY
+                  Добавить подписку в Happ
                 </Button>
-              )}
+                {isApple && (
+                  <Button
+                    href={incyDeepLink}
+                    variant="amber"
+                    loading={!cfg}
+                    iconLeft={<Icon name="bolt" size={17} />}
+                  >
+                    Добавить подписку в INCY
+                  </Button>
+                )}
+              </div>
               <SubCopyRow
                 subUrl={subUrl}
                 label={

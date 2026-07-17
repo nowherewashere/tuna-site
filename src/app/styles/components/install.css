@@ -133,6 +133,15 @@
   font-size: 12px;
   color: var(--ink-card-dim);
 }
+/* Step-2 import CTAs (Добавить в Happ / INCY): a wrapping row so the two amber
+   buttons keep a gap when they share a line on desktop, and stack on mobile — the
+   per-button margin-top only spaced them once wrapped, so on desktop they sat flush. */
+.install-imports {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 10px;
+}
 .istep {
   display: flex;
   gap: 16px;
