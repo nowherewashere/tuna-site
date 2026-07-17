@@ -55,8 +55,8 @@ export const metadata: Metadata = {
   // each page's own resolved title (via title.template) + description, so /oferta,
   // /privacy, /login … all get correct per-page previews without repeating metadata.
   // `og:url` is intentionally omitted so child pages don't inherit the homepage URL —
-  // the canonical link already carries per-page identity. og:image resolves absolute
-  // against metadataBase (https://tuna-vpn.com/og-image.png).
+  // the canonical link already carries per-page identity. og:image is relative
+  // (/og-image.png) and resolves absolute against metadataBase (= SITE_URL).
   openGraph: {
     type: "website",
     siteName: "Tuna VPN",
