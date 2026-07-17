@@ -406,7 +406,7 @@ export default function InstallBlock({ subUrl }: { subUrl: string }) {
                   loading={!cfg}
                   iconLeft={<Icon name="bolt" size={17} />}
                 >
-                  Добавить Tuna VPN
+                  Добавить в Happ
                 </Button>
                 {isApple && (
                   <Button
