@@ -6,6 +6,10 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
 COPY . .
+# Public site origin (canonical/OG/sitemap) is read from the committed .env.production
+# by `next build` and inlined into the static export (NEXT_PUBLIC_* is baked at build,
+# never read at runtime). RU domain-blocking forces domain rotation: edit the single
+# NEXT_PUBLIC_SITE_URL line in tuna-site/.env.production and rebuild — no other changes.
 RUN BUILD_STATIC=true npm run build
 
 # ── Serve the static SPA with a tiny nginx (port 80) ──────────────────────────

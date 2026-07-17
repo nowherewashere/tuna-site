@@ -42,3 +42,6 @@ next-env.d.ts
 
 # keep the no-secret template
 !.env.example
+# commit the public production site origin (NEXT_PUBLIC_SITE_URL) — no secrets, and it
+# must be present on clean checkouts/CI for `next build` to bake the right domain.
+!.env.production

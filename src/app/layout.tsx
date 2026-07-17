@@ -4,6 +4,7 @@ import "./globals.css";
 import RefCapture from "@/components/RefCapture";
 import JsonLd from "@/components/JsonLd";
 import { siteGraph } from "@/lib/structuredData";
+import { SITE_URL } from "@/lib/config";
 
 // Display / headlines: Unbounded — a wide, geometric, Cyrillic-first face. Used
 // big and tight; it carries the whole personality of the brand, so nothing else
@@ -40,7 +41,7 @@ const mono = IBM_Plex_Mono({
 export const metadata: Metadata = {
   // Absolute base so canonical / OG / sitemap URLs resolve to production, not
   // localhost, under static export (SEO-04). Foundation for the Wave-3 OG work.
-  metadataBase: new URL("https://tuna-vpn.com"),
+  metadataBase: new URL(SITE_URL),
   // `default` is the homepage title; `template` suffixes every child page that sets
   // its own title (e.g. "Вход" -> "Вход — Tuna VPN"), so no two routes share one.
   title: {

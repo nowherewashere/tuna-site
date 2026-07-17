@@ -1,4 +1,5 @@
 import type { PublicPlanLanding } from "@/lib/api";
+import { SITE_URL } from "@/lib/config";
 
 /**
  * schema.org (JSON-LD) builders — the single source for every structured-data node
@@ -9,7 +10,7 @@ import type { PublicPlanLanding } from "@/lib/api";
  * fabricate ratings or reviews.
  */
 
-export const ORIGIN = "https://tuna-vpn.com";
+export const ORIGIN = SITE_URL;
 export const ORG_ID = `${ORIGIN}/#organization`;
 export const WEBSITE_ID = `${ORIGIN}/#website`;
 

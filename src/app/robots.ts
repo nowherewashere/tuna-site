@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+import { SITE_URL } from "@/lib/config";
 
 // Required under `output: "export"`: emit this metadata route as a static file at build.
 export const dynamic = "force-static";
@@ -31,6 +32,6 @@ export default function robots(): MetadataRoute.Robots {
       { userAgent: "*", allow: "/", disallow: DISALLOW },
       { userAgent: AI_BOTS, allow: "/", disallow: DISALLOW },
     ],
-    sitemap: "https://tuna-vpn.com/sitemap.xml",
+    sitemap: `${SITE_URL}/sitemap.xml`,
   };
 }

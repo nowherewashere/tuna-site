@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+import { SITE_URL } from "@/lib/config";
 
 // Required under `output: "export"`: emit this metadata route as a static file at
 // build (lastModified/new Date() are then evaluated once, at build time).
@@ -8,7 +9,7 @@ export const dynamic = "force-static";
 // indexable set — the auth/app shells (/login, /connect, /cabinet) are noindex and
 // deliberately excluded. Honest lastModified: the landing is regenerated on every
 // deploy (build time); the legal pages carry their stated effective date.
-const BASE = "https://tuna-vpn.com";
+const BASE = SITE_URL;
 const LEGAL_EFFECTIVE = new Date("2026-07-07");
 
 export default function sitemap(): MetadataRoute.Sitemap {

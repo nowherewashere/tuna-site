@@ -5,6 +5,9 @@ out
 .github
 .env
 .env.*
+# ...but DO copy the committed production origin into the build (NEXT_PUBLIC_SITE_URL,
+# read by `next build`). Public value, no secrets. Exception must follow the excludes.
+!.env.production
 npm-debug.log*
 Dockerfile
 .dockerignore

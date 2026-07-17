@@ -14,5 +14,14 @@
 // to this site via @BotFather (/setdomain) or the widget will not render.
 export const TELEGRAM_BOT = process.env.NEXT_PUBLIC_TELEGRAM_BOT ?? "VPNTuna_Bot";
 
+// Canonical production origin of the marketing/cabinet site: the single source of
+// truth for every ABSOLUTE URL the site emits — canonical, OG/metadataBase, sitemap,
+// robots, and JSON-LD @id. RU domain-blocking forces periodic public-domain rotation;
+// point a build at the live domain with NEXT_PUBLIC_SITE_URL (e.g. https://v-tuna.com)
+// and rebuild — no code edits. No trailing slash (stripped defensively).
+export const SITE_URL = (
+  process.env.NEXT_PUBLIC_SITE_URL ?? "https://tuna-vpn.com"
+).replace(/\/+$/, "");
+
 // Deep link to open the bot in Telegram (used by the cabinet once linked).
 export const telegramBotUrl = () => `https://t.me/${TELEGRAM_BOT}`;
