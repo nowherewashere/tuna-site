@@ -354,7 +354,7 @@ export default function InstallBlock({ subUrl }: { subUrl: string }) {
                         rel="noreferrer"
                         onClick={nativeStore ? (e) => openStoreWithFallback(e, storeUrl) : undefined}
                       >
-                        Скачать Happ
+                        Happ
                       </Button>
                       <span className="store-cap">вне РФ</span>
                     </div>
@@ -370,7 +370,7 @@ export default function InstallBlock({ subUrl }: { subUrl: string }) {
                             : undefined
                         }
                       >
-                        <Icon name="download" size={17} /> Скачать INCY
+                        <Icon name="download" size={17} /> INCY
                       </a>
                       <span className="store-cap">в РФ</span>
                     </div>
@@ -406,7 +406,7 @@ export default function InstallBlock({ subUrl }: { subUrl: string }) {
                   loading={!cfg}
                   iconLeft={<Icon name="bolt" size={17} />}
                 >
-                  Добавить подписку в Happ
+                  Добавить Tuna VPN
                 </Button>
                 {isApple && (
                   <Button
@@ -415,7 +415,7 @@ export default function InstallBlock({ subUrl }: { subUrl: string }) {
                     loading={!cfg}
                     iconLeft={<Icon name="bolt" size={17} />}
                   >
-                    Добавить подписку в INCY
+                    Добавить в INCY
                   </Button>
                 )}
               </div>
