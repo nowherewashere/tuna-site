@@ -454,6 +454,17 @@
   margin-top: var(--space-5);
   margin-bottom: var(--space-5);
 }
+/* Secret-code redeem: a hairline divides it from the subscription readouts above, and
+   it drops the trailing field margin since it's the last thing in the console. Reuses
+   the shared .field* form styles + the inline .field-controls (input + submit) layout. */
+.secret-code-sep {
+  height: 1px;
+  margin: var(--space-5) 0 var(--space-4);
+  background: var(--border-soft);
+}
+.secret-code .field-block {
+  margin-bottom: 0;
+}
 /* "Your plan" badge + a subtle amber ring marking the tariff you're already on. */
 .plan-badge {
   display: inline-flex;

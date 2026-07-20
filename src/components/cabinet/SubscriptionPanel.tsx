@@ -17,11 +17,74 @@ import {
   statusPillClass,
 } from "@/lib/format";
 import { onRovingKeyDown } from "@/lib/roving";
-import { ConsoleFrame } from "@/components/ui";
+import { Button, ConsoleFrame, TextField } from "@/components/ui";
 
 type Selected = { planCode: string; days: number } | null;
 
 const daysWord = (n: number) => plural(n, "день", "дня", "дней");
+
+// Redeem a secret code. It sits with the subscription (not the checkout) because a code
+// is a standalone grant, not a per-order coupon: the parent activates it, then refetches
+// offers/subscription so the new price or extended term shows up right here.
+function SecretCodeRedeem({
+  busy,
+  error,
+  onSubmit,
+  onClearError,
+  labelHidden = false,
+}: {
+  busy: boolean;
+  error: string | null;
+  onSubmit: (code: string) => Promise<boolean>;
+  onClearError: () => void;
+  // Hidden when a console-title eyebrow already names the section (the standalone
+  // consoles); visible as the sub-heading when embedded under the subscription readouts.
+  labelHidden?: boolean;
+}) {
+  const [code, setCode] = useState("");
+  const submit = async () => {
+    const value = code.trim();
+    if (!value || busy) return;
+    if (await onSubmit(value)) setCode("");
+  };
+  return (
+    <div className="secret-code">
+      <TextField
+        label="Секретный код"
+        labelHidden={labelHidden}
+        hint="Бонус или скидка — активируется сразу."
+        placeholder="Введите код"
+        value={code}
+        onChange={(e) => {
+          setCode(e.target.value);
+          if (error) onClearError();
+        }}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            void submit();
+          }
+        }}
+        autoComplete="off"
+        autoCapitalize="characters"
+        spellCheck={false}
+        disabled={busy}
+        error={error}
+        trailing={
+          <Button
+            variant="amber"
+            loading={busy}
+            loadingLabel="Активируем…"
+            disabled={!code.trim()}
+            onClick={() => void submit()}
+          >
+            Активировать
+          </Button>
+        }
+      />
+    </div>
+  );
+}
 
 export default function SubscriptionPanel({
   offers,
@@ -32,6 +95,10 @@ export default function SubscriptionPanel({
   payError,
   onPay,
   clearPayError,
+  promoBusy,
+  promoError,
+  onActivatePromo,
+  clearPromoError,
 }: {
   offers: SubscriptionOffers | null;
   sub: SubscriptionInfo | null;
@@ -41,9 +108,24 @@ export default function SubscriptionPanel({
   payError: string | null;
   onPay: (planCode: string, days: number, gateway: string, paymentMethod?: number) => void;
   clearPayError: () => void;
+  promoBusy: boolean;
+  promoError: string | null;
+  onActivatePromo: (code: string) => Promise<boolean>;
+  clearPromoError: () => void;
 }) {
   // Captured once on mount (pure render); the day counter doesn't need to tick.
   const [now] = useState(() => Date.now());
+
+  // Shared across the mutually-exclusive render sites below (only one shows per pass), so
+  // a code can be redeemed with or without an active subscription. Embedded under the
+  // subscription readouts it shows its own label; standalone it sits under a console-title
+  // eyebrow, so the label is hidden there to avoid repeating the heading.
+  const secretFieldProps = {
+    busy: promoBusy,
+    error: promoError,
+    onSubmit: onActivatePromo,
+    onClearError: clearPromoError,
+  };
 
   if (!offers || offers.plans.length === 0) {
     return (
@@ -51,6 +133,10 @@ export default function SubscriptionPanel({
         <h2 className="panel-title">Подписка</h2>
         <ConsoleFrame className="console-empty" aria-label="Тарифы">
           <p>Тарифы скоро появятся здесь. Пока пользуйся пробным периодом.</p>
+        </ConsoleFrame>
+        <ConsoleFrame className="sub-current">
+          <div className="console-title">Секретный код</div>
+          <SecretCodeRedeem {...secretFieldProps} labelHidden />
         </ConsoleFrame>
       </div>
     );
@@ -112,6 +198,15 @@ export default function SubscriptionPanel({
               <span className="readout-val">{fmtDate(sub.expire_at)}</span>
             </div>
           </div>
+          <div className="secret-code-sep" role="separator" />
+          <SecretCodeRedeem {...secretFieldProps} />
+        </ConsoleFrame>
+      )}
+
+      {!sub && (
+        <ConsoleFrame className="sub-current">
+          <div className="console-title">Секретный код</div>
+          <SecretCodeRedeem {...secretFieldProps} labelHidden />
         </ConsoleFrame>
       )}
 

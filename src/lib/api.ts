@@ -366,6 +366,13 @@ export interface PaymentInit {
   currency: string;
 }
 
+export interface PromocodeActivateResult {
+  success: boolean;
+  // One of DURATION | TRAFFIC | DEVICES | SUBSCRIPTION | PERSONAL_DISCOUNT | PURCHASE_DISCOUNT
+  // (upper-case). The amount isn't returned — refetch offers/current to show new figures.
+  reward_type: string;
+}
+
 export interface SupportConfig {
   // True when the live in-cabinet support chat is on; otherwise the widget shows the
   // Telegram fallback link.
@@ -490,6 +497,13 @@ export const api = {
       gateway_type: gatewayType,
       payment_method: paymentMethod,
     }),
+
+  // Redeem a secret code. It's a standalone action (not a checkout coupon): discount
+  // codes lower future prices (refetch offers), the rest apply to the subscription now
+  // (refetch current). Requires a verified email (409). 404 = not found; 409 = expired /
+  // already used / unavailable.
+  activatePromocode: (code: string) =>
+    req<PromocodeActivateResult>("POST", "/subscription/promocode", { code }),
 
   // Support chat. History on load (after = 0); live updates then arrive via the SSE
   // stream below (with the history poll as a fallback). Sending relays the message

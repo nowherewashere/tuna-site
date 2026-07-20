@@ -37,6 +37,26 @@ const MERGE_TOAST =
   "Аккаунты объединены. Если каких-то устройств не видно — они появятся сами, " +
   "когда откроешь на них Happ. Вручную ничего делать не нужно.";
 
+// The activate endpoint returns only the reward type (not the amount); a refetch shows
+// the exact new figures, so the toast just names what changed.
+function promoSuccessMessage(rewardType: string): string {
+  switch (rewardType.toUpperCase()) {
+    case "DURATION":
+      return "Секретный код активирован — дни добавлены к подписке.";
+    case "TRAFFIC":
+      return "Секретный код активирован — трафик увеличен.";
+    case "DEVICES":
+      return "Секретный код активирован — лимит устройств увеличен.";
+    case "SUBSCRIPTION":
+      return "Секретный код активирован — подписка обновлена.";
+    case "PERSONAL_DISCOUNT":
+    case "PURCHASE_DISCOUNT":
+      return "Секретный код активирован — скидка применена к тарифам.";
+    default:
+      return "Секретный код активирован.";
+  }
+}
+
 export default function CabinetPage() {
   const router = useRouter();
   const [tab, setTab] = useHashTab(TAB_IDS, "overview");
@@ -54,6 +74,8 @@ export default function CabinetPage() {
   const [selected, setSelected] = useState<Selected>(null);
   const [paying, setPaying] = useState(false);
   const [payError, setPayError] = useState<string | null>(null);
+  const [promoBusy, setPromoBusy] = useState(false);
+  const [promoError, setPromoError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [authed, setAuthed] = useState(true);
   const [linkError, setLinkError] = useState<string | null>(null);
@@ -222,6 +244,51 @@ export default function CabinetPage() {
         }),
       );
       setPaying(false);
+    }
+  }
+
+  // Redeem a secret code. It's a standalone action, not a checkout coupon: a discount
+  // code lowers the offer prices, the rest change the subscription right away — so on
+  // success refetch both offers and the current subscription (single source of truth).
+  // Returns true so the field can clear itself.
+  async function activatePromo(code: string): Promise<boolean> {
+    setPromoBusy(true);
+    setPromoError(null);
+    try {
+      const res = await api.activatePromocode(code.trim());
+      api.subscriptionOffers().then(setOffers).catch(() => {});
+      api.currentSubscription().then(setSub).catch(() => {});
+      setToast(promoSuccessMessage(res.reward_type));
+      return true;
+    } catch (e) {
+      setPromoError(
+        apiErrorMessage(e, {
+          byDetail: {
+            "Email must be verified before purchasing or extending a subscription":
+              "Сначала подтверди почту в разделе «Обзор».",
+            "Promocode has expired": "Срок действия секретного кода истёк.",
+            "Promocode already activated": "Ты уже активировал этот секретный код.",
+            "Active subscription required for this promocode":
+              "Для этого кода нужна активная подписка.",
+            "Promocode activation limit reached": "Лимит активаций кода исчерпан.",
+            "Resource is already unlimited": "Этот ресурс уже безлимитный.",
+            "Promocode is for new users only": "Код только для новых пользователей.",
+            "Promocode is for existing users only": "Код только для действующих пользователей.",
+            "Promocode is for invited users only": "Код только для приглашённых пользователей.",
+          },
+          byStatus: {
+            404: "Секретный код не найден.",
+            409: "Секретный код недействителен или уже использован.",
+          },
+          fallback:
+            e instanceof ApiError
+              ? "Не удалось активировать код. Попробуй позже."
+              : "Сеть недоступна. Попробуй ещё раз.",
+        }),
+      );
+      return false;
+    } finally {
+      setPromoBusy(false);
     }
   }
 
@@ -397,6 +464,10 @@ export default function CabinetPage() {
                 payError={payError}
                 onPay={pay}
                 clearPayError={() => setPayError(null)}
+                promoBusy={promoBusy}
+                promoError={promoError}
+                onActivatePromo={activatePromo}
+                clearPromoError={() => setPromoError(null)}
               />
             )}
             {tab === "ref" && (
