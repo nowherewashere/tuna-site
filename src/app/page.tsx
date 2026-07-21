@@ -1,5 +1,6 @@
 import Link from "next/link";
 import AuthCta from "@/components/AuthCta";
+import LootMark from "@/components/LootMark";
 import Icon, { type IconName } from "@/components/Icon";
 import DepthGauge from "@/components/DepthGauge";
 import Nav from "@/components/Nav";
@@ -313,6 +314,7 @@ export default async function LandingPage() {
               guest={{ href: "/login", label: "Подключить" }}
               authed={{ href: "/cabinet", label: "Открыть кабинет" }}
             />
+            <LootMark />
           </div>
         </section>
       </main>

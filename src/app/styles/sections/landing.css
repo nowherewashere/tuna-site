@@ -821,6 +821,17 @@ details.q p {
   font-size: 18px;
   margin-bottom: 30px;
 }
+/* ARG easter-egg marker (see components/LootMark.tsx). Intentionally faint over
+   the abyss (#05101f) — visible only when looked for. Remove this block to revert. */
+.loot-mark {
+  margin-top: 46px;
+  font-family: var(--font-mono), monospace;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.45em;
+  color: rgba(203, 225, 244, 0.12);
+  user-select: none;
+}
 
 /* ── Footer ──────────────────────────────────────────────────────────────── */
 footer {
