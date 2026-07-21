@@ -176,6 +176,18 @@ export default function SubscriptionPanel({
         {liveSummary}
       </div>
 
+      {offers.discount_percent > 0 && (
+        <div className="discount-note" role="status">
+          <Icon name="bolt" size={16} className="discount-note-ic" />
+          <p>
+            Скидка <b>{offers.discount_percent}%</b> активна — уже учтена в ценах ниже.
+            {!offers.discount_is_personal && (
+              <span className="discount-note-sub"> Разовая — сгорит после первой покупки.</span>
+            )}
+          </p>
+        </div>
+      )}
+
       {sub && (
         <ConsoleFrame className="sub-current" aria-label="Текущая подписка">
           <div className="console-title">Текущая подписка</div>
@@ -375,6 +387,15 @@ export default function SubscriptionPanel({
                         <span className="readout-label">{label}</span>
                         <span className="checkout-total">
                           {selPrice.final_amount} {selPrice.currency_symbol}
+                          {selPrice.discount_percent > 0 && (
+                            <>
+                              {" "}
+                              <s className="checkout-was">
+                                {selPrice.original_amount} {selPrice.currency_symbol}
+                              </s>
+                              <span className="checkout-off">−{selPrice.discount_percent}%</span>
+                            </>
+                          )}
                         </span>
                       </div>
                       <p className="checkout-sub">{context}</p>

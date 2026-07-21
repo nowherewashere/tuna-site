@@ -339,6 +339,11 @@ export interface SubscriptionOffers {
   plans: PlanOffer[];
   has_current_subscription: boolean;
   current_subscription_status: string | null;
+  // Effective user discount (%), already applied to every price below (0 = none).
+  discount_percent: number;
+  // True = persistent personal discount; false = one-time purchase discount (spent on
+  // the next purchase). Mirrors the bot's «персональной / разовой скидки» wording.
+  discount_is_personal: boolean;
 }
 
 // Marketing-facing plan summary for the public landing page (no auth). Mirrors
