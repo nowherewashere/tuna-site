@@ -13,8 +13,9 @@ COPY . .
 RUN BUILD_STATIC=true npm run build
 
 # ── Serve the static SPA with a tiny nginx (port 80) ──────────────────────────
-# A normal long-running service: the front nginx proxies tuna-vpn.com here and
-# routes /api/v1/(public|connect) straight to the app. See README.
+# A normal long-running service: the front nginx proxies the public site domain
+# (currently v-tuna.com) here and routes /api/v1/(public|connect) straight to the
+# app. The domain rotates — this container is unaware of it. See README.
 FROM nginx:alpine
 COPY --from=build /app/out /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf

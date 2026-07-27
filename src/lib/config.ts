@@ -17,10 +17,15 @@ export const TELEGRAM_BOT = process.env.NEXT_PUBLIC_TELEGRAM_BOT ?? "VPNTuna_Bot
 // Canonical production origin of the marketing/cabinet site: the single source of
 // truth for every ABSOLUTE URL the site emits — canonical, OG/metadataBase, sitemap,
 // robots, and JSON-LD @id. RU domain-blocking forces periodic public-domain rotation;
-// point a build at the live domain with NEXT_PUBLIC_SITE_URL (e.g. https://v-tuna.com)
-// and rebuild — no code edits. No trailing slash (stripped defensively).
+// point a build at the live domain with NEXT_PUBLIC_SITE_URL and rebuild — no code
+// edits. No trailing slash (stripped defensively).
+//
+// Keep this default on the CURRENTLY LIVE domain. It is what a build without
+// NEXT_PUBLIC_SITE_URL emits, and a rotated-away domain gets released — leaving a
+// dead one here would point canonical/OG at a host someone else can register.
+// Rotated 2026-07: tuna-vpn.com (TSPU SNI-blocked, released) → v-tuna.com.
 export const SITE_URL = (
-  process.env.NEXT_PUBLIC_SITE_URL ?? "https://tuna-vpn.com"
+  process.env.NEXT_PUBLIC_SITE_URL ?? "https://v-tuna.com"
 ).replace(/\/+$/, "");
 
 // Deep link to open the bot in Telegram (used by the cabinet once linked).

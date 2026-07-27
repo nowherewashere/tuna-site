@@ -53,7 +53,10 @@ services:
     networks: [remnawave-network]
 ```
 
-The front nginx (TLS + Cloudflare) adds a `tuna-vpn.com` server block that
-proxies `/` to `tuna-site` and `/api/v1/(public|connect)` to the app
-(`remnashop`). No Node server or database is required for this site. See the
-backend spec §9 and the deploy runbook.
+The front nginx (sole edge, terminates TLS — there is no Cloudflare or CDN in
+front of it) adds a server block for the public site domain (currently
+`v-tuna.com`) that proxies `/` to `tuna-site` and `/api/v1/(public|connect)` to
+the app (`remnashop`). RU domain-blocking forces periodic rotation of that
+domain: update the nginx block and `NEXT_PUBLIC_SITE_URL`, then rebuild. No Node
+server or database is required for this site. See the backend spec §9 and the
+deploy runbook.
