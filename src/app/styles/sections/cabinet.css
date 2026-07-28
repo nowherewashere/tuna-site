@@ -1811,6 +1811,80 @@
   flex-wrap: wrap; /* "Другая почта" drops below the primary action on narrow screens */
   gap: var(--space-3);
 }
+
+/* ── Sign-in methods (social providers) ───────────────────────────────────── */
+.signin-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  /* The console is `align-items: flex-start`, so without this the list sizes to its
+     content and leaves the console half empty — and `space-between` inside each row
+     never fires because there is no free space. Same fix as `.tg-console .field-block`. */
+  align-self: stretch;
+}
+/* Identity on the left, state/action on the right — until the row runs out of width,
+   where the action drops under the provider name rather than squeezing it. */
+.signin-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-3);
+  padding: var(--space-3);
+  background: var(--fill-subtle);
+  /* --line, not --border-soft: the console itself already uses --border-soft, and an
+     inner surface repeating its parent's edge never reads as nested. */
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+}
+.signin-id {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0; /* lets a long masked address wrap instead of widening the console */
+  color: var(--ink-card);
+  font-size: var(--text-base);
+}
+.signin-id svg {
+  flex: none;
+}
+.signin-email {
+  color: var(--ink-card-dim);
+  overflow-wrap: anywhere;
+}
+.signin-actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  /* .btn-link uses the `font` shorthand, which resets size to the inherited value —
+     without this the destructive action renders at 16px, larger than the provider name
+     beside it and the largest text in the row. */
+  font-size: var(--text-sm);
+}
+/* Setting a size above shrinks the link's box; keep it at the 24px minimum target. */
+.signin-actions .btn-link {
+  min-height: 24px;
+}
+.signin-actions .btn-link[aria-disabled="true"] {
+  color: var(--ink-card-dim);
+  text-decoration: none;
+}
+/* .btn:disabled leaves :hover matchable, so a dead control still brightened under the
+   cursor; this state is aria-disabled (kept focusable) and must not look live either. */
+.signin-actions .btn-link[aria-disabled="true"]:hover {
+  filter: none;
+}
+.signin-ok {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--success);
+  font-size: var(--text-sm);
+}
 /* `.tg-console` is a flex column with `align-items: flex-start`, so a field would
    otherwise collapse to its content width. Cap it at a comfortable measure instead
    of letting it span the whole card.

@@ -18,6 +18,7 @@ import { redirectTo, reloadPage } from "@/lib/nav";
 import { apiErrorMessage } from "@/lib/apiError";
 import { userDisplayName } from "@/lib/format";
 import { invalidateAuth } from "@/lib/useAuth";
+import { OAUTH_PROVIDER_LABEL, isKnownProvider, oauthErrorMessage } from "@/lib/oauth";
 import { readSelectedPlan, clearSelectedPlan } from "@/lib/selectedPlan";
 import { TAB_IDS, type Tab } from "@/components/cabinet/tabs";
 import CabinetTabs from "@/components/cabinet/CabinetTabs";
@@ -29,6 +30,23 @@ import SupportPanel from "@/components/cabinet/SupportPanel";
 import Icon from "@/components/Icon";
 
 type Selected = { planCode: string; days: number } | null;
+
+/**
+ * Read the result of a social link attempt out of the URL.
+ *
+ * `/auth/callback` gets here with a full navigation (not `router.replace`), precisely
+ * so these parameters are already in `location` by the time this runs.
+ */
+function readLinkOutcome(): { toast: string | null; error: string | null } {
+  if (typeof window === "undefined") return { toast: null, error: null };
+  const params = new URLSearchParams(window.location.search);
+  const linked = params.get("linked");
+  if (linked && isKnownProvider(linked)) {
+    return { toast: `${OAUTH_PROVIDER_LABEL[linked]} подключён.`, error: null };
+  }
+  const error = params.get("error");
+  return { toast: null, error: error ? oauthErrorMessage(error) : null };
+}
 
 // Shown after either direction of the account merge. A merge keeps only the winning
 // subscription's devices; the rest re-register themselves the next time Happ runs,
@@ -78,8 +96,12 @@ export default function CabinetPage() {
   const [promoError, setPromoError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [authed, setAuthed] = useState(true);
-  const [linkError, setLinkError] = useState<string | null>(null);
-  const [toast, setToast] = useState<string | null>(null);
+  // Outcome of a social link attempt: /auth/callback sends the browser back here with
+  // ?linked=<provider> or ?error=<code>. Seeded from the URL rather than set in an
+  // effect (the lint rule forbids that, and the value is known at first render).
+  const [linkOutcome] = useState(readLinkOutcome);
+  const [linkError, setLinkError] = useState<string | null>(linkOutcome.error);
+  const [toast, setToast] = useState<string | null>(linkOutcome.toast);
   // Set when the user taps "Добавить устройство" on the Devices tab: once the Overview
   // tab has mounted its install guide, jump straight to it (see the effect below). A
   // ref, not state — it's a one-shot side-effect flag that shouldn't cause a render.
@@ -93,6 +115,15 @@ export default function CabinetPage() {
     const t = setTimeout(() => setToast(null), 10000);
     return () => clearTimeout(t);
   }, [toast]);
+
+  // Drop ?linked= / ?error= once read into state, so a reload doesn't replay a stale
+  // outcome. No setState here — the values are already seeded.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.has("linked") || params.has("error")) {
+      window.history.replaceState({}, "", window.location.pathname + window.location.hash);
+    }
+  }, []);
 
   useEffect(() => {
     (async () => {
@@ -441,6 +472,7 @@ export default function CabinetPage() {
                 me={me}
                 onLinkTelegram={linkTelegram}
                 onEmailVerified={emailVerified}
+                onMeChanged={setMe}
                 onGetAccess={() => changeTab("sub")}
                 linkError={linkError}
               />

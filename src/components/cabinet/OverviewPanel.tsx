@@ -4,6 +4,7 @@ import { useState } from "react";
 import InstallBlock from "@/components/InstallBlock";
 import EmailConsole from "@/components/cabinet/EmailConsole";
 import TelegramConsole from "@/components/cabinet/TelegramConsole";
+import SignInMethodsConsole from "@/components/cabinet/SignInMethodsConsole";
 import type { Device, Me, SubscriptionInfo, TelegramAuthUser } from "@/lib/api";
 import { STATUS_LABEL, daysLeftUntil, fmtDate, plural, statusPillClass } from "@/lib/format";
 import { ConsoleFrame } from "@/components/ui";
@@ -17,6 +18,7 @@ export default function OverviewPanel({
   me,
   onLinkTelegram,
   onEmailVerified,
+  onMeChanged,
   onGetAccess,
   linkError,
 }: {
@@ -28,6 +30,7 @@ export default function OverviewPanel({
   me: Me | null;
   onLinkTelegram: (user: TelegramAuthUser) => void;
   onEmailVerified: (merged: boolean) => void;
+  onMeChanged: (updated: Me) => void;
   onGetAccess: () => void;
   linkError: string | null;
 }) {
@@ -47,6 +50,7 @@ export default function OverviewPanel({
   const linkSurface = (
     <>
       <TelegramConsole me={me} onLink={onLinkTelegram} error={linkError} />
+      <SignInMethodsConsole me={me} onChanged={onMeChanged} />
       {me && !me.is_email_verified && <EmailConsole me={me} onVerified={onEmailVerified} />}
     </>
   );
