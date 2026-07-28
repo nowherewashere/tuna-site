@@ -433,7 +433,10 @@ export default function InstallBlock({ subUrl }: { subUrl: string }) {
             <div className="istep-n">3</div>
             <div className="istep-body">
               <h4>Включи и проверь</h4>
-              <p>Открывай недоступные сайты и свободно пользуйся интернетом.</p>
+              <p>
+                Нажми кнопку <b>Пуск</b>, чтобы VPN включился. Открывай недоступные сайты и
+                свободно пользуйся интернетом.
+              </p>
             </div>
           </div>
         </>
