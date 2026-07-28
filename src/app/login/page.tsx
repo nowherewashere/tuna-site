@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useSyncExternalStore } from "react";
-import { api, ApiError, trackFunnel, type TelegramAuthUser } from "@/lib/api";
+import { api, ApiError, trackFunnel } from "@/lib/api";
 import { detectPlatform } from "@/components/InstallBlock";
 import { readRefCode } from "@/lib/referral";
 import { readSelectedPlan } from "@/lib/selectedPlan";
@@ -12,9 +12,7 @@ import { hasSessionHint } from "@/lib/sessionHint";
 import { isValidEmail } from "@/lib/email";
 import Icon from "@/components/Icon";
 import { Button, TextField } from "@/components/ui";
-import TelegramLoginButton from "@/components/TelegramLoginButton";
 import BotLoginPanel from "@/components/BotLoginPanel";
-import { TELEGRAM_BOT } from "@/lib/config";
 import { finishAuth } from "@/lib/finishAuth";
 import { readLastAuthMethod } from "@/lib/lastAuthMethod";
 import { usePublicConfig } from "@/lib/usePublicConfig";
@@ -57,12 +55,6 @@ export default function LoginPage() {
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [tgError, setTgError] = useState<string | null>(null);
-  // The Telegram widget's script/iframe failed to load (blocked, or bot domain not
-  // registered) — swap in a Russian fallback instead of a dead button / raw error.
-  const [tgWidgetFailed, setTgWidgetFailed] = useState(false);
-  // The user asked for the first-party bot flow instead of the widget.
-  const [botLoginOpen, setBotLoginOpen] = useState(false);
   // Code re-send throttle (client-side; the backend returns no retry_after) plus a
   // separate busy flag so a resend never disables the code field / verify button.
   const [resending, setResending] = useState(false);
@@ -270,26 +262,6 @@ export default function LoginPage() {
     startOAuth(provider, { ref: refCode || undefined });
   }
 
-  async function loginWithTelegram(user: TelegramAuthUser) {
-    setLoading(true);
-    setTgError(null);
-    try {
-      await api.telegramLogin(user);
-      await finishAuth("telegram", (href) => router.push(href));
-    } catch (e) {
-      console.error("Telegram login failed:", e);
-      // 403 = the account is blocked; 401 = the widget hash didn't verify on the
-      // backend; anything else is a transient/network error.
-      setTgError(
-        e instanceof ApiError && e.status === 403
-          ? "Аккаунт заблокирован — напиши в поддержку."
-          : e instanceof ApiError && e.status === 401
-            ? "Не удалось подтвердить вход через Telegram. Попробуй ещё раз."
-            : "Не получилось войти через Telegram. Попробуй ещё раз.",
-      );
-      setLoading(false);
-    }
-  }
 
   // Accepts the code explicitly so auto-submit can pass the just-typed value without
   // waiting for the state update; falls back to state for the button / Enter key.
@@ -407,71 +379,48 @@ export default function LoginPage() {
               </p>
               {/* One-tap methods first: the email path costs two steps and a wait for
                   the letter, so it sits below as the universal fallback. */}
-              {(providersPending || oauthProviders.length > 0 || TELEGRAM_BOT) && (
-                <>
-                  <div className="auth-social">
-                    {oauthProviders.length > 0 && isEmbeddedBrowser() && (
-                      <p className="auth-oauth-note">
-                        Если вход через Google не открывается — открой сайт в Chrome
-                        или Safari.
-                      </p>
-                    )}
-                    {providersPending ? (
-                      <div className="auth-oauth-reserve" aria-hidden="true" />
-                    ) : (
-                      <OAuthButtons
-                        providers={oauthProviders}
-                        busy={oauthBusy}
-                        lastUsed={lastMethod}
-                        onStart={startProvider}
-                      />
-                    )}
-                    {oauthError && (
-                      <p className="auth-oauth-err" role="alert">
-                        {oauthError}
-                      </p>
-                    )}
-                    {/* The widget is one tap when it works, but it pulls a script and an
-                        iframe from telegram.org — so the first-party bot flow is always
-                        one click away, and takes over outright when the widget fails to
-                        load rather than leaving a dead end. */}
-                    {botLoginOpen || tgWidgetFailed ? (
-                      <BotLoginPanel
-                        disabled={loading}
-                        onAuthenticated={() => finishAuth("telegram", (h) => router.push(h))}
-                      />
-                    ) : (
-                      TELEGRAM_BOT && (
-                        <>
-                          <TelegramLoginButton
-                            botUsername={TELEGRAM_BOT}
-                            onAuth={loginWithTelegram}
-                            onError={() => setTgWidgetFailed(true)}
-                            cornerRadius={12}
-                          />
-                          <p className="auth-last-note">
-                            <Button variant="link" onClick={() => setBotLoginOpen(true)}>
-                              не открывается? войти через бота
-                            </Button>
-                          </p>
-                        </>
-                      )
-                    )}
-                    {lastMethod === "telegram" && !tgWidgetFailed && !botLoginOpen && (
-                      <p className="auth-last-note">В прошлый раз ты входил через Telegram.</p>
-                    )}
-                    {tgError && (
-                      <p className="auth-tg-err" role="alert">
-                        {tgError}
-                      </p>
-                    )}
-                  </div>
-                  {/* Outside .auth-social: it separates the two groups rather than
-                      belonging to the social one, which also lets its own margins do
-                      the spacing instead of collapsing into the block's. */}
-                  <div className="auth-sep">или по почте</div>
-                </>
-              )}
+              <>
+                <div className="auth-social">
+                  {oauthProviders.length > 0 && isEmbeddedBrowser() && (
+                    <p className="auth-oauth-note">
+                      Если вход через Google не открывается — открой сайт в Chrome
+                      или Safari.
+                    </p>
+                  )}
+                  {providersPending ? (
+                    <div className="auth-oauth-reserve" aria-hidden="true" />
+                  ) : (
+                    <OAuthButtons
+                      providers={oauthProviders}
+                      busy={oauthBusy}
+                      lastUsed={lastMethod}
+                      onStart={startProvider}
+                    />
+                  )}
+                  {oauthError && (
+                    <p className="auth-oauth-err" role="alert">
+                      {oauthError}
+                    </p>
+                  )}
+                  {/* Telegram's own Login Widget used to sit here. It is a fixed-width
+                      iframe served from oauth.telegram.org behind a script from
+                      telegram.org — a third-party dependency in the one market where it
+                      is least dependable, and one that could never line up with the
+                      full-width buttons beside it. This panel does the same job
+                      first-party and at the same size. */}
+                  <BotLoginPanel
+                    disabled={loading}
+                    onAuthenticated={() => finishAuth("telegram", (h) => router.push(h))}
+                  />
+                  {lastMethod === "telegram" && (
+                    <p className="auth-last-note">В прошлый раз ты входил через Telegram.</p>
+                  )}
+                </div>
+                {/* Outside .auth-social: it separates the two groups rather than
+                    belonging to the social one, which also lets its own margins do
+                    the spacing instead of collapsing into the block's. */}
+                <div className="auth-sep">или по почте</div>
+              </>
               <TextField
                 key="login-email"
                 label="Электронная почта"

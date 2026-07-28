@@ -174,8 +174,9 @@
   height: 1px;
   background: var(--line);
 }
-/* Wraps Telegram's own fixed-width widget iframe; can't widen its card. Left
-   aligned by default (cabinet console); centered on the centered login card. */
+/* Wraps Telegram's own fixed-width widget iframe; can't widen its card. Only the
+   cabinet's link console mounts that widget now — the login screen uses the
+   first-party bot flow, which needs no iframe. */
 .tg-auth {
   display: flex;
   justify-content: flex-start;
@@ -191,11 +192,6 @@
 .tg-auth iframe {
   border-radius: var(--radius-md) !important;
 }
-.auth-tg-err {
-  color: var(--danger-text);
-  font-size: var(--text-sm);
-  margin-top: var(--space-3);
-}
 /* Turnstile couldn't verify (challenge error or a blocked script) — a visible,
    retryable failure instead of a permanently-disabled submit that reads as loading. */
 .auth-ts-err {
@@ -203,9 +199,9 @@
   font-size: var(--text-sm);
   margin: 4px 0 14px;
 }
-/* Telegram widget failed to load (blocked / bot domain unregistered) — graceful and
-   not alarming; the email path above still works. */
-.auth-tg-fallback {
+/* A dim, non-alarming aside — used by /auth/callback when the shell has been
+   spinning long enough to need an escape hatch. */
+.auth-note-dim {
   color: var(--ink-card-dim);
   font-size: var(--text-sm);
   margin-top: var(--space-3);
@@ -237,17 +233,6 @@
    .btn-lg row — the same trick .tg-auth uses above. */
 .auth-oauth-reserve {
   min-height: 58px;
-}
-/* Telegram's own widget is a fixed-width iframe we cannot restyle from the inside,
-   so it can never sit flush with the full-width buttons above it. Matching its ROW
-   height to theirs is the part we can control, and that is what stops the two from
-   reading as different UI eras stacked. (Phase 3 replaces it with a first-party
-   button and the seam goes away.) */
-.auth-social .tg-auth {
-  justify-content: center;
-  align-items: center;
-  min-height: 58px;
-  margin-top: var(--space-3);
 }
 .btn-oauth {
   gap: var(--space-3);

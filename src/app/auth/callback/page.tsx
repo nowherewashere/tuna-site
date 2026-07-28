@@ -84,7 +84,7 @@ export default function AuthCallbackPage() {
             Завершаем вход…
           </span>
           {stuck && (
-            <p className="auth-tg-fallback">
+            <p className="auth-note-dim">
               Что-то затянулось. <a href="/login">Вернуться ко входу</a>
             </p>
           )}
