@@ -154,6 +154,14 @@ export function trackFunnel(
 
 // ── Response shapes (mirror the Python pydantic schemas) ──────────────────────
 
+// One linked social identity. `provider_email` is the address the provider reported
+// when it was linked — shown so the cabinet can say WHICH account is attached; the
+// backend never matches on it.
+export interface OAuthProviderInfo {
+  provider: string;
+  provider_email: string | null;
+}
+
 export interface Me {
   telegram_id: number | null;
   auth_type: string;
@@ -163,6 +171,8 @@ export interface Me {
   name: string;
   username: string | null;
   language: string;
+  // Optional: absent on responses cached before this field shipped.
+  oauth_providers?: OAuthProviderInfo[];
 }
 
 export interface SubscriptionInfo {
@@ -232,6 +242,20 @@ export interface TelegramAuthUser {
 // devices dropped by the merge re-appear on their own.
 export interface TelegramLinkResult extends Me {
   merged: boolean;
+}
+
+// Handshake for "confirm this sign-in in the bot". The token is opaque and short-lived;
+// the QR encodes exactly the same URL as `url`, rendered by the backend so the SPA
+// carries no QR library.
+export interface BotLoginStart {
+  token: string;
+  url: string;
+  qr_png_base64: string;
+  expires_in: number;
+}
+
+export interface BotLoginStatus {
+  status: "pending" | "approved" | "declined" | "expired";
 }
 
 export interface EmailVerificationRequested {
@@ -391,6 +415,9 @@ export interface PublicConfig {
   // Null when there is no invited-only trial plan (no referral bonus).
   referred_trial_days: number | null;
   support: SupportConfig;
+  // Social sign-in providers that are enabled server-side. Empty (or absent, on a
+  // response cached before this shipped) => no social buttons at all.
+  oauth_providers?: string[];
 }
 
 export interface SupportMessage {
@@ -438,6 +465,11 @@ export const api = {
     }),
   verifyLoginCode: (email: string, code: string) =>
     req<AuthResult>("POST", "/auth/email/verify-code", { email, code }),
+  // The one-tap link mailed alongside the code. A POST the user triggers, never a GET
+  // on the link itself: mail scanners follow URLs in email, and a link that signed you
+  // in on open would be spent before you ever clicked it.
+  verifyLoginLink: (token: string) =>
+    req<AuthResult>("POST", "/auth/email/verify-link", { token }),
   me: () => req<Me>("GET", "/auth/me"),
   logout: () => req<{ success: boolean }>("POST", "/auth/logout"),
 
@@ -459,6 +491,29 @@ export const api = {
     req<EmailVerificationRequested>("POST", "/auth/email/request-verification", { email }),
   confirmEmailVerification: (code: string) =>
     req<EmailConfirmResult>("POST", "/auth/email/confirm", { code }),
+
+  // Sign in by confirming inside the bot — a first-party alternative to the Telegram
+  // Login Widget, which needs a script and an iframe from telegram.org. `start` also
+  // sets an httpOnly cookie binding the confirmation to THIS browser, which is what
+  // makes `claim` safe against being shown someone else's QR.
+  //
+  // `start`/`claim` establish a session, so a 401 from them is real — but neither is
+  // listed in AUTH_ENTRY because neither can return one: start is anonymous and claim
+  // answers 400 for every invalid case.
+  botLoginStart: () => req<BotLoginStart>("POST", "/auth/telegram/bot-login/start"),
+  botLoginStatus: (token: string) =>
+    req<BotLoginStatus>("GET", `/auth/telegram/bot-login/status?token=${encodeURIComponent(token)}`),
+  botLoginClaim: (token: string) =>
+    req<AuthResult>("POST", "/auth/telegram/bot-login/claim", { token }),
+
+  // Detach a social identity. The sign-in and link legs are browser redirects (see
+  // lib/oauth.ts), so this is the only OAuth call that goes through req() — and it
+  // runs INSIDE a session, which is why it is deliberately absent from AUTH_ENTRY:
+  // a 401 here means an expired access token and must trigger the silent refresh,
+  // exactly like /auth/telegram/link. The backend refuses with 409
+  // `last_sign_in_method` when it would leave the account with no way in.
+  oauthUnlink: (provider: string) =>
+    req<Me>("DELETE", `/auth/oauth/${encodeURIComponent(provider)}`),
 
   // Subscription. `/current` returns null when the user has no subscription yet.
   currentSubscription: () => req<SubscriptionInfo | null>("GET", "/subscription/current"),

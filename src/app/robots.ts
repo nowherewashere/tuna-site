@@ -13,7 +13,7 @@ export const dynamic = "force-static";
 // "most-specific user-agent wins", so a bot that finds its own name ignores the
 // `*` group entirely — the explicit group makes the welcome legible and keeps the
 // same Disallow set so the policy can't drift open for those crawlers later.
-const DISALLOW = ["/cabinet", "/connect", "/login"];
+const DISALLOW = ["/cabinet", "/connect", "/login", "/auth"];
 
 const AI_BOTS = [
   // Retrieval (answer-time fetch)

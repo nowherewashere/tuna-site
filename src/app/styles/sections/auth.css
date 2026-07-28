@@ -156,15 +156,14 @@
 }
 
 /* ── Telegram sign-in (login) ─────────────────────────────────────────────── */
-.auth-tg {
-  margin-top: var(--space-5);
-}
-/* Labelled hairline divider between the email form and the Telegram button. */
+/* Labelled hairline divider between the one-tap methods above and the email form
+   below. Symmetric margins: it belongs to neither group, so it owns the gap on both
+   sides (and is not the last child of a block whose margin it would collapse into). */
 .auth-sep {
   display: flex;
   align-items: center;
   gap: var(--space-3);
-  margin: 0 0 var(--space-4);
+  margin: var(--space-5) 0;
   color: var(--ink-card-dim);
   font-size: var(--text-sm);
 }
@@ -175,11 +174,6 @@
   height: 1px;
   background: var(--line);
 }
-.auth-tg-note {
-  color: var(--ink-card-dim);
-  font-size: var(--text-sm);
-  margin-bottom: var(--space-3);
-}
 /* Wraps Telegram's own fixed-width widget iframe; can't widen its card. Left
    aligned by default (cabinet console); centered on the centered login card. */
 .tg-auth {
@@ -188,9 +182,6 @@
   max-width: 100%;
   overflow-x: clip;
   min-height: var(--space-10); /* 40px — reserve the widget's height, no layout shift */
-}
-.auth-tg .tg-auth {
-  justify-content: center;
 }
 /* Telegram's widget iframe carries an opaque background; with a rounded button
    its square corners peek past the button as a colour that doesn't match the
@@ -218,6 +209,161 @@
   color: var(--ink-card-dim);
   font-size: var(--text-sm);
   margin-top: var(--space-3);
+}
+
+/* ── Social sign-in ───────────────────────────────────────────────────────── */
+/* The one-tap methods, above the email form. No bottom margin — .auth-sep owns the
+   gap to the email form, symmetrically, from outside this block. */
+.auth-social {
+  margin-bottom: 0;
+}
+/* One column at every width: in Russian the labels ("Войти через Google") are long
+   enough that a 2-up grid truncates at 360px, and a clipped brand name reads worse
+   than a taller card. The login card caps at 440px, so one column never gets wide. */
+.auth-oauth {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+/* One row per provider: the button plus its optional "last used" line, kept tighter
+   to each other than providers are to one another. */
+.auth-oauth-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+/* Holds the buttons' height while /config is still in flight, so their arrival does
+   not shove the email field (which is autofocused) down the page. Matches one
+   .btn-lg row — the same trick .tg-auth uses above. */
+.auth-oauth-reserve {
+  min-height: 58px;
+}
+/* Telegram's own widget is a fixed-width iframe we cannot restyle from the inside,
+   so it can never sit flush with the full-width buttons above it. Matching its ROW
+   height to theirs is the part we can control, and that is what stops the two from
+   reading as different UI eras stacked. (Phase 3 replaces it with a first-party
+   button and the seam goes away.) */
+.auth-social .tg-auth {
+  justify-content: center;
+  align-items: center;
+  min-height: 58px;
+  margin-top: var(--space-3);
+}
+.btn-oauth {
+  gap: var(--space-3);
+  /* .btn-lg is 15px padding + 17px text ≈ 52px tall — already past the 44px target. */
+  font-weight: 500; /* a brand label shouldn't shout louder than the amber CTA */
+}
+.btn-oauth .brand-ic {
+  flex: none;
+}
+/* Google's LIGHT button, one of the three surfaces its brand guidelines sanction
+   (#FFFFFF fill, #1F1F1F label, #747775 hairline). The dark variant (#131314) was
+   tried first and measured 1.14:1 against this navy card — the fill simply did not
+   exist, leaving the one-tap path visually weaker than the amber email CTA below it,
+   which inverts the order the screen is arranged in. The light surface is the only
+   move that fixes that without touching the mark. Vendor constants, not tokens. */
+.btn-oauth-google {
+  background: #fff;
+  border: 1px solid #747775;
+  color: #1f1f1f;
+  backdrop-filter: none;
+}
+.btn-oauth-google:hover {
+  background: #f2f2f2;
+  border-color: #5f6368;
+}
+/* The method the user came back to. A line under the button, not a pill inside it:
+   inline, the row needed ~307px against a content box that never exceeds 292px, so
+   the label wrapped to three lines — and it ran into the accessible name. */
+.auth-last-note {
+  color: var(--ink-card-dim);
+  font-size: var(--text-sm);
+}
+/* Bound to the button that produced it rather than floating between the providers
+   and the Telegram row below. */
+.auth-oauth-err {
+  color: var(--danger-text);
+  font-size: var(--text-sm);
+  margin-top: var(--space-2);
+}
+/* A darkened Telegram blue. The brand's own #2AABEE gives white text only 2.57:1 —
+   below even the 3:1 large-text floor, let alone AA's 4.5:1 — and its lighter hover is
+   worse. This shade holds ~5.4:1 while still reading as Telegram. Hover changes the
+   border, not the fill, so the label's contrast cannot regress on interaction. */
+.btn-oauth-telegram {
+  background: #1670a8;
+  border: 1px solid #1670a8;
+  color: #fff;
+  backdrop-filter: none;
+}
+.btn-oauth-telegram:hover {
+  border-color: #4da3d6;
+}
+/* Both Telegram states are siblings of .auth-oauth, not children, so that block's
+   gap does not reach them — without this they share an edge with the Google button. */
+.btn-oauth-telegram,
+.bot-login {
+  margin-top: var(--space-3);
+}
+
+/* ── Confirm-in-the-bot panel ─────────────────────────────────────────────── */
+.bot-login {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--fill-subtle);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md);
+}
+/* Focused programmatically when the panel opens; it is a container, not a control, so
+   it takes no visible ring of its own. */
+.bot-login:focus {
+  outline: none;
+}
+.bot-login-title {
+  color: var(--ink-card);
+  font-size: var(--text-md);
+  font-weight: 600;
+}
+/* White plate so the code keeps the light quiet zone it needs to scan on a dark card.
+   No padding: the PNG already carries a 4-module border, and adding CSS padding on top
+   doubled the quiet zone at the expense of the code's own size. */
+.bot-login-qr {
+  display: none;
+  width: 180px;
+  height: 180px;
+  background: #fff;
+  border-radius: var(--radius-sm);
+}
+/* Width alone does not mean "not the phone that will open this link" — a rotated
+   handset is 844px wide and 390px tall, where a 180px QR ate the whole viewport. The
+   height condition is what actually identifies a screen with room to spare. */
+@media (min-width: 560px) and (min-height: 600px) {
+  .bot-login-qr {
+    display: block;
+  }
+}
+/* Left-aligned like .auth-hint and .auth-oauth-note: it wraps to two lines at most
+   widths, and the card's centre alignment reads badly over two lines. */
+.bot-login-hint {
+  align-self: stretch;
+  text-align: left;
+  color: var(--ink-card-dim);
+  font-size: var(--text-sm);
+  line-height: 1.45;
+}
+
+/* Google refuses OAuth inside embedded WebViews, so this warns before the user leaves
+   rather than after they hit its error page. Left-aligned like .auth-hint: it is
+   explanatory prose, and the card's centre alignment reads badly over two lines. */
+.auth-oauth-note {
+  text-align: left;
+  color: var(--ink-card-dim);
+  font-size: var(--text-sm);
+  margin-bottom: var(--space-3);
 }
 
 .onb-alt-lg {

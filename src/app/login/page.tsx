@@ -8,13 +8,25 @@ import { readRefCode } from "@/lib/referral";
 import { readSelectedPlan } from "@/lib/selectedPlan";
 import Turnstile from "@/components/Turnstile";
 import { useTurnstile } from "@/lib/useTurnstile";
-import { invalidateAuth } from "@/lib/useAuth";
 import { hasSessionHint } from "@/lib/sessionHint";
 import { isValidEmail } from "@/lib/email";
 import Icon from "@/components/Icon";
 import { Button, TextField } from "@/components/ui";
 import TelegramLoginButton from "@/components/TelegramLoginButton";
+import BotLoginPanel from "@/components/BotLoginPanel";
 import { TELEGRAM_BOT } from "@/lib/config";
+import { finishAuth } from "@/lib/finishAuth";
+import { readLastAuthMethod } from "@/lib/lastAuthMethod";
+import { usePublicConfig } from "@/lib/usePublicConfig";
+import OAuthButtons from "@/components/OAuthButtons";
+import {
+  OAUTH_PROVIDER_LABEL,
+  isEmbeddedBrowser,
+  oauthErrorMessage,
+  renderableProviders,
+  startOAuth,
+  type OAuthProvider,
+} from "@/lib/oauth";
 
 type Step = "email" | "code";
 
@@ -49,6 +61,8 @@ export default function LoginPage() {
   // The Telegram widget's script/iframe failed to load (blocked, or bot domain not
   // registered) — swap in a Russian fallback instead of a dead button / raw error.
   const [tgWidgetFailed, setTgWidgetFailed] = useState(false);
+  // The user asked for the first-party bot flow instead of the widget.
+  const [botLoginOpen, setBotLoginOpen] = useState(false);
   // Code re-send throttle (client-side; the backend returns no retry_after) plus a
   // separate busy flag so a resend never disables the code field / verify button.
   const [resending, setResending] = useState(false);
@@ -56,12 +70,43 @@ export default function LoginPage() {
   // Persistent polite live region text — a freshly-mounted aria-live node isn't
   // reliably announced, so the region stays mounted and only its text changes.
   const [liveMsg, setLiveMsg] = useState("");
+  // Social sign-in: which provider's redirect is in flight, and the failure the
+  // /auth/callback shell bounced back here as `?error=`.
+  const [oauthBusy, setOauthBusy] = useState<string | null>(null);
+  // A social sign-in that failed comes back as /login?error=<code> — the callback
+  // shell is a bare redirect target and can't render an error itself. Seeded from the
+  // URL here rather than in an effect (SSR-safe for the same reason as `email` above:
+  // nothing on this branch renders until the session check clears).
+  const [oauthError, setOauthError] = useState<string | null>(() => {
+    if (typeof window === "undefined") return null;
+    const code = new URLSearchParams(window.location.search).get("error");
+    return code ? oauthErrorMessage(code) : null;
+  });
+
+  const publicConfig = usePublicConfig();
+  // Gate on what will actually render, not on the raw list: a provider the backend
+  // enables before this build knows its mark is dropped, and gating on the raw list
+  // would leave a lone "или по почте" divider above nothing.
+  const oauthProviders = renderableProviders(publicConfig?.oauth_providers ?? []);
+  // /config is a runtime fetch, so the buttons arrive after first paint. Reserve their
+  // row meanwhile or everything below — including the autofocused email field — jumps
+  // down when they land (same reason .tg-auth carries a min-height).
+  const providersPending = publicConfig === null;
 
   // Referral attribution captured from a /r/<code> visit (RefCapture). Client-only;
   // useSyncExternalStore returns null on the server so SSG markup matches (no flash).
   const refCode = useSyncExternalStore(
     () => () => {},
     () => readRefCode(),
+    () => null,
+  );
+
+  // Which method worked last time, for the "в прошлый раз" hint. Same shape as
+  // refCode above: client-only storage, so the server snapshot is null and the
+  // static markup matches (no flash, no hydration mismatch).
+  const lastMethod = useSyncExternalStore(
+    () => () => {},
+    () => readLastAuthMethod(),
     () => null,
   );
 
@@ -96,6 +141,14 @@ export default function LoginPage() {
     };
   }, [router]);
 
+  // Drop ?error= from the URL once it has been read into state, so a reload doesn't
+  // resurrect a stale failure. Deliberately no setState — the value is already seeded.
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).has("error")) {
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+  }, []);
+
   // Mirror the entered address to sessionStorage so a reload or a Back→forward cycle
   // on the code step keeps it (seeded back via the useState initializer above).
   useEffect(() => {
@@ -127,33 +180,6 @@ export default function LoginPage() {
     const id = setTimeout(() => setCooldown((c) => c - 1), 1000);
     return () => clearTimeout(id);
   }, [cooldown]);
-
-  // Post-authentication routing, shared by the email and Telegram paths. A brand-new
-  // account has no subscription → grant the trial (idempotent; 409 = already has one)
-  // and fire the onboarding funnel steps. Everyone ends up in the cabinet, which shows
-  // the install guide at the top.
-  async function finishAuth() {
-    invalidateAuth();
-    const existing = await api.currentSubscription().catch(() => null);
-    if (!existing) {
-      try {
-        await api.activateTrial();
-      } catch (e) {
-        if (!(e instanceof ApiError && e.status === 409)) {
-          console.error("Trial activation failed:", e);
-        }
-      }
-      const sub = await api.currentSubscription().catch(() => null);
-      if (sub) {
-        const platform = detectPlatform();
-        trackFunnel("config_issued", { platform, userRef: sub.user_remna_id });
-        trackFunnel("app_install_shown", { platform, userRef: sub.user_remna_id });
-      }
-    }
-    // A plan chosen on the landing (sessionStorage) deep-links into the Subscription
-    // tab, where the cabinet preselects it once offers load — instead of a blank Overview.
-    router.push(readSelectedPlan() ? "/cabinet#sub" : "/cabinet");
-  }
 
   // The bare send + error handling, with no history/step side-effects, so the initial
   // request and an in-place resend share one path (and one error vocabulary). `setBusy`
@@ -234,12 +260,22 @@ export default function LoginPage() {
     window.history.back();
   }
 
+  // Leaves the SPA entirely, so there is no success path to handle here — the browser
+  // comes back to /auth/callback. The busy flag only survives until the navigation
+  // commits; it exists so a second click can't start a competing flow.
+  function startProvider(provider: OAuthProvider) {
+    setOauthError(null);
+    setOauthBusy(provider);
+    setLiveMsg(`Переходим к ${OAUTH_PROVIDER_LABEL[provider]}…`);
+    startOAuth(provider, { ref: refCode || undefined });
+  }
+
   async function loginWithTelegram(user: TelegramAuthUser) {
     setLoading(true);
     setTgError(null);
     try {
       await api.telegramLogin(user);
-      await finishAuth();
+      await finishAuth("telegram", (href) => router.push(href));
     } catch (e) {
       console.error("Telegram login failed:", e);
       // 403 = the account is blocked; 401 = the widget hash didn't verify on the
@@ -264,7 +300,7 @@ export default function LoginPage() {
     setError(null);
     try {
       await api.verifyLoginCode(email.trim(), entered);
-      await finishAuth();
+      await finishAuth("email", (href) => router.push(href));
     } catch (e) {
       setError(
         e instanceof ApiError && e.status === 410
@@ -366,9 +402,76 @@ export default function LoginPage() {
             <>
               <h1>Вход в Tuna</h1>
               <p className="lead">
-                Введи почту — пришлём код. Войдём или создадим аккаунт и сразу выдадим доступ. Без
-                пароля.
+                Войди одним нажатием — или получи код на почту. Войдём или создадим аккаунт и сразу
+                выдадим доступ. Без пароля.
               </p>
+              {/* One-tap methods first: the email path costs two steps and a wait for
+                  the letter, so it sits below as the universal fallback. */}
+              {(providersPending || oauthProviders.length > 0 || TELEGRAM_BOT) && (
+                <>
+                  <div className="auth-social">
+                    {oauthProviders.length > 0 && isEmbeddedBrowser() && (
+                      <p className="auth-oauth-note">
+                        Если вход через Google не открывается — открой сайт в Chrome
+                        или Safari.
+                      </p>
+                    )}
+                    {providersPending ? (
+                      <div className="auth-oauth-reserve" aria-hidden="true" />
+                    ) : (
+                      <OAuthButtons
+                        providers={oauthProviders}
+                        busy={oauthBusy}
+                        lastUsed={lastMethod}
+                        onStart={startProvider}
+                      />
+                    )}
+                    {oauthError && (
+                      <p className="auth-oauth-err" role="alert">
+                        {oauthError}
+                      </p>
+                    )}
+                    {/* The widget is one tap when it works, but it pulls a script and an
+                        iframe from telegram.org — so the first-party bot flow is always
+                        one click away, and takes over outright when the widget fails to
+                        load rather than leaving a dead end. */}
+                    {botLoginOpen || tgWidgetFailed ? (
+                      <BotLoginPanel
+                        disabled={loading}
+                        onAuthenticated={() => finishAuth("telegram", (h) => router.push(h))}
+                      />
+                    ) : (
+                      TELEGRAM_BOT && (
+                        <>
+                          <TelegramLoginButton
+                            botUsername={TELEGRAM_BOT}
+                            onAuth={loginWithTelegram}
+                            onError={() => setTgWidgetFailed(true)}
+                            cornerRadius={12}
+                          />
+                          <p className="auth-last-note">
+                            <Button variant="link" onClick={() => setBotLoginOpen(true)}>
+                              не открывается? войти через бота
+                            </Button>
+                          </p>
+                        </>
+                      )
+                    )}
+                    {lastMethod === "telegram" && !tgWidgetFailed && !botLoginOpen && (
+                      <p className="auth-last-note">В прошлый раз ты входил через Telegram.</p>
+                    )}
+                    {tgError && (
+                      <p className="auth-tg-err" role="alert">
+                        {tgError}
+                      </p>
+                    )}
+                  </div>
+                  {/* Outside .auth-social: it separates the two groups rather than
+                      belonging to the social one, which also lets its own margins do
+                      the spacing instead of collapsing into the block's. */}
+                  <div className="auth-sep">или по почте</div>
+                </>
+              )}
               <TextField
                 key="login-email"
                 label="Электронная почта"
@@ -411,30 +514,6 @@ export default function LoginPage() {
               >
                 Получить код
               </Button>
-              {TELEGRAM_BOT && (
-                <div className="auth-tg">
-                  <div className="auth-sep">или</div>
-                  <p className="auth-tg-note">Уже заходили через Telegram? Войди одним нажатием.</p>
-                  {tgWidgetFailed ? (
-                    <p className="auth-tg-fallback" role="alert">
-                      Не удалось загрузить вход через Telegram — обнови страницу или
-                      войди по почте выше.
-                    </p>
-                  ) : (
-                    <TelegramLoginButton
-                      botUsername={TELEGRAM_BOT}
-                      onAuth={loginWithTelegram}
-                      onError={() => setTgWidgetFailed(true)}
-                      cornerRadius={12}
-                    />
-                  )}
-                  {tgError && (
-                    <p className="auth-tg-err" role="alert">
-                      {tgError}
-                    </p>
-                  )}
-                </div>
-              )}
             </>
           )}
         </div>
