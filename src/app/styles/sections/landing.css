@@ -664,6 +664,17 @@ section {
   color: var(--amber);
   flex-shrink: 0;
 }
+/* Metered premium-location quota. Sits right under the unlimited-traffic line and
+   reads as its qualifier, so it top-aligns its icon and wraps rather than pushing a
+   narrow card sideways — pool names are admin-authored and can be long. */
+.price-meta li.price-meta-pool {
+  align-items: flex-start;
+  text-wrap: pretty;
+  /* A bare text node is an anonymous flex item whose minimum size is its longest
+     word, so a space-free pool name would push past the card. `anywhere`, not
+     `overflow-wrap: break-word`, because only the former shrinks min-content. */
+  overflow-wrap: anywhere;
+}
 /* Per-plan locations (flag emojis) — may span several flags, so allow the row to
    top-align its icon and let the flags wrap instead of overflowing a narrow card. */
 .price-meta li.price-meta-loc {

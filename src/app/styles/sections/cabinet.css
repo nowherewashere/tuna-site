@@ -457,6 +457,85 @@
 /* Secret-code redeem: a hairline divides it from the subscription readouts above, and
    it drops the trailing field margin since it's the last thing in the console. Reuses
    the shared .field* form styles + the inline .field-controls (input + submit) layout. */
+/* ── Premium-pool meters ─────────────────────────────────────────────────────
+   Traffic is unlimited on ordinary locations, so this is deliberately NOT the
+   headline instrument (the Overview keeps its "uncapped" chip): a quiet secondary
+   allowance, rendered as a thin fill bar under the subscription readouts. Amber is
+   the single signal colour in this palette, so it marks the fill; only the spent
+   state escalates to the danger tone. */
+.pool-meters {
+  display: flex;
+  flex-direction: column;
+  margin-top: var(--space-4);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border-soft);
+}
+/* Capped like the devices gauge (.slot-track): a full-width 1040px hairline on
+   desktop reads as a rule, not an instrument, and space-between would fling the
+   label and the figure a thousand pixels apart. */
+.pool-meter {
+  max-width: 560px;
+}
+/* Repeated rows get a hairline, the same grammar as .dev-row — with three amber
+   bars stacked, spacing alone doesn't say where one meter ends. */
+.pool-meter + .pool-meter {
+  margin-top: var(--space-4);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border-soft);
+}
+.pool-meter-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  /* Pool names are admin-authored free text: wrap the figure onto its own line
+     rather than ellipsize the name, whose tail is what tells two pools apart. */
+  flex-wrap: wrap;
+  margin-bottom: var(--space-2);
+}
+.pool-meter-val {
+  font-family: var(--font-mono), monospace;
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  margin-left: auto;
+}
+/* Same geometry and empty-state fill as the devices gauge (.slot), so the cabinet
+   reads as one instrument family. */
+.pool-meter-track {
+  height: 8px;
+  border-radius: var(--radius-pill);
+  background: var(--fill-subtle);
+  overflow: hidden;
+}
+.pool-meter-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--amber-2), var(--amber));
+  transition: width var(--dur-slow) var(--ease-out);
+}
+/* --danger is the fill/border half of the pair; --danger-text stays for text. */
+.pool-meter.is-out .pool-meter-fill {
+  background: var(--danger);
+}
+.pool-meter-note {
+  margin-top: var(--space-2);
+  font-size: var(--text-sm);
+  color: var(--ink-card-dim);
+  text-wrap: pretty;
+}
+.pool-meter.is-out .pool-meter-note {
+  color: var(--danger-text);
+}
+/* One CTA for the whole group: several spent pools share the same way out, and N
+   identical links would just clutter a screen reader's link list. */
+.pool-meters-cta {
+  margin-top: var(--space-4);
+  align-self: flex-start;
+}
+
 .secret-code-sep {
   height: 1px;
   margin: var(--space-5) 0 var(--space-4);
@@ -493,6 +572,9 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
+  /* Jump target of the spent-pool CTA — clear the sticky topbar, same as
+     .install-console, or the first plan's name and price land behind it. */
+  scroll-margin-top: 80px;
 }
 .plan-consoles .console {
   margin-bottom: 0;

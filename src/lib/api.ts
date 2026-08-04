@@ -175,6 +175,28 @@ export interface Me {
   oauth_providers?: OAuthProviderInfo[];
 }
 
+/** How often a premium-pool quota resets. Panel vocabulary, worded client-side. */
+export type PoolResetStrategy = "NO_RESET" | "DAY" | "WEEK" | "MONTH" | "MONTH_ROLLING";
+
+/**
+ * One metered premium-location pool on the current subscription.
+ *
+ * Traffic is unlimited on ordinary locations; a pool is the subset of premium
+ * locations the plan meters. Running its quota out disables that pool only —
+ * everything else keeps working — until `reset_at`.
+ */
+export interface PoolUsage {
+  pool_id: number;
+  name: string;
+  quota_bytes: number;
+  // null = the panel was unreachable. Render "unknown", never 0, or the meter would
+  // claim nothing has been spent.
+  used_bytes: number | null;
+  is_exhausted: boolean;
+  // null when the quota never resets — it lasts the whole subscription.
+  reset_at: string | null;
+}
+
 export interface SubscriptionInfo {
   user_remna_id: string;
   status: string;
@@ -192,6 +214,10 @@ export interface SubscriptionInfo {
   used_traffic_bytes: number | null;
   lifetime_used_traffic_bytes: number | null;
   online_at: string | null;
+  // Metered premium-location pools. Absent/null when the plan meters none (or the
+  // feature is off) — the backend sends null, never [], so it stays cache-compatible
+  // with responses written before the field existed.
+  pools?: PoolUsage[] | null;
 }
 
 export interface Device {
@@ -337,6 +363,14 @@ export interface DurationOffer {
   prices: DurationPrice[];
 }
 
+/** A plan's advertised quota on one premium-location pool. */
+export interface PlanPoolQuota {
+  pool_id: number;
+  name: string;
+  quota_bytes: number;
+  reset_strategy: PoolResetStrategy;
+}
+
 export interface PlanOffer {
   id: number;
   public_code: string;
@@ -349,6 +383,8 @@ export interface PlanOffer {
   type: string;
   recommended_purchase_type: string;
   durations: DurationOffer[];
+  // Metered premium-location quotas; absent when the plan meters none.
+  pools?: PlanPoolQuota[] | null;
 }
 
 export interface SubscriptionOffers {
@@ -383,6 +419,9 @@ export interface PublicPlanLanding {
   monthly_from_rub: string;
   max_duration_days: number;
   max_duration_price_rub: string;
+  // Metered premium-location quotas; absent when the plan meters none. Optional so a
+  // landing payload cached before this field shipped still parses.
+  pools?: PlanPoolQuota[] | null;
 }
 
 export interface PaymentInit {

@@ -1,8 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { api, type PublicPlanLanding } from "@/lib/api";
-import { plural, fmtBytes } from "@/lib/format";
+import { api, type PlanPoolQuota, type PublicPlanLanding } from "@/lib/api";
+import { plural, fmtBytes, fmtQuota, poolPeriodLabel } from "@/lib/format";
 import { storeSelectedPlan } from "@/lib/selectedPlan";
 import AuthCta from "@/components/AuthCta";
 import Icon from "@/components/Icon";
@@ -16,6 +16,21 @@ function trafficLabel(bytes: number): string {
 
 function deviceLabel(n: number): string {
   return `${n} ${plural(n, "устройство", "устройства", "устройств")}`;
+}
+
+/**
+ * A metered premium-location quota, read as a companion to "Безлимитный трафик":
+ * unlimited everywhere, this much on the premium locations.
+ *
+ * A renewing quota carries the period inline ("200 ГБ/мес"); a NO_RESET one says so
+ * explicitly rather than just omitting it — side by side on two cards, a silent
+ * omission looks like a formatting slip instead of a different policy.
+ */
+function poolLabel(pool: PlanPoolQuota): string {
+  const period = poolPeriodLabel(pool.reset_strategy);
+  const quota = `${fmtQuota(pool.quota_bytes)}${period}`;
+  const tail = period ? "" : " — на весь срок";
+  return `${quota} на «${pool.name}»${tail}`;
 }
 
 /** Round the API's decimal price string to a whole ruble ("139.33" → "139"). */
@@ -152,6 +167,14 @@ export default function PricingSection({
                     <Icon name="bolt" size={17} />
                     {trafficLabel(p.traffic_limit)}
                   </li>
+                  {/* Directly under the unlimited-traffic line: the two are one claim
+                      — unlimited everywhere, metered only on these premium locations. */}
+                  {p.pools?.map((pool) => (
+                    <li key={pool.pool_id} className="price-meta-pool">
+                      <Icon name="gauge" size={17} />
+                      {poolLabel(pool)}
+                    </li>
+                  ))}
                   {p.locations && (
                     <li className="price-meta-loc">
                       <Icon name="globe" size={17} />

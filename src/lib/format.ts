@@ -1,4 +1,4 @@
-import type { DurationOffer } from "@/lib/api";
+import type { DurationOffer, PoolResetStrategy } from "@/lib/api";
 import type { IconName } from "@/components/Icon";
 
 /** Russian plural picker: one / few / many by the usual RU rules. */
@@ -92,6 +92,40 @@ export function fmtBytes(n: number): string {
   const u = ["Б", "КБ", "МБ", "ГБ", "ТБ"];
   const i = Math.min(Math.floor(Math.log(n) / Math.log(1024)), u.length - 1);
   return `${(n / 1024 ** i).toFixed(i ? 1 : 0)} ${u[i]}`;
+}
+
+/** Byte size with a trailing ".0" trimmed.
+ *
+ *  Quotas are authored by an admin in whole gigabytes, so "200 ГБ" reads as the
+ *  advertised number while fmtBytes' fixed one decimal ("200.0 ГБ") reads as a
+ *  measurement. A genuinely fractional value keeps its decimal. */
+export function fmtQuota(n: number): string {
+  return fmtBytes(n).replace(/\.0(?= )/, "");
+}
+
+/** How often a premium-pool quota renews, as a compact per-period unit ("/мес").
+ *  Empty for NO_RESET, which callers must spell out instead of leaving silent — on a
+ *  card beside a renewing quota, a missing period reads as a formatting slip. */
+export function poolPeriodLabel(strategy: PoolResetStrategy): string {
+  switch (strategy) {
+    case "DAY":
+      return "/сутки";
+    case "WEEK":
+      return "/нед";
+    case "MONTH":
+    case "MONTH_ROLLING":
+      return "/мес";
+    default:
+      return "";
+  }
+}
+
+/** Share of a pool quota already spent, clamped to 0…1. `null` when usage is
+ *  unknown (the panel was unreachable), so the meter can render an unknown state
+ *  instead of a full or empty bar it cannot justify. */
+export function poolFillRatio(used: number | null, quota: number): number | null {
+  if (used === null || quota <= 0) return null;
+  return Math.min(1, Math.max(0, used / quota));
 }
 
 /** Friendly display name: real name → username → email local-part → «друг».

@@ -1,18 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Icon from "@/components/Icon";
 import LocationFlags from "@/components/LocationFlags";
-import type { SubscriptionInfo, SubscriptionOffers } from "@/lib/api";
+import type { PoolUsage, SubscriptionInfo, SubscriptionOffers } from "@/lib/api";
 import {
   daysLeftUntil,
   durationLabel,
   expiryAfterAdding,
   fmtDate,
+  fmtQuota,
   ladderSavings,
   monthlyPrice,
   pickPrice,
   plural,
+  poolFillRatio,
   STATUS_LABEL,
   statusPillClass,
 } from "@/lib/format";
@@ -86,6 +88,75 @@ function SecretCodeRedeem({
   );
 }
 
+/**
+ * Usage meter for one metered premium-location pool.
+ *
+ * Traffic is unlimited everywhere else, so this bar is deliberately *not* the
+ * headline instrument (the Overview keeps its "uncapped" chip): it reads as a
+ * secondary allowance. Three states — filling, spent, and unknown — and the last
+ * one matters: when the panel can't be reached `used_bytes` is null, and showing an
+ * empty bar would tell the user they've spent nothing.
+ */
+function PoolMeter({ pool }: { pool: PoolUsage }) {
+  const unknown = pool.used_bytes === null;
+  const ratio = poolFillRatio(pool.used_bytes, pool.quota_bytes);
+  const pct = Math.round((ratio ?? 0) * 100);
+  const quotaLabel = fmtQuota(pool.quota_bytes);
+  const usedLabel = unknown ? "—" : fmtQuota(pool.used_bytes!);
+  const remainingLabel = unknown
+    ? null
+    : fmtQuota(Math.max(0, pool.quota_bytes - pool.used_bytes!));
+  // fmtDate already ends in "г." — never let a date land sentence-final, or the copy
+  // reads "…16 авг. 2026 г..".
+  const resetLabel = pool.reset_at ? fmtDate(pool.reset_at) : null;
+  // The flag is authoritative over the reading: usage comes from a live panel call
+  // that can fail on a pool the last metering pass already found spent, and an empty
+  // bar under "квота израсходована" would contradict its own caption.
+  const fillPct = pool.is_exhausted ? 100 : unknown ? 0 : pct;
+
+  const note = (() => {
+    if (pool.is_exhausted) {
+      return resetLabel
+        ? `Квота израсходована — до ${resetLabel} премиум-локации отключены. Остальные работают как обычно.`
+        : "Квота израсходована — премиум-локации отключены. Остальные работают как обычно.";
+    }
+    if (unknown) return "Не удалось получить расход. Обнови страницу чуть позже.";
+    // "Осталось" is already the label of the days readout right above, so the pool
+    // uses a different word for a different quantity.
+    if (resetLabel) return `Доступно ещё ${remainingLabel} · обновится ${resetLabel}`;
+    return `Доступно ещё ${remainingLabel} · квота на весь срок подписки`;
+  })();
+
+  return (
+    <div className={`pool-meter${pool.is_exhausted ? " is-out" : ""}`}>
+      <div className="pool-meter-head">
+        <span className="readout-label">{pool.name}</span>
+        <span className="pool-meter-val">
+          {usedLabel} / {quotaLabel}
+        </span>
+      </div>
+      <div
+        className="pool-meter-track"
+        role="progressbar"
+        aria-label={`Премиум-трафик: ${pool.name}`}
+        aria-valuemin={0}
+        aria-valuemax={pool.quota_bytes}
+        {...(unknown ? {} : { "aria-valuenow": Math.min(pool.used_bytes!, pool.quota_bytes) })}
+        aria-valuetext={
+          unknown
+            ? pool.is_exhausted
+              ? "квота израсходована"
+              : "расход неизвестен"
+            : `${usedLabel} из ${quotaLabel}, ${pct}%`
+        }
+      >
+        <span className="pool-meter-fill" style={{ width: `${fillPct}%` }} />
+      </div>
+      <p className="pool-meter-note">{note}</p>
+    </div>
+  );
+}
+
 export default function SubscriptionPanel({
   offers,
   sub,
@@ -115,6 +186,9 @@ export default function SubscriptionPanel({
 }) {
   // Captured once on mount (pure render); the day counter doesn't need to tick.
   const [now] = useState(() => Date.now());
+  // Scroll target of the spent-pool CTA (see the button below for why it is a ref
+  // and not an #anchor). `.plan-consoles` carries scroll-margin-top for the topbar.
+  const plansRef = useRef<HTMLDivElement>(null);
 
   // Shared across the mutually-exclusive render sites below (only one shows per pass), so
   // a code can be redeemed with or without an active subscription. Embedded under the
@@ -148,6 +222,9 @@ export default function SubscriptionPanel({
   const hasRemainder = remainder > 0;
   const statusClass = statusPillClass(sub?.status);
   const expirySoon = daysLeft > 0 && daysLeft <= 5;
+  // null (not []) on plans that meter nothing, and on responses cached before the
+  // field shipped — either way there is no meter to draw.
+  const pools = sub?.pools ?? [];
 
   // One persistent live region announces the selection concisely (a fresh
   // aria-live node mounted with its content isn't reliably announced).
@@ -210,6 +287,29 @@ export default function SubscriptionPanel({
               <span className="readout-val">{fmtDate(sub.expire_at)}</span>
             </div>
           </div>
+          {pools.length > 0 && (
+            <div className="pool-meters">
+              {pools.map((pool) => (
+                <PoolMeter key={pool.pool_id} pool={pool} />
+              ))}
+              {/* One CTA for the group, not one per meter: every spent pool has the
+                  same way out, and repeating it would only pad the link list.
+                  A button that scrolls, NOT an `#anchor` link: the cabinet reads its
+                  active tab from the URL hash (useHashTab), so any unknown hash would
+                  throw the user back to Overview — away from the plans it points at. */}
+              {pools.some((pool) => pool.is_exhausted) && (
+                <button
+                  type="button"
+                  className="btn btn-ghost pool-meters-cta"
+                  onClick={() =>
+                    plansRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+                  }
+                >
+                  Выбрать тариф с большей квотой
+                </button>
+              )}
+            </div>
+          )}
           <div className="secret-code-sep" role="separator" />
           <SecretCodeRedeem {...secretFieldProps} />
         </ConsoleFrame>
@@ -228,7 +328,7 @@ export default function SubscriptionPanel({
           : "Выбери тариф и срок — чем дольше период, тем ниже цена за месяц."}
       </div>
 
-      <div className="plan-consoles">
+      <div className="plan-consoles" ref={plansRef}>
         {offers.plans.map((p) => {
           // Durations shortest → longest; savings are measured against the shortest.
           const durations = [...p.durations].sort((a, b) => a.days - b.days);
