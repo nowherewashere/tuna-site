@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { api, type PlanPoolQuota, type PublicPlanLanding } from "@/lib/api";
-import { plural, fmtBytes, fmtQuota, poolPeriodLabel } from "@/lib/format";
+import { plural, fmtBytes, fmtQuota } from "@/lib/format";
 import { storeSelectedPlan } from "@/lib/selectedPlan";
 import AuthCta from "@/components/AuthCta";
 import Icon from "@/components/Icon";
@@ -22,15 +22,13 @@ function deviceLabel(n: number): string {
  * A metered premium-location quota, read as a companion to "Безлимитный трафик":
  * unlimited everywhere, this much on the premium locations.
  *
- * A renewing quota carries the period inline ("200 ГБ/мес"); a NO_RESET one says so
- * explicitly rather than just omitting it — side by side on two cards, a silent
- * omission looks like a formatting slip instead of a different policy.
+ * Always per month, because that is how the quota is priced — a longer term simply
+ * multiplies it (see `quotaMonths`). The card cannot say the total: it advertises a
+ * plan, and the term is chosen on the next screen. The reset strategy the API still
+ * sends is ignored; a quota now lasts the whole term and never resets inside it.
  */
 function poolLabel(pool: PlanPoolQuota): string {
-  const period = poolPeriodLabel(pool.reset_strategy);
-  const quota = `${fmtQuota(pool.quota_bytes)}${period}`;
-  const tail = period ? "" : " — на весь срок";
-  return `${quota} на «${pool.name}»${tail}`;
+  return `${fmtQuota(pool.quota_bytes)}/мес на «${pool.name}»`;
 }
 
 /** Round the API's decimal price string to a whole ruble ("139.33" → "139"). */

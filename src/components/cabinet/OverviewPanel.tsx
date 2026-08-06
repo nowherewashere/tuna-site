@@ -5,6 +5,7 @@ import InstallBlock from "@/components/InstallBlock";
 import EmailConsole from "@/components/cabinet/EmailConsole";
 import TelegramConsole from "@/components/cabinet/TelegramConsole";
 import SignInMethodsConsole from "@/components/cabinet/SignInMethodsConsole";
+import { PoolMeter } from "@/components/cabinet/SubscriptionPanel";
 import type { Device, Me, SubscriptionInfo, TelegramAuthUser } from "@/lib/api";
 import { STATUS_LABEL, daysLeftUntil, fmtDate, plural, statusPillClass } from "@/lib/format";
 import { ConsoleFrame } from "@/components/ui";
@@ -43,6 +44,8 @@ export default function OverviewPanel({
   const expirySoon = daysLeft !== null && daysLeft <= 5;
   const deviceCount = devices?.length ?? 0;
   const deviceMax = maxDevices ?? sub?.device_limit ?? 0;
+  // null (not []) while the feature is off or the plan meters nothing.
+  const pools = sub?.pools ?? [];
 
   // Both halves of the account-link surface. The email half appears only while this
   // account has no verified email — the state in which signing in with email would
@@ -116,6 +119,18 @@ export default function OverviewPanel({
             </span>
           </div>
         </div>
+
+        {/* Directly under the "∞ Трафик" chip, because the two are one claim:
+            unlimited everywhere, metered only on these premium locations. Same
+            component and same wording as the Подписка tab and the bot's hub, so the
+            number a user quotes back at support is the same number everywhere. */}
+        {pools.length > 0 && (
+          <div className="pool-meters">
+            {pools.map((pool) => (
+              <PoolMeter key={pool.pool_id} pool={pool} />
+            ))}
+          </div>
+        )}
 
         <div className="console-readouts">
           <div className="readout">

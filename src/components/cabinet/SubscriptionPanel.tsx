@@ -10,6 +10,7 @@ import {
   expiryAfterAdding,
   fmtDate,
   fmtQuota,
+  fmtQuotaPair,
   ladderSavings,
   monthlyPrice,
   pickPrice,
@@ -97,18 +98,14 @@ function SecretCodeRedeem({
  * one matters: when the panel can't be reached `used_bytes` is null, and showing an
  * empty bar would tell the user they've spent nothing.
  */
-function PoolMeter({ pool }: { pool: PoolUsage }) {
-  const unknown = pool.used_bytes === null;
+export function PoolMeter({ pool }: { pool: PoolUsage }) {
+  const unknown = pool.remaining_bytes === null;
   const ratio = poolFillRatio(pool.used_bytes, pool.quota_bytes);
   const pct = Math.round((ratio ?? 0) * 100);
-  const quotaLabel = fmtQuota(pool.quota_bytes);
-  const usedLabel = unknown ? "—" : fmtQuota(pool.used_bytes!);
-  const remainingLabel = unknown
-    ? null
-    : fmtQuota(Math.max(0, pool.quota_bytes - pool.used_bytes!));
-  // fmtDate already ends in "г." — never let a date land sentence-final, or the copy
-  // reads "…16 авг. 2026 г..".
-  const resetLabel = pool.reset_at ? fmtDate(pool.reset_at) : null;
+  // Remaining, not used — the bot's hub and subscription card both read
+  // "495 / 500 ГБ", and a cabinet counting the other way would look like a bug.
+  const [leftLabel, quotaLabel] = fmtQuotaPair(pool.remaining_bytes ?? 0, pool.quota_bytes);
+  const headValue = unknown ? `— / ${quotaLabel}` : `${leftLabel} / ${quotaLabel}`;
   // The flag is authoritative over the reading: usage comes from a live panel call
   // that can fail on a pool the last metering pass already found spent, and an empty
   // bar under "квота израсходована" would contradict its own caption.
@@ -116,24 +113,19 @@ function PoolMeter({ pool }: { pool: PoolUsage }) {
 
   const note = (() => {
     if (pool.is_exhausted) {
-      return resetLabel
-        ? `Квота израсходована — до ${resetLabel} премиум-локации отключены. Остальные работают как обычно.`
-        : "Квота израсходована — премиум-локации отключены. Остальные работают как обычно.";
+      return "Квота израсходована — премиум-локации отключены. Остальные работают как обычно.";
     }
     if (unknown) return "Не удалось получить расход. Обнови страницу чуть позже.";
     // "Осталось" is already the label of the days readout right above, so the pool
     // uses a different word for a different quantity.
-    if (resetLabel) return `Доступно ещё ${remainingLabel} · обновится ${resetLabel}`;
-    return `Доступно ещё ${remainingLabel} · квота на весь срок подписки`;
+    return `Доступно ещё ${leftLabel} ГБ · квота на весь срок подписки`;
   })();
 
   return (
     <div className={`pool-meter${pool.is_exhausted ? " is-out" : ""}`}>
       <div className="pool-meter-head">
         <span className="readout-label">{pool.name}</span>
-        <span className="pool-meter-val">
-          {usedLabel} / {quotaLabel}
-        </span>
+        <span className="pool-meter-val">{headValue}</span>
       </div>
       <div
         className="pool-meter-track"
@@ -141,13 +133,13 @@ function PoolMeter({ pool }: { pool: PoolUsage }) {
         aria-label={`Премиум-трафик: ${pool.name}`}
         aria-valuemin={0}
         aria-valuemax={pool.quota_bytes}
-        {...(unknown ? {} : { "aria-valuenow": Math.min(pool.used_bytes!, pool.quota_bytes) })}
+        {...(unknown ? {} : { "aria-valuenow": Math.min(pool.used_bytes ?? 0, pool.quota_bytes) })}
         aria-valuetext={
           unknown
             ? pool.is_exhausted
               ? "квота израсходована"
               : "расход неизвестен"
-            : `${usedLabel} из ${quotaLabel}, ${pct}%`
+            : `осталось ${leftLabel} из ${quotaLabel}, израсходовано ${pct}%`
         }
       >
         <span className="pool-meter-fill" style={{ width: `${fillPct}%` }} />
@@ -391,6 +383,18 @@ export default function SubscriptionPanel({
                       <Icon name="check" size={14} />
                     </span>
                     {line}
+                  </li>
+                ))}
+                {/* Outside `feats` on purpose: an admin-authored description replaces
+                    the derived lines wholesale, and a pool folded in there would
+                    vanish from exactly the plans that bothered to describe themselves.
+                    Per month, like the landing — the term is chosen below, not here. */}
+                {p.pools?.map((pool) => (
+                  <li key={pool.pool_id} className="plan-feat-pool">
+                    <span className="ok">
+                      <Icon name="gauge" size={14} />
+                    </span>
+                    {fmtQuota(pool.quota_bytes)}/мес на «{pool.name}»
                   </li>
                 ))}
               </ul>

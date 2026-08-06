@@ -120,6 +120,34 @@ export function poolPeriodLabel(strategy: PoolResetStrategy): string {
   }
 }
 
+/** Months of pool quota a term of `days` grants — the backend's rule, mirrored.
+ *
+ *  A quota is priced per month and multiplied at purchase, so a shelf that knows the
+ *  term can state what it will actually buy. Only exact multiples of 30 scale; odd
+ *  terms get ×1. Must stay in step with `quota_months` in the backend
+ *  (src/core/utils/converters.py) — the two answer the same question on either side
+ *  of the API, and a disagreement would price the card differently from the purchase. */
+export function quotaMonths(days: number): number {
+  return days > 0 && days % 30 === 0 ? days / 30 : 1;
+}
+
+/** A "495 / 500 ГБ" pair — both halves in GB, the unit stated once at the end.
+ *
+ *  Pool quotas are authored by an admin in whole gigabytes and multiplied by the term,
+ *  so they stay in GB and are never promoted: "1500 ГБ" is the number everyone quotes,
+ *  while "1.46 ТБ" both loses it and disagrees with the bot. Scaling each half on its
+ *  own would be worse still — a 500 GB quota beside a 500 MB remainder would read
+ *  "500 / 500 ГБ" on a nearly spent pool. Mirrors `_pair` in src/telegram/utils.py. */
+export function fmtQuotaPair(part: number, whole: number): [string, string] {
+  // ru-RU grouping and decimal separator, matching what fluent emits on the bot side
+  // for the same figure — "1 500", not "1500" here and "1 500" there.
+  const gb = (n: number) =>
+    new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 2 }).format(
+      Math.max(0, n) / 1024 ** 3,
+    );
+  return [gb(part), `${gb(whole)} ГБ`];
+}
+
 /** Share of a pool quota already spent, clamped to 0…1. `null` when usage is
  *  unknown (the panel was unreachable), so the meter can render an unknown state
  *  instead of a full or empty bar it cannot justify. */

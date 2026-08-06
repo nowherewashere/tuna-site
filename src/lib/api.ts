@@ -183,17 +183,24 @@ export type PoolResetStrategy = "NO_RESET" | "DAY" | "WEEK" | "MONTH" | "MONTH_R
  *
  * Traffic is unlimited on ordinary locations; a pool is the subset of premium
  * locations the plan meters. Running its quota out disables that pool only —
- * everything else keeps working — until `reset_at`.
+ * everything else keeps working — for the rest of the term.
  */
 export interface PoolUsage {
   pool_id: number;
   name: string;
+  // For the WHOLE term: the plan prices the quota per month and the purchase
+  // multiplies it by the number of months, so a 3-month term carries 3× the figure
+  // advertised on the card.
   quota_bytes: number;
   // null = the panel was unreachable. Render "unknown", never 0, or the meter would
   // claim nothing has been spent.
   used_bytes: number | null;
+  // What is left in the current term. Served rather than computed here: it is null —
+  // not the full quota — when usage is unknown, and it floors at 0 when the panel
+  // reports an overshoot between metering passes.
+  remaining_bytes: number | null;
   is_exhausted: boolean;
-  // null when the quota never resets — it lasts the whole subscription.
+  // Retained for compatibility; always null now that a quota lasts the whole term.
   reset_at: string | null;
 }
 
